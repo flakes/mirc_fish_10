@@ -330,7 +330,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, cons
 	const std::string l_plainPrefix = l_ini->GetString(L"plain_prefix", L"+p");
 	if(!l_plainPrefix.empty() && l_message.find(l_plainPrefix) == 0)
 	{
-		l_newMsg = l_line.substr(0, l_msgPos + 2) + l_message.substr(l_plainPrefix.size());
+		l_newMsg = l_line.substr(0, l_msgPos + 2) + l_message.substr(l_plainPrefix.size()) + "\n";
 	}
 	else
 	{
