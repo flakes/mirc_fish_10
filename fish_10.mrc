@@ -6,7 +6,10 @@
 
 on *:START: {
 ; you can change the blow.ini path here if you like:
+
   set %blow_ini $shortfn($nofile($mircexe) $+ blow.ini)
+
+; don't edit anything below this line.
 
   set %FiSH_dll $shortfn($nofile($mircexe) $+ fish_10.dll)
 
