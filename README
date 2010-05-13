@@ -34,7 +34,7 @@ Supported mIRC versions: mIRC 7 only!
 		- Shut down mIRC!
 		- Extract fish_10.dll, fish_inject.dll and fish_10.mrc to your mirc.exe folder.
 			Do the same with libeay32.dll and ssleay32.dll if your download contains them.
-		- You can edit fish_10.mrc if your blow.ini is at a different location than this folder.
+		- You can edit fish_10.mrc if your blow.ini is at a different location than that folder.
 			This is useful for people who installed mIRC into Program Files but keep their settings
 			in the Users/AppData folder.
 		- Start mIRC back up. If your mIRC is automatically connecting on startup, you might
@@ -65,7 +65,7 @@ Supported mIRC versions: mIRC 7 only!
 == ABOUT ==
 
 	fish_10.mrc is a 1:1 copy of FiSH.mrc, with some modifications to account for proper
-	Windows Vista and 7 support and to faciliate DLL loading.
+	Windows Vista and 7 support and to facilitate DLL loading.
 
 	I would like to thank RXD for the work he has put into the FiSH addon over the last
 	few years. However, he has been slow with updates and unwilling to open source a

@@ -394,7 +394,7 @@ extern "C" int __stdcall UnloadDll(int mTimeout)
 }
 
 
-/* dummy call to faciliate loading of DLL */
+/* dummy call to facilitate loading of DLL */
 
 extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
@@ -403,6 +403,7 @@ extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, 
 }
 
 
+#ifdef _DEBUG
 /* blergh */
 
 void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function, std::string a_message)
@@ -422,6 +423,6 @@ void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function,
 		OutputDebugStringA("\n");
 	}
 }
-
+#endif
 
 static_assert(sizeof(SOCKET) == sizeof(HANDLE), "fail");
