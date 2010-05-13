@@ -13,8 +13,11 @@ on *:START: {
 
   set %FiSH_dll $shortfn($nofile($mircexe) $+ fish_10.dll)
 
+; this call is very important:
   .dll $shortfn($nofile($mircexe) $+ fish_inject.dll) _callMe
+; this one is just for info:
   .dll %FiSH_dll _callMe
+; and this one is important again:
   .dll %FiSH_dll FiSH_SetIniPath %blow_ini
 }
 
@@ -295,7 +298,7 @@ menu status,channel,nicklist,query {
   ..-
   ..Open blow.ini :run %blow_ini
   ..-
-  ..FiSH 10 :run http://fish.secure.la
+  ..FiSH 10 - based on FiSH 1.30 by RXD :run http://github.com/flakes/mirc_fish_10
 }
 
 menu channel {
