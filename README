@@ -1,9 +1,101 @@
 "FiSH 10" - a blowfish encryption plug-in for mIRC 7,
   compatible to previous FiSH scripts and other clients!
 
+This is an encryption addon for mIRC, it is based on FiSH v1.30 and is compatible to the
+original 'blowcrypt/bloW' script as well as Mircryption and other clients.
+It supports private chat, channel, topic encryption and comes with a secure key-exchange
+system (DH1080).
+
+Supported mIRC versions: mIRC 7 only!
+	You can download the latest beta from www.mirc.com/beta.html
+
 == INSTALLING ==
 
-== IMPORTANT ==
+	Don't shy away, the guide below is just verbose, installing is easy!
+
+	Installing should be pretty straightforward as patching mirc.exe is no longer required.
+	If you have been using FiSH.dll before, it is however strongly recommended that
+	you restore mirc.exe to its unpatched, original state before you install FiSH 10.
+	You can of course apply a "crack" after that, but mIRC is a good product, so if you use
+	it every day, you should just consider getting a legit lifetime license.
+
+	Alright, now on to the actual installing procedure. If you have not been using FiSH.dll
+	before, or if you are installing mIRC 7 from scratch, you can skip this paragraph.
+		- Unload FiSH.mrc from mIRC like so: //unload -rs $shortfn($nofile($mircexe) $+ FiSH.mrc)
+		(- Unload blow.mrc, blowcrypt.mrc, mircryption.mrc, etc.)
+		- Delete FiSH.dll
+		- Delete FiSH.mrc
+		(- Delete DH.dll blowfish.dll bloW.dll)
+		- Keep! blow.ini
+
+	Now that your mIRC installation is clean, we can move on to the actual installing part.
+		- Download the latest zip file from http://github.com/flakes/mirc_fish_10/downloads
+			(if you haven't already)
+		- Shut down mIRC!
+		- Extract fish_10.dll, fish_inject.dll and fish_10.mrc to your mirc.exe folder.
+			Do the same with libeay32.dll and ssleay32.dll if your download contains them.
+		- You can edit fish_10.mrc if your blow.ini is at a different location than this folder.
+			This is useful for people who installed mIRC into Program Files but keep their settings
+			in the Users/AppData folder.
+		- Start mIRC back up. If your mIRC is automatically connecting on startup, you might
+			have to turn that off, or add a timer. It is extremely important that fish_10.mrc
+			gets loaded before ANY IRC connection is being made.
+		- Install the script: //load -rs $shortfn($nofile($mircexe) $+ fish_10.mrc)
+		- Shut down mIRC, and start it again
+		- Two lines like this should show up (and no error popup):
+			*** FiSH 10 *** by [c&f] *** fish_inject.dll compiled XXX XX 2010 12:00:00 ***
+			*** FiSH 10 *** by [c&f] *** fish_10.dll     compiled XXX XX 2010 12:00:00 ***
+		- If that is the case, FiSH 10 is now ready for action!
+		- Connect to your networks and do your thing.
+
+	When mIRC updates, FiSH 10 should just continue to work in 99% of the cases, unlike
+	the previous solution. And it's open source, pretty cool, he?
+
+	You can report bugs at http://github.com/flakes/mirc_fish_10/issues
+	or ask for help in the old FiSH.dll's forums: http://fish.secure.la/forum/
+	Please don't message me on IRC.
+
+	If you are an IRC freak like me, you should also check out ZNC, the best bouncer
+	software available: http://en.znc.in/wiki/ZNC
+
+	FiSH 10 does not contain any specialiced code for decrypting psyBNC or sBNC logs.
+	Why should it? ZNC's buffers play back just fine, including appended (not prepended)
+	time stamps.
 
 == ABOUT ==
 
+	fish_10.mrc is a 1:1 copy of FiSH.mrc, with some modifications to account for proper
+	Windows Vista and 7 support and to faciliate DLL loading.
+
+	I would like to thank RXD for the work he has put into the FiSH addon over the last
+	few years. However, he has been slow with updates and unwilling to open source a
+	simple add-on like this, so someone had to take over at least the mIRC addon.
+
+	FiSH 10 also uses CPatch by armagedescu, thanks. It contains some code from
+	http://dirtirc.sourceforge.net/ (blowfish core) and some utility methods from
+	http://code.google.com/p/infekt/ (which is an excellent NFO viewer by the way).
+	The rest of the code is what I contributed myself and is licensed under the
+	"Go fuck yourself, it's free!" license.
+
+== TECHNICAL ==
+
+	FiSH 10 makes heavy use of OpenSSL. It is recommended that you use the SSL libs
+	(ssleay32.dll and libeay32.dll) that come with the download, but other recent
+	libraries should work too. If they don't, FiSH 10 will let you know on startup.
+
+	You can read some lines about the in-memory patching in fish-inject.cpp. fish_inject.dll
+	(compiled from fish-inject.cpp, patcher.cpp and socket.cpp) does the magic of intercepting
+	the system calls and managing buffers. For complete lines, it calls into fish_10.dll which
+	does the actual IRC parsing and encryption things.
+	Key-exchange, getting the "outside" IP etc. is still being handled by fish_10.mrc, like it
+	has always been.
+
+== SECURITY NOTE ==
+
+	You are advised to use TrueCrypt or a similar solution to protect the blow.ini file. While all the
+	keys are stored encrypted, the encryption is not particularly strong and could be broken without
+	a lot of effort!
+
+	Furthermore, DON'T exchange keys via plaintext (IRC/email/Facebook/whatever). This defeats the
+	entire purpose of the encryption. Instead, use DH1080 key exchange to establish a secure channel
+	for (channel) key exchange.
