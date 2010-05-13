@@ -1,0 +1,33 @@
+[FiSH]
+process_incoming=1
+process_outgoing=1
+
+plain_prefix="+p "
+
+;*encrypt NOTICE messages?
+encrypt_notice=0
+;*encrypt ACTION messages? (except CTCP)
+encrypt_action=0
+
+;*append crypt-mark at end of message
+mark_position=1
+;mark_encrypted=" ·"
+mark_encrypted=" 12·"
+
+;*prefix crypt-mark example
+;mark_position=2
+;mark_encrypted="12> "
+;mark_encrypted="12· "
+
+MyIP_service=checkip.dyndns.org
+;www.checkip.org / www.whatismyip.com / www.myip.dk / yourip.dentar.com / iplookup.flashfxp.com
+
+[#chan1]
+key=+OK wHat.EveR/uzQx./f0l/2jN/rdq1VQZ/eZ.Csn7r/10jvq0N32pU54.mjsG/8m
+encrypt_topic=1
+date=14/08/2003
+
+[user2]
+key=+OK vERy.seKuRE.Key/bE
+mark_encrypted=0
+date=14/06/2003
