@@ -82,7 +82,7 @@ Supported mIRC versions: mIRC 7 only!
 	few years. However, he has been slow with updates and unwilling to open source a
 	simple addon like this, so someone had to take over the mIRC addon.
 
-	FiSH 10 is using "CPatch2 by armagedescu, thanks. It contains some code from
+	FiSH 10 is using "CPatch" by armagedescu, thanks. It contains some code from
 	http://dirtirc.sourceforge.net/ (blowfish core) and some utility methods from
 	http://code.google.com/p/infekt/ (which is an excellent NFO viewer by the way).
 	The rest of the code is what I contributed myself and is licensed under the
@@ -113,7 +113,8 @@ Supported mIRC versions: mIRC 7 only!
 
 == FUTURE ==
 
-	There are two "big" items on my to-do list:
+	There are three "big" items on my to-do list:
 	One is a logic that tries to avoid sending truncated fish messages and splits the message into
 	several lines automatically (with an option to turn it off).
 	Secondly, CBC encryption mode for improved security. Must be compatible to Mircryption.
+	And last but not least, trying to make FiSH 10 work in mIRC 6 as well.
