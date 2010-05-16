@@ -13,17 +13,17 @@ public:
 	void SetIniPath(std::wstring a_iniPath) { m_iniPath = a_iniPath; }
 
 	/* general purpose INI tools */
-	std::wstring GetStringW(const wchar_t* a_key, const wchar_t* a_default = NULL);
-	std::string GetString(const wchar_t* a_key, const wchar_t* a_default = NULL);
-	bool GetBool(const wchar_t* a_key, bool a_default);
-	int GetInt(const wchar_t* a_key, int a_default = 0);
+	std::wstring GetStringW(const wchar_t* a_key, const wchar_t* a_default = NULL) const;
+	std::string GetString(const wchar_t* a_key, const wchar_t* a_default = NULL) const;
+	bool GetBool(const wchar_t* a_key, bool a_default) const;
+	int GetInt(const wchar_t* a_key, int a_default = 0) const;
 
 	/* blow.ini-specific methods */
 	static std::string FixContactName(const std::string& a_name);
-	std::string GetBlowKey(const std::string& a_name);
-	bool DeleteBlowKey(const std::string& a_name);
-	bool WriteBlowKey(const std::string& a_name, const std::string& a_value);
-	bool GetSectionBool(const std::string& a_name, const wchar_t* a_key, bool a_default);
+	std::string GetBlowKey(const std::string& a_name) const;
+	bool DeleteBlowKey(const std::string& a_name) const;
+	bool WriteBlowKey(const std::string& a_name, const std::string& a_value) const;
+	bool GetSectionBool(const std::string& a_name, const wchar_t* a_key, bool a_default) const;
 };
 
 /* from util.cpp */

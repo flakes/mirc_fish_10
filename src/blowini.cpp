@@ -12,7 +12,7 @@ CBlowIni::CBlowIni(std::wstring a_iniPath)
 }
 
 
-std::wstring CBlowIni::GetStringW(const wchar_t* a_key, const wchar_t* a_default)
+std::wstring CBlowIni::GetStringW(const wchar_t* a_key, const wchar_t* a_default) const
 {
 	wchar_t l_buf[4096] = {0};
 
@@ -22,13 +22,13 @@ std::wstring CBlowIni::GetStringW(const wchar_t* a_key, const wchar_t* a_default
 }
 
 
-std::string CBlowIni::GetString(const wchar_t* a_key, const wchar_t* a_default)
+std::string CBlowIni::GetString(const wchar_t* a_key, const wchar_t* a_default) const
 {
 	return UnicodeToCp(CP_UTF8, GetStringW(a_key, a_default));
 }
 
 
-bool CBlowIni::GetBool(const wchar_t* a_key, bool a_default)
+bool CBlowIni::GetBool(const wchar_t* a_key, bool a_default) const
 {
 	const std::wstring l_val = GetStringW(a_key, (a_default ? L"1" : L"0"));
 
@@ -36,7 +36,7 @@ bool CBlowIni::GetBool(const wchar_t* a_key, bool a_default)
 }
 
 
-int CBlowIni::GetInt(const wchar_t* a_key, int a_default)
+int CBlowIni::GetInt(const wchar_t* a_key, int a_default) const
 {
 	return ::GetPrivateProfileIntW(INI_SECTION, a_key, a_default, m_iniPath.c_str());
 }
@@ -57,7 +57,7 @@ std::string CBlowIni::FixContactName(const std::string& a_name)
 }
 
 
-std::string CBlowIni::GetBlowKey(const std::string& a_name)
+std::string CBlowIni::GetBlowKey(const std::string& a_name) const
 {
 	const std::string l_iniSection = FixContactName(a_name);
 	const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
@@ -93,7 +93,7 @@ std::string CBlowIni::GetBlowKey(const std::string& a_name)
 }
 
 
-bool CBlowIni::DeleteBlowKey(const std::string& a_name)
+bool CBlowIni::DeleteBlowKey(const std::string& a_name) const
 {
 	const std::string l_iniSection = FixContactName(a_name);
 	const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
@@ -111,7 +111,7 @@ bool CBlowIni::DeleteBlowKey(const std::string& a_name)
 }
 
 
-bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_value)
+bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_value) const
 {
 	const std::string l_iniSection = FixContactName(a_name);
 	const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
@@ -146,7 +146,7 @@ bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_valu
 }
 
 
-bool CBlowIni::GetSectionBool(const std::string& a_name, const wchar_t* a_key, bool a_default)
+bool CBlowIni::GetSectionBool(const std::string& a_name, const wchar_t* a_key, bool a_default) const
 {
 	const std::string l_iniSection = FixContactName(a_name);
 	const std::string l_iniKey = UnicodeToCp(CP_ACP, a_key);
