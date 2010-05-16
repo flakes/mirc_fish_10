@@ -539,5 +539,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		::DeleteCriticalSection(&s_iniLock);
 		break;
 	}
+
+	return TRUE;
 }
 

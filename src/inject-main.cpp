@@ -345,6 +345,17 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 		}
 		else
 		{
+			wchar_t wszPatchedInfo[50] = {0};
+			swprintf_s(wszPatchedInfo, 50, L"[%i%i%i%i%i%i%i%i]",
+				(s_patchConnect->patched() ? 1 : 0),
+				(s_patchSend->patched() ? 1 : 0),
+				(s_patchRecv->patched() ? 1 : 0),
+				(!s_patchRecvLegacy || s_patchRecvLegacy->patched() ? 1 : 0),
+				(!s_patchSendLegacy || s_patchSendLegacy->patched() ? 1 : 0),
+				(s_patchCloseSocket->patched() ? 1 : 0),
+				(s_patchSSLWrite->patched() ? 1 : 0),
+				(s_patchSSLRead->patched() ? 1 : 0));
+
 			delete s_patchConnect; s_patchConnect = NULL;
 			delete s_patchSend; s_patchSend = NULL;
 			delete s_patchRecv; s_patchRecv = NULL;
@@ -354,8 +365,11 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 			delete s_patchSSLWrite; s_patchSSLWrite = NULL;
 			delete s_patchSSLRead; s_patchSSLRead = NULL;
 
-			::MessageBoxW(info->mHwnd, L"FiSH 10 failed to load: Patching functions in memory was unsuccesful.",
-				L"Error", MB_ICONEXCLAMATION);
+			std::wstring l_errorInfo = L"FiSH 10 failed to load: Patching functions in memory was unsuccesful.";
+			l_errorInfo += L"\r\nDebug info: ";
+			l_errorInfo += wszPatchedInfo;
+
+			::MessageBoxW(info->mHwnd, l_errorInfo.c_str(), L"Error", MB_ICONEXCLAMATION);
 		}
 	}
 }
