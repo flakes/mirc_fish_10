@@ -471,6 +471,65 @@ EXPORT_SIG(int) FiSH_DelKey(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL 
 }
 
 
+EXPORT_SIG(int) FiSH_decrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+{
+	if(data && *data)
+	{
+		const std::string l_data(data);
+		std::string::size_type l_pos = l_data.find(' ');
+
+		if(l_pos != std::string::npos)
+		{
+			std::string l_key = l_data.substr(0, l_pos), l_message = l_data.substr(l_pos + 1);
+
+			if(l_message.find("+OK ") == 0)
+				l_message.erase(0, 4);
+			else if(l_message.find("mcps ") == 0)
+				l_message.erase(0, 5);
+
+			std::string l_decrypted;
+
+			if(blowfish_decrypt(l_message, l_decrypted, l_key) == 1)
+			{
+				l_decrypted += "&";
+			}
+
+			// use strncpy so strcpy_s doesn't terminate if l_decrypted.size() > 899
+			strncpy_s(data, 900, l_decrypted.c_str(), 899);
+
+			return 3;
+		}
+	}
+
+	return 0;
+}
+
+
+EXPORT_SIG(int) FiSH_encrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+{
+	if(data && *data)
+	{
+		const std::string l_data(data);
+		std::string::size_type l_pos = l_data.find(' ');
+
+		if(l_pos != std::string::npos)
+		{
+			const std::string l_key = l_data.substr(0, l_pos),
+				l_message = l_data.substr(l_pos + 1);
+
+			std::string l_encrypted;
+			blowfish_encrypt(l_message, l_encrypted, l_key);
+
+			strncpy_s(data, 900, l_encrypted.c_str(), 899);
+
+			return 3;
+		}
+	}
+
+	return 0;
+}
+
+
 EXPORT_SIG(int) FiSH_GetMyIP(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
 	auto l_ini = GetBlowIni();
