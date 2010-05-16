@@ -111,10 +111,11 @@ Supported mIRC versions: mIRC 7 only!
 	entire purpose of encryption. Instead, use DH1080 key exchange to establish a secure channel
 	for (channel) key exchange.
 
-== FUTURE ==
+== THE FUTURE ==
 
-	There are three "big" items on my to-do list:
-	One is a logic that tries to avoid sending truncated fish messages and splits the message into
-	several lines automatically (with an option to turn it off).
-	Secondly, CBC encryption mode for improved security. Must be compatible to Mircryption.
-	And last but not least, trying to make FiSH 10 work in mIRC 6 as well.
+	- A feature that tries to avoid sending truncated fish messages and splits the message into
+		several lines automatically (with an option to turn it off).
+	- CBC encryption mode for improved security. Must be compatible to Mircryption.
+	- Make FiSH 10 work in good old mIRC 6.
+	- Per-network nick and channel key storage.
+		Challenges: Backwards compatibility
