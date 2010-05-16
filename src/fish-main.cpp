@@ -1,14 +1,20 @@
 #include "fish-internal.h"
 #include <memory>
 
+static CRITICAL_SECTION s_iniLock;
 
-static std::string s_iniPath;
 
 static std::shared_ptr<CBlowIni> GetBlowIni()
 {
 	static std::shared_ptr<CBlowIni> ls_instance;
 
-	if(!ls_instance) ls_instance = std::shared_ptr<CBlowIni>(new CBlowIni());
+	if(!ls_instance)
+	{
+		::EnterCriticalSection(&s_iniLock);
+		// the lock makes sure we only ever get one CBlowIni instance.
+		if(!ls_instance) ls_instance = std::shared_ptr<CBlowIni>(new CBlowIni());
+		::LeaveCriticalSection(&s_iniLock);
+	}
 	
 	return ls_instance;
 }
@@ -518,3 +524,20 @@ extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, 
 	strcpy_s(data, 900, "/echo -a *** FiSH 10 *** by [c&f] *** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***");
 	return 2;
 }
+
+
+/* DllMain for initialization purposes */
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+	switch(fdwReason)
+	{
+	case DLL_PROCESS_ATTACH:
+		::InitializeCriticalSection(&s_iniLock);
+		break;
+	case DLL_PROCESS_DETACH:
+		::DeleteCriticalSection(&s_iniLock);
+		break;
+	}
+}
+
