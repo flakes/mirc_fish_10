@@ -103,7 +103,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 
 	if(l_cmd_type == CMD_N322 || l_cmd_type == CMD_N332 || l_cmd_type == CMD_TOPIC)
 	{
-		l_targetPos = l_line.rfind('#', l_msgPos);
+		l_targetPos = l_line.rfind(" #", l_msgPos);
 
 		if(l_targetPos != std::string::npos && l_targetPos > l_cmdPos + l_cmd.size())
 		{
