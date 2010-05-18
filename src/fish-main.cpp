@@ -101,6 +101,8 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 	else
 		return NULL;
 
+	std::string l_leading, l_trailing;
+
 	if(l_cmd_type == CMD_N322 || l_cmd_type == CMD_N332 || l_cmd_type == CMD_TOPIC)
 	{
 		l_targetPos = l_line.rfind(" #", l_msgPos);
@@ -124,6 +126,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 
 				if(l_tmpPos != std::string::npos)
 				{
+					l_leading = l_message.substr(0, l_tmpPos + 2);
 					l_message.erase(0, l_tmpPos + 2);
 				}
 			}
@@ -183,7 +186,6 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 		l_message.erase(0, 5);
 
 	// account for stuff like trailing time stamps from BNCs:
-	std::string l_trailing;
 	if((l_tmpPos = l_message.find(' ')) != std::string::npos)
 	{
 		l_trailing = l_message.substr(l_tmpPos);
@@ -239,7 +241,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 	// form new line:
 	l_newMsg = l_line.substr(0, l_msgPos) +
 		(l_cmd_type == CMD_ACTION ? "\x01""ACTION " : "") +
-		l_newMsg +
+		l_leading + l_newMsg +
 		(l_cmd_type == CMD_ACTION ? "\x01\n" : "\n");
 
 	// return and let fish_inject handle the rest:
