@@ -257,37 +257,40 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	::EnterCriticalSection(&s_socketsLock);
 	auto it = s_sockets.find(s);
 
-	if(it == s_sockets.end())
+	if(it != s_sockets.end())
+	{
+		auto l_sock = it->second;
+
+		::LeaveCriticalSection(&s_socketsLock);
+
+		while(!l_sock->HasReceivedLine())
+		{
+			char l_localBuf[1024];
+
+			int l_sslRet = s_lpfn_SSL_read(ssl, l_localBuf, 1024);
+
+			if(l_sslRet < 1)
+			{
+				return l_sslRet;
+			}
+		
+			l_sock->OnAfterReceive(l_localBuf, l_sslRet);
+		}
+
+		// yay we got a complete line in the buffer.
+
+		const std::string l_tmp = l_sock->ReadFromRecvBuffer(num);
+
+		memcpy(buf, l_tmp.c_str(), l_tmp.size());
+
+		return l_tmp.size();
+	}
+	else
 	{
 		::LeaveCriticalSection(&s_socketsLock);
+
 		return s_lpfn_SSL_read(ssl, buf, num);
 	}
-
-	auto l_sock = it->second;
-
-	::LeaveCriticalSection(&s_socketsLock);
-
-	while(!l_sock->HasReceivedLine())
-	{
-		char l_localBuf[1024];
-
-		int l_sslRet = s_lpfn_SSL_read(ssl, l_localBuf, 1024);
-
-		if(l_sslRet < 1)
-		{
-			return l_sslRet;
-		}
-		
-		l_sock->OnAfterReceive(l_localBuf, l_sslRet);
-	}
-
-	// yay we got a complete line in the buffer.
-
-	const std::string l_tmp = l_sock->ReadFromRecvBuffer(num);
-
-	memcpy(buf, l_tmp.c_str(), l_tmp.size());
-
-	return l_tmp.size();
 }
 
 
