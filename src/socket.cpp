@@ -61,6 +61,8 @@ void CSocketInfo::OnAfterReceive(const char* a_data, size_t a_len)
 {
 	m_receivingBuffer.append(a_data, a_len);
 
+	if(!m_dataExchanged) m_dataExchanged = true;
+
 	std::string l_chunk;
 	std::string::size_type l_pos;
 	while((l_pos = m_receivingBuffer.find("\n")) != std::string::npos)
