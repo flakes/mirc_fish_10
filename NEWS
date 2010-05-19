@@ -1,0 +1,12 @@
+
+== 2010-05-18 ==
+  * Fixed issue #6 (Topic support broken for channel names that contain more than one # sign)
+  * Re-prepend cut off channel modes in UnrealIRCD's /list.
+	* Added FiSH.dll compatible FiSH_encrypt_msg and FiSH_decrypt_msg exports to
+		fish_10.dll, for use from mIRC script, e.g. like this:
+		echo -a $dll(fish_10.dll,FiSH_encrypt_msg,KEYHERE MESSAGEHERE)
+	* Added some debug info to the "patch failed" message (which patch failed)
+	* Some internal minor changes
+
+== 2010-05-13 ==
+	* Initial release
