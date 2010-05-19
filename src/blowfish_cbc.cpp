@@ -106,7 +106,7 @@ int blowfish_decrypt_cbc(const std::string& a_in, std::string &ar_out, const std
 	std::string l_in = Base64_Decode(a_in);
 	if(l_in.empty())
 	{
-		return 0;
+		return -1;
 	}
 	bool l_beenCut = (l_in.size() % 8 != 0);
 
