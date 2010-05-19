@@ -111,6 +111,8 @@ Supported mIRC versions: mIRC 7 only!
 	entire purpose of encryption. Instead, use DH1080 key exchange to establish a secure channel
 	for (channel) key exchange.
 
+	And, obviously, DO NOT store any log files on unencrypted disks.
+
 == THE FUTURE ==
 
 	- A feature that tries to avoid sending truncated fish messages and splits the message into
