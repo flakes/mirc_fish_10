@@ -2,6 +2,7 @@
 #include <openssl/evp.h>
 #include <openssl/blowfish.h>
 #include <openssl/rand.h>
+ #include <openssl/err.h>
 
 /*
 Mircryption compatible Blowfish routines using OpenSSL.
@@ -34,7 +35,14 @@ static bool _blowfish_cipher_walk(EVP_CIPHER_CTX *a_ctx, const char* a_bufIn, si
 		l_bufPtr += l_inSize;
 	}
 
-	return (EVP_CipherFinal_ex(a_ctx, l_tmpBuf, &l_outLen) != 0);
+	bool l_success = (EVP_CipherFinal_ex(a_ctx, l_tmpBuf, &l_outLen) != 0);
+
+	if(l_success)
+	{
+		ar_out.append(reinterpret_cast<char*>(l_tmpBuf), l_outLen);
+	}
+
+	return l_success;
 }
 
 
@@ -89,6 +97,7 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const st
 	// encrypt data:
 	_blowfish_cipher_walk(&l_ctx, l_bufIn, l_inBufSize, ar_out);
 
+	delete[] l_bufIn;
 	EVP_CIPHER_CTX_cleanup(&l_ctx);
 
 	// do base64 for easier handling outside this function:
@@ -110,14 +119,18 @@ int blowfish_decrypt_cbc(const std::string& a_in, std::string &ar_out, const std
 	}
 	bool l_beenCut = (l_in.size() % 8 != 0);
 
+	if(l_beenCut)
+	{
+		l_in.erase(l_in.size() - (l_in.size() % 8));
+	}
+
 	// init struct for decryption:
 	EVP_CIPHER_CTX_init(&l_ctx);
 	EVP_CipherInit_ex(&l_ctx, EVP_bf_cbc(), NULL, NULL, NULL, 0);
 
 	// set options:
 	EVP_CIPHER_CTX_set_key_length(&l_ctx, l_keyLen);
-	EVP_CIPHER_CTX_set_padding(&l_ctx, 1); // we can use auto padding here,
-	// although it shouldn't be necessary unless we deal with cut messages.
+	EVP_CIPHER_CTX_set_padding(&l_ctx, 0); // MUST be the same setting used during encryption.
 
 	// actually initialize session context:
 	EVP_CipherInit_ex(&l_ctx, NULL, NULL, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 0);
@@ -127,11 +140,10 @@ int blowfish_decrypt_cbc(const std::string& a_in, std::string &ar_out, const std
 
 	EVP_CIPHER_CTX_cleanup(&l_ctx);
 
-	if(l_success)
-	{
-		// remove IV data.
-		ar_out.erase(0, 8);
-	}
+	// used to do if(l_success) here, but even if the decryption was not successful, there
+	// might be *some* data in the out buffer, so we should always do this:
+	ar_out.erase(0, 8); // remove IV data
+	remove_bad_chars(ar_out);
 
 	return (l_success ? (l_beenCut ? 1 : 0) : -1);
 }

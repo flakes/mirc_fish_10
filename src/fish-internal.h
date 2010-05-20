@@ -33,6 +33,8 @@ void StrTrimRight(std::string& a_str);
 std::string HttpDownloadTextFile(const std::wstring& a_url);
 std::string Base64_Encode(const std::string& a_input);
 std::string Base64_Decode(const std::string& a_input);
+bool HasCBCPrefix(std::string& a_key, bool a_strip = false);
+void remove_bad_chars(std::string &str);
 
 /* from blowfish.cpp */
 void blowfish_encrypt(const std::string& ain, std::string &out, const std::string &key);
@@ -41,6 +43,10 @@ int blowfish_decrypt(const std::string& ain, std::string &out, const std::string
 /* from dh1080.cpp */
 bool DH1080_Generate(std::string& ar_priv, std::string& ar_pub);
 std::string DH1080_Compute(const std::string& a_priv, const std::string& a_pub);
+
+/* from blowfish_cbc.cpp */
+int blowfish_decrypt_cbc(const std::string& a_in, std::string &ar_out, const std::string &a_key);
+void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const std::string &a_key);
 
 /* for fish-main.cpp */
 #define EXPORT_SIG(RET_TYPE) extern "C" RET_TYPE __stdcall

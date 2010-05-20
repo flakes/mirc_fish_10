@@ -15,14 +15,6 @@ union bf_data {
 static const std::string fish_base64 = "./0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 
-static void remove_bad_chars(std::string &str)
-{
-	std::string::size_type i;
-	while (i = str.find('\x00', 0), i != std::string::npos) str.erase(i, 1);
-	while (i = str.find_first_of("\x0d\x0a"), i != std::string::npos) str.erase(i, 1);
-}
-
-
 void blowfish_encrypt(const std::string& ain, std::string &out, const std::string &key)
 {
 	std::string in(ain);

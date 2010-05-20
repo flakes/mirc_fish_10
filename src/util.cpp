@@ -207,3 +207,28 @@ std::string Base64_Decode(const std::string& a_input)
 	return l_result;
 }
 
+
+void remove_bad_chars(std::string &str)
+{
+	std::string::size_type i;
+	while (i = str.find('\x00', 0), i != std::string::npos) str.erase(i, 1);
+	while (i = str.find_first_of("\x0d\x0a"), i != std::string::npos) str.erase(i, 1);
+}
+
+
+bool HasCBCPrefix(std::string& a_key, bool a_strip)
+{
+	size_t l_prefixLen = 0;
+
+	if(_strnicmp(a_key.c_str(), "cbc:", 4) == 0)
+	{
+		l_prefixLen = 4;
+	}
+
+	if(l_prefixLen > 0 && a_strip)
+	{
+		a_key.erase(0, l_prefixLen);
+	}
+
+	return (l_prefixLen > 0);
+}
