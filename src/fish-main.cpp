@@ -204,7 +204,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 	switch(blowfish_decrypt(l_message, l_newMsg, l_blowKey))
 	{
 	case -1:
-		l_newMsg = l_message + " [FiSH: DECRYPTION FAILED!]";
+		l_newMsg = l_message + "=[FiSH: DECRYPTION FAILED!]=";
 		break;
 	case 1:
 		l_newMsg += "\x02&\x02";
@@ -491,8 +491,15 @@ EXPORT_SIG(int) FiSH_decrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, 
 
 			std::string l_decrypted;
 			int l_result;
+			bool l_cbc = HasCBCPrefix(l_key, true);
 
-			if(!HasCBCPrefix(l_key, true))
+			if(!l_cbc && !l_message.empty() && l_message[0] == '*')
+			{
+				l_cbc = true;
+				l_message.erase(0, 1);
+			}
+
+			if(!l_cbc)
 			{
 				l_result = blowfish_decrypt(l_message, l_decrypted, l_key);
 			}
@@ -542,6 +549,7 @@ EXPORT_SIG(int) FiSH_encrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, 
 			else
 			{
 				blowfish_encrypt_cbc(l_message, l_encrypted, l_key);
+				l_encrypted.insert(0, "*"); // mark CBC mode "message"
 			}
 
 			strncpy_s(data, 900, l_encrypted.c_str(), 899);
