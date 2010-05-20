@@ -193,7 +193,8 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 	}
 
 	// get blowfish key...
-	const std::string l_blowKey = l_ini->GetBlowKey(l_contact);
+	bool l_cbc;
+	std::string l_blowKey = l_ini->GetBlowKey(l_contact, l_cbc);
 
 	if(l_blowKey.empty())
 		return NULL;
@@ -201,7 +202,26 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 	// put together new message:
 	std::string l_newMsg;
 
-	switch(blowfish_decrypt(l_message, l_newMsg, l_blowKey))
+	if(l_cbc && !l_message.empty() && l_message[0] != '*')
+	{
+		// silent fallback to old style
+		l_cbc = false;
+	}
+	else if(!l_cbc && !l_message.empty() && l_message[0] == '*')
+	{
+		// auto-enable new style even for non-prefixed keys
+		l_cbc = true;
+	}
+
+	if(l_cbc && !l_message.empty() && l_message[0] == '*')
+	{
+		// strip asterisk
+		l_message.erase(0, 1);
+	}
+
+	int l_decryptionResult = blowfish_decrypt_auto(l_cbc, l_message, l_newMsg, l_blowKey);
+
+	switch(l_decryptionResult)
 	{
 	case -1:
 		l_newMsg = l_message + "=[FiSH: DECRYPTION FAILED!]=";
@@ -326,7 +346,8 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, cons
 	}
 
 	// get blowfish key...
-	const std::string l_blowKey = l_ini->GetBlowKey(l_target);
+	bool l_cbc;
+	const std::string l_blowKey = l_ini->GetBlowKey(l_target, l_cbc);
 
 	if(l_blowKey.empty())
 		return NULL;
@@ -342,12 +363,12 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, cons
 	}
 	else
 	{
-		blowfish_encrypt(l_message, l_newMsg, l_blowKey);
+		blowfish_encrypt_auto(l_cbc, l_message, l_newMsg, l_blowKey);
 
 		l_newMsg =
 			l_line.substr(0, l_msgPos + 2) +
 			(l_cmd_type == CMD_ACTION ? "\x01""ACTION +OK " : "+OK ") +
-			l_newMsg +
+			std::string(l_cbc ? "*" : "") + l_newMsg +
 			(l_cmd_type == CMD_ACTION ? "\x01\n" : "\n");
 	}
 
@@ -451,7 +472,14 @@ EXPORT_SIG(int) FiSH_GetKey(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL 
 {
 	if(data && *data)
 	{
-		const std::string l_key = GetBlowIni()->GetBlowKey(data);
+		bool l_cbc;
+		std::string l_key = GetBlowIni()->GetBlowKey(data, l_cbc);
+		
+		if(l_cbc)
+		{
+			// :TODO: find out if there's a better way for UI integration and so forth
+			l_key.insert(0, "cbc:");
+		}
 
 		strcpy_s(data, 900, l_key.c_str());
 
@@ -490,7 +518,6 @@ EXPORT_SIG(int) FiSH_decrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, 
 				l_message.erase(0, 5);
 
 			std::string l_decrypted;
-			int l_result;
 			bool l_cbc = HasCBCPrefix(l_key, true);
 
 			if(!l_cbc && !l_message.empty() && l_message[0] == '*')
@@ -499,14 +526,7 @@ EXPORT_SIG(int) FiSH_decrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, 
 				l_message.erase(0, 1);
 			}
 
-			if(!l_cbc)
-			{
-				l_result = blowfish_decrypt(l_message, l_decrypted, l_key);
-			}
-			else
-			{
-				l_result = blowfish_decrypt_cbc(l_message, l_decrypted, l_key);
-			}
+			int l_result = blowfish_decrypt_auto(l_cbc, l_message, l_decrypted, l_key);
 
 			if(l_result == 1)
 			{

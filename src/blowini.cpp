@@ -57,7 +57,7 @@ std::string CBlowIni::FixContactName(const std::string& a_name)
 }
 
 
-std::string CBlowIni::GetBlowKey(const std::string& a_name) const
+std::string CBlowIni::GetBlowKey(const std::string& a_name, bool& ar_cbc) const
 {
 	const std::string l_iniSection = FixContactName(a_name);
 	const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
@@ -89,6 +89,8 @@ std::string CBlowIni::GetBlowKey(const std::string& a_name) const
 		}
 	}
 
+	ar_cbc = (HasCBCPrefix(l_blowKey, true) || GetSectionBool(a_name, L"cbc", false));
+
 	return l_blowKey;
 }
 
@@ -116,9 +118,10 @@ bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_valu
 	const std::string l_iniSection = FixContactName(a_name);
 	const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
 	const std::wstring l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
-	std::string l_keyValue;
-
-	blowfish_encrypt(a_value, l_keyValue, m_iniBlowKey);
+	std::string l_keyActual(a_value), l_keyValue;
+	bool l_cbc = HasCBCPrefix(l_keyActual, true);
+	
+	blowfish_encrypt(l_keyActual, l_keyValue, m_iniBlowKey);
 	l_keyValue.insert(0, "+OK ");
 
 	bool l_success = true;
@@ -140,6 +143,16 @@ bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_valu
 		{
 			::WritePrivateProfileStringW(l_iniSectionW.c_str(), L"date", l_timeBuf, m_iniPath.c_str());
 		}
+	}
+
+	if(l_success && l_cbc)
+	{
+		::WritePrivateProfileStringW(l_iniSectionW.c_str(), L"cbc", L"1", m_iniPath.c_str());
+	}
+	else
+	{
+		// delete cbc entry
+		::WritePrivateProfileStringW(l_iniSectionW.c_str(), L"cbc", NULL, m_iniPath.c_str());
 	}
 
 	return l_success;
