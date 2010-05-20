@@ -108,8 +108,14 @@ on ^*:NOTICE:DH1080_INIT*:?:{
     %FiSH.pub_key = $gettok(%tempkey, 2, 32)
     unset %tempkey
     var %secret = $dll(%FiSH_dll,DH1080_comp, %FiSH.prv_key $2)
-    .notice $nick DH1080_FINISH %FiSH.pub_key
-    FiSH.setkey $nick %secret
+    if ($3 == CBC) {
+      .notice $nick DH1080_FINISH %FiSH.pub_key CBC
+      FiSH.setkey $nick cbc: $+ %secret
+    }
+    else {
+      .notice $nick DH1080_FINISH %FiSH.pub_key
+      FiSH.setkey $nick %secret
+    }
     unset %FiSH.prv_key
     unset %FiSH.pub_key
     unset %secret
@@ -126,7 +132,8 @@ on ^*:NOTICE:DH1080_FINISH*:?:{
   if ($len($2) > 178 && $len($2) < 182) {
     if ($len(%FiSH.prv_key) == 180 || $len(%FiSH.prv_key) == 181) {
       var %secret = $dll(%FiSH_dll,DH1080_comp, %FiSH.prv_key $2)
-      FiSH.setkey $nick %secret
+      if ($3 == CBC) FiSH.setkey $nick cbc: $+ %secret
+      else FiSH.setkey $nick %secret
       unset %FiSH.dh $+ [ $nick ]
       unset %FiSH.prv_key
       unset %FiSH.pub_key
@@ -201,7 +208,7 @@ alias FiSH.DH1080_INIT {
   %FiSH.prv_key = $gettok(%tempkey, 1, 32)
   %FiSH.pub_key = $gettok(%tempkey, 2, 32)
   unset %tempkey
-  .NOTICE %cur_contact DH1080_INIT %FiSH.pub_key
+  .NOTICE %cur_contact DH1080_INIT %FiSH.pub_key CBC
   echo $color(Mode text) -tm $nick *** FiSH: Sent my DH1080 public key to %cur_contact $+ , waiting for reply ...
 }
 
