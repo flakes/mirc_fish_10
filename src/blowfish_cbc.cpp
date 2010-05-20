@@ -2,7 +2,6 @@
 #include <openssl/evp.h>
 #include <openssl/blowfish.h>
 #include <openssl/rand.h>
- #include <openssl/err.h>
 
 /*
 Mircryption compatible Blowfish routines using OpenSSL.
