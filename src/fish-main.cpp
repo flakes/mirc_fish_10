@@ -490,10 +490,24 @@ EXPORT_SIG(int) FiSH_decrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, 
 				l_message.erase(0, 5);
 
 			std::string l_decrypted;
+			int l_result;
 
-			if(blowfish_decrypt(l_message, l_decrypted, l_key) == 1)
+			if(!HasCBCPrefix(l_key, true))
+			{
+				l_result = blowfish_decrypt(l_message, l_decrypted, l_key);
+			}
+			else
+			{
+				l_result = blowfish_decrypt_cbc(l_message, l_decrypted, l_key);
+			}
+
+			if(l_result == 1)
 			{
 				l_decrypted += "&";
+			}
+			else if(l_result < 0)
+			{
+				l_decrypted += "=[FiSH: DECRYPTION FAILED!]=";
 			}
 
 			// use strncpy so strcpy_s doesn't terminate if l_decrypted.size() > 899
@@ -516,11 +530,19 @@ EXPORT_SIG(int) FiSH_encrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, 
 
 		if(l_pos != std::string::npos)
 		{
-			const std::string l_key = l_data.substr(0, l_pos),
+			std::string l_key = l_data.substr(0, l_pos),
 				l_message = l_data.substr(l_pos + 1);
 
 			std::string l_encrypted;
-			blowfish_encrypt(l_message, l_encrypted, l_key);
+
+			if(!HasCBCPrefix(l_key, true))
+			{
+				blowfish_encrypt(l_message, l_encrypted, l_key);
+			}
+			else
+			{
+				blowfish_encrypt_cbc(l_message, l_encrypted, l_key);
+			}
 
 			strncpy_s(data, 900, l_encrypted.c_str(), 899);
 
