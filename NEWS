@@ -1,4 +1,12 @@
 
+== 2010-05-20 ==
+	* Added Mircryption compatible CBC mode!
+		Use "cbc:KEYHERE" as key to activate. Incoming messages encrypted using the "old"
+		ECB mode still display fine.
+	* Added first-ever CBC mode DH1080 key exchange!
+		Two FiSH 10 users doing a DH1080 key exchange will now automatically use the new
+		CBC mode. Key exchanges with old users are completely unimpaired!
+
 == 2010-05-19 ==
 	* Fixed issue #7 (DCC downloads stalling at 99%)
 

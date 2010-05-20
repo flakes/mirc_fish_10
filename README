@@ -4,7 +4,8 @@
 This is an encryption addon for mIRC, it is based on FiSH v1.30 and is compatible to the
 original 'blowcrypt/bloW' script as well as Mircryption and other clients.
 It supports private chat, channel, topic encryption and comes with a secure key-exchange
-system (DH1080).
+system (DH1080). In addition to the regular ECB Blowfish mode, it also supports the more
+secure BCB mode.
 
 Supported mIRC versions: mIRC 7 only!
 	You can download the latest beta from www.mirc.com/beta.html
@@ -13,11 +14,11 @@ Supported mIRC versions: mIRC 7 only!
 
 	Don't shy away, the guide below is just verbose, installing is easy!
 
-	Installing should be pretty straightforward as patching mirc.exe is no longer required.
-	If you have been using FiSH.dll before, it is however strongly recommended that
-	you restore mirc.exe to its unpatched, original state before you install FiSH 10.
+	Setting up FiSH 10 should be pretty straightforward as patching mirc.exe is no longer
+	required. If you have been using FiSH.dll before, it is however strongly recommended
+	that you restore mirc.exe to its unpatched, original state before you install FiSH 10.
 	You can of course apply a "crack" after that, but mIRC is a good product, so if you use
-	it every day, you should just consider getting a legit lifetime license.
+	it every day, I strongly advise you to get a legit lifetime license.
 
 	Alright, now on to the actual installing procedure. If you have not been using FiSH.dll
 	before, or if you are installing mIRC 7 from scratch, you can skip this paragraph.
@@ -34,12 +35,13 @@ Supported mIRC versions: mIRC 7 only!
 		- Shut down mIRC!
 		- Extract fish_10.dll, fish_inject.dll and fish_10.mrc to your mirc.exe folder.
 			Do the same with libeay32.dll and ssleay32.dll if your download contains them.
+		- If necessary, extract blow.ini-EXAMPLE and rename the file to "blow.ini".
 		- You can edit fish_10.mrc if your blow.ini is at a different location than that folder.
 			This is useful for people who installed mIRC into Program Files but keep their settings
 			in the Users/AppData folder.
 		- Start mIRC back up. If your mIRC is automatically connecting on startup, you might
 			have to turn that off, or add a timer. It is extremely important that fish_10.mrc
-			gets loaded before ANY IRC connection is being made.
+			always loads before ANY IRC connection is made.
 		- Install the script: //load -rs $shortfn($nofile($mircexe) $+ fish_10.mrc)
 		- Shut down mIRC, and start it again
 		- Two lines like this should show up (and no error popup):
@@ -53,9 +55,11 @@ Supported mIRC versions: mIRC 7 only!
 	your AV scanner, or a bug in FiSH 10. If you made sure you installed the latest version,
 	you can check here for existing problem reports, or create a new one:
 	http://github.com/flakes/mirc_fish_10/issues
+	(Hint for Vista and above: Hit Ctrl + C to copy the message box contents into the clipboard,
+	then paste into your bug report using Ctrl + V)
 
 	If you downloaded the ZIP file with the OpenSSL DLL files included, you might have to
-	install this:
+	install this too:
 	www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2
 
 	When mIRC updates, FiSH 10 should just continue to work in 99% of the cases, unlike
@@ -73,14 +77,27 @@ Supported mIRC versions: mIRC 7 only!
 	time stamps. I do consider adding support for psyBNC's network prefix thing at some
 	point though, since there seems to be a bunch of people actually using that.
 
+== CBC MODE ==
+
+	FiSH 10 implements Mircryption's CBC mode, as defined here:
+	www.donationcoder.com/Software/Mouser/mircryption/extra_cbcinfo.php
+
+	FiSH 10 is the first add-on to deploy a fully backwards compatible DH1080 key exchange
+	that AUTOMATICALLY enables the more secure CBC encryption mode, if both parties use
+	FiSH 10. You won't notice a difference, but your messages will be encrypted	more securely
+	than ever. Key exchanges with users of older versions and other scripts are completely
+	unimpaired.
+
 == ABOUT ==
 
 	fish_10.mrc is a 1:1 copy of FiSH.mrc, with some modifications to account for proper
 	Windows Vista and 7 support and to facilitate DLL loading.
+	It has undergone and will undergo more changes to improve CBC mode integration
+	and awareness.
 
 	I would like to thank RXD for the work he has put into the FiSH addon over the last
 	few years. However, he has been slow with updates and unwilling to open source a
-	simple addon like this, so someone had to take over the mIRC addon.
+	simple mIRC addon like this, so someone had to take over!
 
 	FiSH 10 is using "CPatch" by armagedescu, thanks. It contains some code from
 	http://dirtirc.sourceforge.net/ (blowfish core) and some utility methods from
@@ -98,17 +115,17 @@ Supported mIRC versions: mIRC 7 only!
 	(compiled from fish-inject.cpp, patcher.cpp and socket.cpp) does the magic of intercepting
 	the system calls and managing buffers. For complete lines, it calls into fish_10.dll which
 	does the actual IRC parsing and encryption things.
-	Key-exchange, getting the "outside" IP etc. is still being handled by fish_10.mrc, like it
+	Key-exchange, getting the "outside" IP etc. is still handled by fish_10.mrc, like it
 	has always been.
 
 == SECURITY NOTE ==
 
-	You are advised to use TrueCrypt or a similar solution to protect the blow.ini file. While all the
-	keys are stored encrypted, the encryption is not particularly strong and could be broken without
-	a lot of effort!
+	You are advised to use TrueCrypt or a similar solution to protect your blow.ini file. While all
+	the keys are stored encrypted, the encryption is not particularly strong and could be broken
+	without a lot of effort!
 
 	Furthermore, DON'T exchange keys via plaintext (IRC/email/Facebook/whatever). This defeats the
-	entire purpose of encryption. Instead, use DH1080 key exchange to establish a secure channel
+	entire purpose of encryption. Instead, use DH1080 key exchange to establish a secure connection
 	for (channel) key exchange.
 
 	And, obviously, DO NOT store any log files on unencrypted disks.
@@ -117,7 +134,6 @@ Supported mIRC versions: mIRC 7 only!
 
 	- A feature that tries to avoid sending truncated fish messages and splits the message into
 		several lines automatically (with an option to turn it off).
-	- CBC encryption mode for improved security. Must be compatible to Mircryption.
 	- Make FiSH 10 work in good old mIRC 6.
 	- Per-network nick and channel key storage.
 		Challenges: Backwards compatibility
