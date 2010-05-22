@@ -7,10 +7,11 @@ class CBlowIni
 protected:
 	std::wstring m_iniPath;
 	std::string m_iniBlowKey;
+	bool m_noLegacy;
 
 public:
 	CBlowIni(std::wstring a_iniPath = L"");
-	void SetIniPath(std::wstring a_iniPath) { m_iniPath = a_iniPath; }
+	void SetIniPath(std::wstring a_iniPath);
 
 	/* general purpose INI tools */
 	std::wstring GetStringW(const wchar_t* a_key, const wchar_t* a_default = NULL) const;

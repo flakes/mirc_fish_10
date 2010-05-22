@@ -6,9 +6,20 @@
 
 CBlowIni::CBlowIni(std::wstring a_iniPath)
 {
+	SetIniPath(a_iniPath);
+
 	m_iniBlowKey = "blowinikey\0ADDITIONAL SPACE FOR CUSTOM BLOW.INI PASSWORD";
 	// well, it's open source now, but hex editing the DLL might still
 	// be easier in some cases.
+}
+
+
+void CBlowIni::SetIniPath(std::wstring a_iniPath)
+{
+	m_iniPath = a_iniPath;
+	// allow no_legay setting to be read in GetBool call... *hack*:
+	m_noLegacy = false;
+	m_noLegacy = GetBool(L"no_legacy", false);
 }
 
 
@@ -60,23 +71,31 @@ std::string CBlowIni::FixContactName(const std::string& a_name)
 std::string CBlowIni::GetBlowKey(const std::string& a_name, bool& ar_cbc) const
 {
 	const std::string l_iniSection = FixContactName(a_name);
-	const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
-	char l_buf[4096] = {0};
-
-	// use ANSI to maintain backwards compatibility to old blow.ini / fish.dlls.
-	::GetPrivateProfileStringA(l_iniSection.c_str(), "key", "", l_buf, 4095, l_ansiFileName.c_str());
-
 	std::string l_blowKey;
 
-	if(*l_buf == 0)
+	if(m_noLegacy)
 	{
-		// fallback for INI filenames with non-ANSI characters:
-		const std::wstring l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
-		l_blowKey = UnicodeToCp(CP_ACP, GetStringW(l_iniSectionW.c_str()));
+		const std::wstring l_iniSectionW = UnicodeFromCp(CP_UTF8, l_iniSection);
+		l_blowKey = UnicodeToCp(CP_UTF8, GetStringW(l_iniSectionW.c_str()));
 	}
 	else
 	{
-		l_blowKey = l_buf;
+		const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
+		char l_buf[4096] = {0};
+
+		// use ANSI to maintain backwards compatibility to old blow.ini / fish.dlls.
+		::GetPrivateProfileStringA(l_iniSection.c_str(), "key", "", l_buf, 4095, l_ansiFileName.c_str());
+
+		if(*l_buf == 0)
+		{
+			// fallback for INI filenames with non-ANSI characters:
+			const std::wstring l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
+			l_blowKey = UnicodeToCp(CP_ACP, GetStringW(l_iniSectionW.c_str()));
+		}
+		else
+		{
+			l_blowKey = l_buf;
+		}
 	}
 
 	if(l_blowKey.find("+OK ") == 0)
@@ -98,15 +117,25 @@ std::string CBlowIni::GetBlowKey(const std::string& a_name, bool& ar_cbc) const
 bool CBlowIni::DeleteBlowKey(const std::string& a_name) const
 {
 	const std::string l_iniSection = FixContactName(a_name);
-	const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
 	bool l_success = true;
 
-	if(::WritePrivateProfileStringA(l_iniSection.c_str(), NULL, NULL, l_ansiFileName.c_str()) == 0)
+	if(m_noLegacy)
 	{
-		// compatibility fallback, read above...
-		const std::wstring l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
+		const std::wstring l_iniSectionW = UnicodeFromCp(CP_UTF8, l_iniSection);
 
 		l_success = (::WritePrivateProfileStringW(l_iniSectionW.c_str(), NULL, NULL, m_iniPath.c_str()) != 0);
+	}
+	else
+	{
+		const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
+
+		if(::WritePrivateProfileStringA(l_iniSection.c_str(), NULL, NULL, l_ansiFileName.c_str()) == 0)
+		{
+			// compatibility fallback, read above...
+			const std::wstring l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
+
+			l_success = (::WritePrivateProfileStringW(l_iniSectionW.c_str(), NULL, NULL, m_iniPath.c_str()) != 0);
+		}
 	}
 
 	return l_success;
@@ -116,8 +145,7 @@ bool CBlowIni::DeleteBlowKey(const std::string& a_name) const
 bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_value) const
 {
 	const std::string l_iniSection = FixContactName(a_name);
-	const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
-	const std::wstring l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
+	std::wstring l_iniSectionW;
 	std::string l_keyActual(a_value), l_keyValue;
 	bool l_cbc = HasCBCPrefix(l_keyActual, true);
 	
@@ -126,11 +154,23 @@ bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_valu
 
 	bool l_success = true;
 
-	if(::WritePrivateProfileStringA(l_iniSection.c_str(), "key", l_keyValue.c_str(), l_ansiFileName.c_str()) == 0)
+	if(m_noLegacy)
 	{
-		const std::wstring l_keyValueW = UnicodeFromCp(CP_ACP, l_keyValue);
-
+		l_iniSectionW = UnicodeFromCp(CP_UTF8, l_iniSection);
+		const std::wstring l_keyValueW = UnicodeFromCp(CP_UTF8, l_keyValue);
 		l_success = (::WritePrivateProfileStringW(l_iniSectionW.c_str(), L"key", l_keyValueW.c_str(), m_iniPath.c_str()) != 0);
+	}
+	else
+	{
+		const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
+		l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
+
+		if(::WritePrivateProfileStringA(l_iniSection.c_str(), "key", l_keyValue.c_str(), l_ansiFileName.c_str()) == 0)
+		{
+			const std::wstring l_keyValueW = UnicodeFromCp(CP_ACP, l_keyValue);
+
+			l_success = (::WritePrivateProfileStringW(l_iniSectionW.c_str(), L"key", l_keyValueW.c_str(), m_iniPath.c_str()) != 0);
+		}
 	}
 
 	if(l_success)
@@ -163,19 +203,14 @@ bool CBlowIni::GetSectionBool(const std::string& a_name, const wchar_t* a_key, b
 {
 	const std::string l_iniSection = FixContactName(a_name);
 	const std::string l_iniKey = UnicodeToCp(CP_ACP, a_key);
-	const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
-	char l_buf[10] = {0};
 
-	::GetPrivateProfileStringA(l_iniSection.c_str(), l_iniKey.c_str(),
-		(a_default ? "1" : "0"), l_buf, 9, l_ansiFileName.c_str());
-
-	if(*l_buf == 0)
+	if(m_noLegacy)
 	{
 		wchar_t l_bufW[10] = {0};
 
-		const std::wstring l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
-		const std::wstring l_iniKeyW = UnicodeFromCp(CP_ACP, l_iniKey);
-		
+		const std::wstring l_iniSectionW = UnicodeFromCp(CP_UTF8, l_iniSection);
+		const std::wstring l_iniKeyW = UnicodeFromCp(CP_UTF8, l_iniKey);
+
 		::GetPrivateProfileStringW(l_iniSectionW.c_str(), l_iniKeyW.c_str(),
 			(a_default ? L"1" : L"0"), l_bufW, 9, m_iniPath.c_str());
 
@@ -183,6 +218,27 @@ bool CBlowIni::GetSectionBool(const std::string& a_name, const wchar_t* a_key, b
 	}
 	else
 	{
-		return (l_buf[0] != L'0' && l_buf[0] != L'n' && l_buf[0] != L'N');
+		const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
+		char l_buf[10] = {0};
+
+		::GetPrivateProfileStringA(l_iniSection.c_str(), l_iniKey.c_str(),
+			(a_default ? "1" : "0"), l_buf, 9, l_ansiFileName.c_str());
+
+		if(*l_buf == 0)
+		{
+			wchar_t l_bufW[10] = {0};
+
+			const std::wstring l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
+			const std::wstring l_iniKeyW = UnicodeFromCp(CP_ACP, l_iniKey);
+
+			::GetPrivateProfileStringW(l_iniSectionW.c_str(), l_iniKeyW.c_str(),
+				(a_default ? L"1" : L"0"), l_bufW, 9, m_iniPath.c_str());
+
+			return (!*l_bufW ? a_default : (l_bufW[0] != L'0' && l_bufW[0] != L'n' && l_bufW[0] != L'N'));
+		}
+		else
+		{
+			return (l_buf[0] != L'0' && l_buf[0] != L'n' && l_buf[0] != L'N');
+		}
 	}
 }
