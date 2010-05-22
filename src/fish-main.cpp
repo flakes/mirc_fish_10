@@ -413,7 +413,7 @@ EXPORT_SIG(__declspec(dllexport) void) _FreeString(const char* a_str)
 
 
 /* called from fish_inject.dll */
-EXPORT_SIG(__declspec(dllexport) void) _SocketClosed(HANDLE a_socket)
+EXPORT_SIG(__declspec(dllexport) void) _OnSocketClosed(HANDLE a_socket)
 {
 	::EnterCriticalSection(&s_socketMapLock);
 	s_socketMap.erase(a_socket);
