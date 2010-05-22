@@ -70,6 +70,7 @@ namespace FiSH_DLL
 		__declspec(dllimport) char* __stdcall _OnIncomingIRCLine(SOCKET a_socket, const char* a_line, size_t a_len);
 		__declspec(dllimport) char* __stdcall _OnOutgoingIRCLine(SOCKET a_socket, const char* a_line, size_t a_len);
 		__declspec(dllimport) void __stdcall _FreeString(const char* a_str);
+		__declspec(dllimport) void __stdcall _SocketClosed(SOCKET a_socket);
 	}
 };
 

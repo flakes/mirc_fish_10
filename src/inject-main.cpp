@@ -202,6 +202,8 @@ int WSAAPI my_closesocket(SOCKET s)
 	s_sockets.erase(s);
 	::LeaveCriticalSection(&s_socketsLock);
 
+	FiSH_DLL::_SocketClosed(s);
+
 	return s_lpfn_closesocket(s);
 }
 

@@ -1,8 +1,7 @@
 #include "fish-internal.h"
-#include <memory>
+
 
 static CRITICAL_SECTION s_iniLock;
-
 
 static std::shared_ptr<CBlowIni> GetBlowIni()
 {
@@ -20,11 +19,38 @@ static std::shared_ptr<CBlowIni> GetBlowIni()
 }
 
 
+std::map<HANDLE, std::string> s_socketMap;
+static CRITICAL_SECTION s_socketMapLock;
+
+
 /* for use from fish_inject.dll */
 EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 {
+	if(*a_line != ':')
+		return NULL;
+
+	if(strstr(a_line, " ") == strstr(a_line, " 005 "))
+	{
+		std::string l_line(a_line, a_len);
+		std::string::size_type l_pos = l_line.find(" NETWORK=");
+
+		if(l_pos != std::string::npos)
+		{
+			l_pos += 9; // strlen(" NETWORK=")
+			std::string::size_type l_endPos = l_line.find(" ", l_pos);
+			if(l_endPos == std::string::npos) l_endPos = l_line.size();
+
+			::EnterCriticalSection(&s_socketMapLock);
+			// allow overwriting network names for dis/re-connecting BNCs and such:
+			s_socketMap[a_socket] = l_line.substr(l_pos, l_endPos - l_pos);
+			::LeaveCriticalSection(&s_socketMapLock);
+
+			return NULL;
+		}
+	}
+
 	// quick exit to save some CPU cycles:
-	if(*a_line != ':' || strstr(a_line, "+OK ") == 0 && strstr(a_line, "mcps ") == 0)
+	if(!strstr(a_line, "+OK ") && !strstr(a_line, "mcps "))
 		return NULL;
 
 	auto l_ini = GetBlowIni();
@@ -386,6 +412,15 @@ EXPORT_SIG(__declspec(dllexport) void) _FreeString(const char* a_str)
 }
 
 
+/* called from fish_inject.dll */
+EXPORT_SIG(__declspec(dllexport) void) _SocketClosed(HANDLE a_socket)
+{
+	::EnterCriticalSection(&s_socketMapLock);
+	s_socketMap.erase(a_socket);
+	::LeaveCriticalSection(&s_socketMapLock);
+}
+
+
 /* for use from MSL */
 EXPORT_SIG(int) FiSH_SetIniPath(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
@@ -645,9 +680,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	{
 	case DLL_PROCESS_ATTACH:
 		::InitializeCriticalSection(&s_iniLock);
+		::InitializeCriticalSection(&s_socketMapLock);
 		break;
 	case DLL_PROCESS_DETACH:
 		::DeleteCriticalSection(&s_iniLock);
+		::DeleteCriticalSection(&s_socketMapLock);
 		break;
 	}
 
