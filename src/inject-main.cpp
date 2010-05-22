@@ -263,6 +263,17 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 
 		::LeaveCriticalSection(&s_socketsLock);
 
+		// in case mIRC ever gets DCC-over-SSL support,
+		// we will be prepared:
+		if(!l_sock->HasExchangedData())
+		{
+			::EnterCriticalSection(&s_socketsLock);
+			s_sockets.erase(s);
+			::LeaveCriticalSection(&s_socketsLock);
+
+			return s_lpfn_SSL_read(ssl, buf, num);
+		}
+
 		while(!l_sock->HasReceivedLine())
 		{
 			char l_localBuf[1024];
