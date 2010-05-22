@@ -202,43 +202,31 @@ bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_valu
 bool CBlowIni::GetSectionBool(const std::string& a_name, const wchar_t* a_key, bool a_default) const
 {
 	const std::string l_iniSection = FixContactName(a_name);
-	const std::string l_iniKey = UnicodeToCp(CP_ACP, a_key);
+	int l_result = -1;
 
-	if(m_noLegacy)
-	{
-		wchar_t l_bufW[10] = {0};
-
-		const std::wstring l_iniSectionW = UnicodeFromCp(CP_UTF8, l_iniSection);
-		const std::wstring l_iniKeyW = UnicodeFromCp(CP_UTF8, l_iniKey);
-
-		::GetPrivateProfileStringW(l_iniSectionW.c_str(), l_iniKeyW.c_str(),
-			(a_default ? L"1" : L"0"), l_bufW, 9, m_iniPath.c_str());
-
-		return (!*l_bufW ? a_default : (l_bufW[0] != L'0' && l_bufW[0] != L'n' && l_bufW[0] != L'N'));
-	}
-	else
+	if(!m_noLegacy)
 	{
 		const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
+		const std::string l_iniKey = UnicodeToCp(CP_ACP, a_key);
 		char l_buf[10] = {0};
 
 		::GetPrivateProfileStringA(l_iniSection.c_str(), l_iniKey.c_str(),
 			(a_default ? "1" : "0"), l_buf, 9, l_ansiFileName.c_str());
 
-		if(*l_buf == 0)
-		{
-			wchar_t l_bufW[10] = {0};
-
-			const std::wstring l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
-			const std::wstring l_iniKeyW = UnicodeFromCp(CP_ACP, l_iniKey);
-
-			::GetPrivateProfileStringW(l_iniSectionW.c_str(), l_iniKeyW.c_str(),
-				(a_default ? L"1" : L"0"), l_bufW, 9, m_iniPath.c_str());
-
-			return (!*l_bufW ? a_default : (l_bufW[0] != L'0' && l_bufW[0] != L'n' && l_bufW[0] != L'N'));
-		}
-		else
-		{
-			return (l_buf[0] != L'0' && l_buf[0] != L'n' && l_buf[0] != L'N');
-		}
+		l_result = (l_buf[0] != L'0' && l_buf[0] != L'n' && l_buf[0] != L'N' ? 1 : 0);
 	}
+
+
+	if(m_noLegacy || l_result == -1)
+	{
+		const std::wstring l_iniSectionW = UnicodeFromCp((m_noLegacy ? CP_UTF8 : CP_ACP), l_iniSection);
+		wchar_t l_bufW[10] = {0};
+
+		::GetPrivateProfileStringW(l_iniSectionW.c_str(), a_key,
+			(a_default ? L"1" : L"0"), l_bufW, 9, m_iniPath.c_str());
+
+		return (!*l_bufW ? a_default : (l_bufW[0] != L'0' && l_bufW[0] != L'n' && l_bufW[0] != L'N'));
+	}
+
+	return (l_result != 0);
 }
