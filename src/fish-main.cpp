@@ -15,7 +15,7 @@ static std::shared_ptr<CBlowIni> GetBlowIni()
 		if(!ls_instance) ls_instance = std::shared_ptr<CBlowIni>(new CBlowIni());
 		::LeaveCriticalSection(&s_iniLock);
 	}
-	
+
 	return ls_instance;
 }
 
@@ -474,7 +474,7 @@ EXPORT_SIG(int) FiSH_GetKey(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL 
 	{
 		bool l_cbc;
 		std::string l_key = GetBlowIni()->GetBlowKey(data, l_cbc);
-		
+
 		if(l_cbc)
 		{
 			// :TODO: find out if there's a better way for UI integration and so forth

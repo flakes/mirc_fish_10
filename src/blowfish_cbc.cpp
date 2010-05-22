@@ -74,7 +74,7 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const st
 
 	char *l_bufIn = new char[l_inBufSize];
 	memset(l_bufIn, 0, l_inBufSize); // important for padding
-	
+
 	ar_out.clear();
 
 	// generate IV:

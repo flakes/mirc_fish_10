@@ -97,7 +97,7 @@ static bool _DH1080_Init(DH** a_dh)
 
 			std::string l_primeStr = DH1080_PRIME;
 			DH1080_Base64_Decode(l_primeStr);
-			
+
 			if(!l_primeStr.empty() && BN_bin2bn((unsigned char*)l_primeStr.data(), l_primeStr.size(), l_dh->p))
 			{
 				return true;

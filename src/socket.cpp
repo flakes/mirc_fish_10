@@ -7,7 +7,7 @@ CSocketInfo::CSocketInfo(SOCKET s)
 	m_ssl = m_sslShakingHands = false;
 	m_dataExchanged = false;
 }
-	
+
 /**
 	* @return Modified data placed in m_sendBuffer yes/no
 	**/

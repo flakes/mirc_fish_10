@@ -68,7 +68,7 @@ int WSAAPI my_connect(SOCKET s, const struct sockaddr FAR * name, int namelen)
 		s_sockets[s] = std::shared_ptr<CSocketInfo>(new CSocketInfo(s));
 		::LeaveCriticalSection(&s_socketsLock);
 	}
-	
+
 	return s_lpfn_connect(s, name, namelen);
 }
 
@@ -284,7 +284,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 			{
 				return l_sslRet;
 			}
-		
+
 			l_sock->OnAfterReceive(l_localBuf, l_sslRet);
 		}
 
@@ -311,7 +311,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 extern "C" void __stdcall LoadDll(LOADINFO* info)
 {
 	info->mKeep = FALSE;
-	
+
 	HINSTANCE hInstSSLeay = ::GetModuleHandleW(L"ssleay32.dll");
 
 	if(LOWORD(info->mVersion) < 7)

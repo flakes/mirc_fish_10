@@ -148,7 +148,7 @@ bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_valu
 	std::wstring l_iniSectionW;
 	std::string l_keyActual(a_value), l_keyValue;
 	bool l_cbc = HasCBCPrefix(l_keyActual, true);
-	
+
 	blowfish_encrypt(l_keyActual, l_keyValue, m_iniBlowKey);
 	l_keyValue.insert(0, "+OK ");
 
@@ -215,7 +215,6 @@ bool CBlowIni::GetSectionBool(const std::string& a_name, const wchar_t* a_key, b
 
 		l_result = (l_buf[0] != L'0' && l_buf[0] != L'n' && l_buf[0] != L'N' ? 1 : 0);
 	}
-
 
 	if(m_noLegacy || l_result == -1)
 	{
