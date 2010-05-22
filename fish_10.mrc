@@ -5,11 +5,14 @@
 
 
 on *:START: {
-; you can change the blow.ini path here if you like:
+; ********** you can change the blow.ini path here if you like: **********
 
   set %blow_ini $shortfn($nofile($mircexe) $+ blow.ini)
 
-; don't edit anything below this line.
+; for example to use %appdata%\mIRC:
+;	set %blow_ini $shortfn($mircdir $+ blow.ini)
+
+; ***************** don't edit anything below this line. *****************
 
   set %FiSH_dll $shortfn($nofile($mircexe) $+ fish_10.dll)
 
@@ -151,12 +154,10 @@ alias FiSH.setkey {
 
   $dll(%FiSH_dll,FiSH_WriteKey,%cur_contact $2-)
 
-  if ( $window(%cur_contact) == $NULL) {
-    echo $color(Mode text) -at *** FiSH: Key for %cur_contact set to *censored*
-  }
-  else {
-    echo $color(Mode text) -tm %cur_contact *** FiSH: Key for %cur_contact set to *censored*
-  }
+  var %info = *** FiSH: Key for %cur_contact set to *censored* $iif($gettok($2-,1,58) == CBC, (CBC Mode), )
+
+  if ($window(%cur_contact) == $null) echo $color(Mode text) -at %info
+  else echo $color(Mode text) -tm %cur_contact %info
 }
 
 
