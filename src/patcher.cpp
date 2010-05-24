@@ -82,13 +82,11 @@ BOOL CPatch::HookFunction(long FuncToHook, long  MyHook, long* NewCallAddress, b
 	{
 		int rewrite_len = 0;
 		m_old_jmp = 0;
-		const int long_jmp_len = 5;
-		int new_instruction_set_len = 0;
-
 
 		if(okToRewriteTragetInstructionSet(FuncToHook, rewrite_len))
 		{
-			new_instruction_set_len = rewrite_len;
+			const int long_jmp_len = 5;
+			int new_instruction_set_len = rewrite_len;
 			if(m_old_jmp == 0) new_instruction_set_len += long_jmp_len;
 			m_PatchInstructionSet = new char[new_instruction_set_len];
 			*NewCallAddress = reinterpret_cast<long>(m_PatchInstructionSet);
@@ -141,11 +139,11 @@ CPatch::~CPatch()
 	}
 }
 
-bool CPatch::patched()
+bool CPatch::patched() const
 {
 	return m_patched;
 }
-bool CPatch::ok(){return m_valid;}
+bool CPatch::ok() const {return m_valid;}
 bool CPatch::ok(bool _valid)
 {
 	m_valid = _valid;

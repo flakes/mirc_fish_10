@@ -72,8 +72,8 @@ public:
 	}
 	~CPatch();
 
-	bool patched();
-	bool ok();
+	bool patched() const;
+	bool ok() const;
 	bool ok(bool _valid);
 	void remove_patch(bool forever = false);
 	void set_patch();
