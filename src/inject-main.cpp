@@ -392,7 +392,7 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 			delete s_patchSSLWrite; s_patchSSLWrite = NULL;
 			delete s_patchSSLRead; s_patchSSLRead = NULL;
 
-			std::wstring l_errorInfo = L"FiSH 10 failed to load: Patching functions in memory was unsuccesful.";
+			std::wstring l_errorInfo = L"FiSH 10 failed to load: Patching functions in memory was unsuccessful.";
 			l_errorInfo += L"\r\nDebug info: ";
 			l_errorInfo += wszPatchedInfo;
 
