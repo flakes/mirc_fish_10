@@ -461,15 +461,11 @@ EXPORT_SIG(int) DH1080_comp(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL 
 {
 	if(data && *data)
 	{
-		const std::string l_data(data);
-		std::string::size_type l_pos = l_data.find(' ');
+		const string_vector l_data = SplitString(data, " ");
 
-		if(l_pos != std::string::npos)
+		if(l_data.size() >= 2)
 		{
-			const std::string l_priv = l_data.substr(0, l_pos),
-				l_pub = l_data.substr(l_pos + 1);
-
-			const std::string l_shared = DH1080_Compute(l_priv, l_pub);
+			const std::string l_shared = DH1080_Compute(l_data[0], l_data[1]);
 
 			strcpy_s(data, 900, l_shared.c_str());
 
@@ -542,12 +538,11 @@ EXPORT_SIG(int) FiSH_decrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, 
 {
 	if(data && *data)
 	{
-		const std::string l_data(data);
-		std::string::size_type l_pos = l_data.find(' ');
+		const string_vector l_data = SplitString(data, " ", 2);
 
-		if(l_pos != std::string::npos)
+		if(l_data.size() >= 2)
 		{
-			std::string l_key = l_data.substr(0, l_pos), l_message = l_data.substr(l_pos + 1);
+			std::string l_key = l_data[0], l_message = l_data[1];
 
 			if(l_message.find("+OK ") == 0)
 				l_message.erase(0, 4);
@@ -589,14 +584,11 @@ EXPORT_SIG(int) FiSH_encrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, 
 {
 	if(data && *data)
 	{
-		const std::string l_data(data);
-		std::string::size_type l_pos = l_data.find(' ');
+		const string_vector l_data = SplitString(data, " ", 2);
 
-		if(l_pos != std::string::npos)
+		if(l_data.size() >= 2)
 		{
-			std::string l_key = l_data.substr(0, l_pos),
-				l_message = l_data.substr(l_pos + 1);
-
+			std::string l_key = l_data[0], l_message = l_data[1];
 			std::string l_encrypted;
 
 			if(!HasCBCPrefix(l_key, true))
