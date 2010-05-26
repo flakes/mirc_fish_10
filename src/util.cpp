@@ -232,3 +232,28 @@ bool HasCBCPrefix(std::string& a_key, bool a_strip)
 
 	return (l_prefixLen > 0);
 }
+
+
+const string_vector SplitString(const std::string& a_in, const char *a_delimiter, size_t a_limit)
+{
+	string_vector l_result;
+	std::string::size_type l_prevPos = 0, l_pos = a_in.find(a_delimiter);
+	size_t l_delimLen = strlen(a_delimiter);
+
+	while(l_pos != std::string::npos)
+	{
+		if(l_delimLen == 1) { l_pos = a_in.find_first_not_of(a_delimiter, l_pos); l_pos--; }
+		l_result.push_back(a_in.substr(l_prevPos, l_pos - l_prevPos));
+		l_prevPos = l_pos + l_delimLen;
+		if(l_result.size() == a_limit) break;
+		l_pos = a_in.find(a_delimiter, l_prevPos);
+	}
+
+	if(l_prevPos < a_in.size())
+	{
+		l_result.push_back(a_in.substr(l_prevPos));
+	}
+
+	return l_result;
+}
+
