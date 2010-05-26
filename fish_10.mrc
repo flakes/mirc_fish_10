@@ -10,7 +10,7 @@ on *:START: {
   set %blow_ini $shortfn($nofile($mircexe) $+ blow.ini)
 
 ; for example to use %appdata%\mIRC:
-;	set %blow_ini $shortfn($mircdir $+ blow.ini)
+;  set %blow_ini $shortfn($mircdir $+ blow.ini)
 
 ; ***************** don't edit anything below this line. *****************
 
@@ -147,18 +147,21 @@ on ^*:NOTICE:DH1080_FINISH*:?:{
 }
 
 
-alias FiSH.setkey {
-  if ($1 == /query) var %cur_contact = $active
-  else var %cur_contact = $1
-  if ($2- == $null) return
+alias -l FiSH.WriteKey {
+  if ($2 == /query) var %cur_contact = $active
+  else var %cur_contact = $2
+  if ($3- == $null) return
 
-  $dll(%FiSH_dll,FiSH_WriteKey,%cur_contact $2-)
+  $dll(%FiSH_dll,FiSH_WriteKey10,$1 %cur_contact $3-)
 
   var %info = *** FiSH: Key for %cur_contact set to *censored* $iif($gettok($2-,1,58) == CBC, (CBC Mode), )
 
   if ($window(%cur_contact) == $null) echo $color(Mode text) -at %info
   else echo $color(Mode text) -tm %cur_contact %info
 }
+
+alias FiSH.setkey { FiSH.WriteKey decode_utf8 $1 $2- }
+alias FiSH.setkey_utf8 { FiSH.WriteKey raw_bytes $1 $2- }
 
 
 alias FiSH.usechankey {
@@ -229,6 +232,7 @@ menu channel {
   FiSH
   .Show key :FiSH.showkey $chan
   .Set new key :FiSH.setkey $chan $?
+  .Set new key (UTF-8) :FiSH.setkey_utf8 $chan $?
   .Remove key :FiSH.removekey $chan
 }
 
@@ -239,6 +243,7 @@ menu query {
   .-
   .Show key :FiSH.showkey $1
   .Set new key :FiSH.setkey $1 $?
+  .Set new key (UTF-8) :FiSH.setkey_utf8 $1 $?
   .Remove key :FiSH.removekey $1
 }
 
@@ -249,6 +254,7 @@ menu nicklist {
   .-
   .Show key :FiSH.showkey $1
   .Set new key :FiSH.setkey $1 $?
+  .Set new key (UTF-8) :FiSH.setkey_utf8 $1 $?
   .Remove key :FiSH.removekey $1
   .Use same key as $chan :FiSH.usechankey $1 $chan
 }

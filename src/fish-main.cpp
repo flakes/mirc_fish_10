@@ -481,19 +481,21 @@ EXPORT_SIG(int) DH1080_comp(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL 
 }
 
 
-EXPORT_SIG(int) FiSH_WriteKey(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+EXPORT_SIG(int) FiSH_WriteKey10(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
 	if(data && *data)
 	{
-		const std::string l_data(data);
-		std::string::size_type l_pos = l_data.find(' ');
+		string_vector l_data = SplitString(data, " ", 3);
 
-		if(l_pos != std::string::npos)
+		if(l_data.size() == 3)
 		{
-			const std::string l_name = l_data.substr(0, l_pos),
-				l_key = l_data.substr(l_pos + 1);
+			if(_stricmp(l_data[0].c_str(), "decode_utf8") == 0)
+			{
+				// old FiSH keys have always been ANSI encoded.
+				l_data[2] = UnicodeToCp(CP_ACP, UnicodeFromCp(CP_UTF8, l_data[2]));
+			}
 
-			GetBlowIni()->WriteBlowKey(l_name, l_key);
+			GetBlowIni()->WriteBlowKey(l_data[1], l_data[2]);
 
 			return 1;
 		}
