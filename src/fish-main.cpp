@@ -102,6 +102,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 	if(l_cmd.empty() || l_message.empty())
 		return NULL;
 
+	// check if +OK is in the message part of the line:
 	if(l_message.find("+OK ") == std::string::npos && l_message.find("mcps ") == std::string::npos)
 		return NULL;
 
@@ -210,6 +211,8 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 		l_message.erase(0, 4);
 	else if(l_message.find("mcps ") == 0)
 		l_message.erase(0, 5);
+	else
+		return NULL; // something must have gone awry.
 
 	// account for stuff like trailing time stamps from BNCs:
 	if((l_tmpPos = l_message.find(' ')) != std::string::npos)
