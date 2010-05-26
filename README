@@ -70,7 +70,7 @@ Supported mIRC versions: mIRC 7 only!
 	Please don't message me on IRC.
 
 	If you are an IRC enthusiast like I am, you should also check out ZNC, the best
-	bouncer	software available: http://en.znc.in/
+	bouncer software available: http://en.znc.in/
 
 	FiSH 10 does not contain any special code for decrypting psyBNC or sBNC logs.
 	Why should it? ZNC's buffers play back just fine, including appended (not prepended)
@@ -129,6 +129,13 @@ Supported mIRC versions: mIRC 7 only!
 	for (channel) key exchange.
 
 	And, obviously, DO NOT store any log files on unencrypted disks.
+
+== KNOWN ISSUES ==
+
+	FiSH 10 is incompatible to the following applications. Please whitelist mirc.exe in these:
+		- "AdMuncher"
+
+	This is because FiSH 10 integrates itself into mIRC similarly to these apps.
 
 == THE FUTURE ==
 
