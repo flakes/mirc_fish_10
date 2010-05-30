@@ -97,6 +97,7 @@ on *:NICK:{
   var %ky_tmp = $readini %blow_ini $nick key
   if ($len(%ky_tmp) > 4) {
     writeini -n %blow_ini $newnick key %ky_tmp
+    writeini -n %blow_ini $newnick dh1080_cbc $readini(%blow_ini,$nick,dh1080_cbc)
   }
   unset %ky_tmp
 }
@@ -154,7 +155,7 @@ alias -l FiSH.WriteKey {
 
   $dll(%FiSH_dll,FiSH_WriteKey10,$1 %cur_contact $3-)
 
-  var %info = *** FiSH: Key for %cur_contact set to *censored* $iif($gettok($2-,1,58) == CBC, (CBC Mode), )
+  var %info = *** FiSH: Key for %cur_contact set to *censored* $iif($gettok($3-,1,58) == cbc, (CBC Mode), )
 
   if ($window(%cur_contact) == $null) echo $color(Mode text) -at %info
   else echo $color(Mode text) -tm %cur_contact %info
@@ -212,7 +213,7 @@ alias FiSH.DH1080_INIT {
   %FiSH.prv_key = $gettok(%tempkey, 1, 32)
   %FiSH.pub_key = $gettok(%tempkey, 2, 32)
   unset %tempkey
-  .NOTICE %cur_contact DH1080_INIT %FiSH.pub_key CBC
+  .NOTICE %cur_contact DH1080_INIT %FiSH.pub_key $iif($readini(%blow_ini,%cur_contact,dh1080_cbc) == 0,, CBC)
   echo $color(Mode text) -tm $nick *** FiSH: Sent my DH1080 public key to %cur_contact $+ , waiting for reply ...
 }
 
@@ -336,4 +337,7 @@ menu query {
   ...Only for $1 $iif($readini(%blow_ini,$1,mark_encrypted) == 0, [Off], [On])
   ....Enable :writeini -n %blow_ini $1 mark_encrypted 1
   ....Disable :writeini -n %blow_ini $1 mark_encrypted 0
+  ..CBC key exchange $iif($readini(%blow_ini,$1,dh1080_cbc) == 0, [Off], [On])
+  ...Enable :writeini -n %blow_ini $1 dh1080_cbc 1
+  ...Disable :writeini -n %blow_ini $1 dh1080_cbc 0
 }
