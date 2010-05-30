@@ -130,6 +130,13 @@ Supported mIRC versions: mIRC 7 only!
 
 	And, obviously, DO NOT store any log files on unencrypted disks.
 
+	When using DH1080, please be aware that DH1080 does NOT protect you against sophisticated man-
+	in-the-middle attacks where the attacker is able to read and modify your IRC data stream in
+	real time.
+	You can spot an attacker like that by using the Show key right-click menu entry, and comparing
+	the key contents via an absolutely man-in-the-middle-proof channel, such as via telephone or a
+	meeting in person.
+
 == KNOWN ISSUES ==
 
 	FiSH 10 is incompatible to the following applications. Please whitelist mirc.exe in these:
