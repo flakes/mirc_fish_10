@@ -134,7 +134,8 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 	{
 		l_targetPos = l_line.rfind(" #", l_msgPos);
 
-		if(l_targetPos != std::string::npos && l_targetPos > l_cmdPos + l_cmd.size())
+		if(l_targetPos != std::string::npos && l_targetPos >= l_cmdPos + l_cmd.size())
+			/* >= because of the leading space in the find string */
 		{
 			l_tmpPos = l_line.find(' ', l_targetPos + 1);
 
