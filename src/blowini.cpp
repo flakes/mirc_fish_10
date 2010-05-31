@@ -114,6 +114,29 @@ std::string CBlowIni::GetBlowKey(const std::string& a_name, bool& ar_cbc) const
 }
 
 
+std::string CBlowIni::GetBlowKey(const std::string& a_network, const std::string& a_contact, bool& ar_cbc) const
+{
+#if 0
+	if(a_network.empty())
+	{
+		return GetBlowKey(a_contact, ar_cbc);
+	}
+	else
+#endif
+	{
+		std::string l_result = GetBlowKey(a_network + ":" + a_contact, ar_cbc);
+
+		if(!m_noLegacy && l_result.empty())
+		{
+			// fall back to legacy non-network name-prefixed section:
+			l_result = GetBlowKey(a_contact, ar_cbc);
+		}
+
+		return l_result;
+	}
+}
+
+
 bool CBlowIni::DeleteBlowKey(const std::string& a_name) const
 {
 	const std::string l_iniSection = FixContactName(a_name);
@@ -139,6 +162,19 @@ bool CBlowIni::DeleteBlowKey(const std::string& a_name) const
 	}
 
 	return l_success;
+}
+
+
+bool CBlowIni::DeleteBlowKey(const std::string& a_network, const std::string& a_contact) const
+{
+	bool l_result = DeleteBlowKey(a_network + ":" + a_contact);
+
+	if(!m_noLegacy)
+	{
+		l_result = DeleteBlowKey(a_contact) || l_result;
+	}
+
+	return l_result;
 }
 
 
@@ -199,6 +235,20 @@ bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_valu
 }
 
 
+bool CBlowIni::WriteBlowKey(const std::string& a_network, const std::string& a_contact, const std::string& a_value) const
+{
+	bool l_result = WriteBlowKey(a_network + ":" + a_contact, a_value);
+
+	if(!m_noLegacy)
+	{
+		// (over)write key, legacy style:
+		l_result = WriteBlowKey(a_contact, a_value) || l_result;
+	}
+
+	return l_result;
+}
+
+
 bool CBlowIni::GetSectionBool(const std::string& a_name, const wchar_t* a_key, bool a_default) const
 {
 	const std::string l_iniSection = FixContactName(a_name);
@@ -228,4 +278,17 @@ bool CBlowIni::GetSectionBool(const std::string& a_name, const wchar_t* a_key, b
 	}
 
 	return (l_result != 0);
+}
+
+
+bool CBlowIni::GetSectionBool(const std::string& a_network, const std::string& a_contact, const wchar_t* a_key, bool a_default) const
+{
+	if(m_noLegacy)
+	{
+		return GetSectionBool(a_network + ":" + a_contact, a_key, a_default);
+	}
+	else
+	{
+		return GetSectionBool(a_network + ":" + a_contact, a_key, GetSectionBool(a_contact, a_key, a_default));
+	}
 }

@@ -224,7 +224,13 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 
 	// get blowfish key...
 	bool l_cbc;
-	std::string l_blowKey = l_ini->GetBlowKey(l_contact, l_cbc);
+	std::string l_blowKey, l_networkName;
+
+	::EnterCriticalSection(&s_socketMapLock);
+	l_networkName = s_socketMap[a_socket];
+	::LeaveCriticalSection(&s_socketMapLock);
+
+	l_blowKey = l_ini->GetBlowKey(l_networkName, l_contact, l_cbc);
 
 	if(l_blowKey.empty())
 		return NULL;
@@ -261,7 +267,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 		 /* fall through */
 	case 0:
 		l_newMsg += l_trailing;
-		if(l_ini->GetSectionBool(l_contact, L"mark_encrypted", l_ini->GetBool(L"mark_encrypted", false)))
+		if(l_ini->GetSectionBool(l_networkName, l_contact, L"mark_encrypted", l_ini->GetBool(L"mark_encrypted", false)))
 		{ // try local setting and use global setting as default ^^
 			int l_markPos = l_ini->GetInt(L"mark_position"); // 1 = append, 2 = prepend, 0 = disabled
 			if(l_markPos > 0 && l_markPos <= 2)
@@ -347,7 +353,11 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, cons
 		return NULL; // "should never happen"
 
 	std::string l_target = l_line.substr(l_targetPos, l_msgPos - l_targetPos),
-		l_message = l_line.substr(l_msgPos + 2);
+		l_message = l_line.substr(l_msgPos + 2), l_networkName;
+
+	::EnterCriticalSection(&s_socketMapLock);
+	l_networkName = s_socketMap[a_socket];
+	::LeaveCriticalSection(&s_socketMapLock);
 
 	// kill trailing whitespace, we'll add back the new line later:
 	StrTrimRight(l_message);
@@ -356,7 +366,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, cons
 		return NULL;
 
 	// check topic encryption setting:
-	if(l_cmd_type == CMD_TOPIC && !l_ini->GetSectionBool(l_target, L"encrypt_topic", false))
+	if(l_cmd_type == CMD_TOPIC && !l_ini->GetSectionBool(l_networkName, l_target, L"encrypt_topic", false))
 		return NULL;
 
 	// don't encrypt DH1080 key exchange:
@@ -377,7 +387,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, cons
 
 	// get blowfish key...
 	bool l_cbc;
-	const std::string l_blowKey = l_ini->GetBlowKey(l_target, l_cbc);
+	const std::string l_blowKey = l_ini->GetBlowKey(l_networkName, l_target, l_cbc);
 
 	if(l_blowKey.empty())
 		return NULL;
@@ -485,17 +495,18 @@ EXPORT_SIG(int) FiSH_WriteKey10(HWND mWnd, HWND aWnd, char *data, char *parms, B
 {
 	if(data && *data)
 	{
-		string_vector l_data = SplitString(data, " ", 3);
+		string_vector l_data = SplitString(data, " ", 4);
+		/* <decode_utf8|raw_bytes> <network> <contact> <key> */
 
-		if(l_data.size() == 3)
+		if(l_data.size() == 4)
 		{
 			if(_stricmp(l_data[0].c_str(), "decode_utf8") == 0)
 			{
 				// old FiSH keys have always been ANSI encoded.
-				l_data[2] = UnicodeToCp(CP_ACP, UnicodeFromCp(CP_UTF8, l_data[2]));
+				l_data[3] = UnicodeToCp(CP_ACP, UnicodeFromCp(CP_UTF8, l_data[3]));
 			}
 
-			GetBlowIni()->WriteBlowKey(l_data[1], l_data[2]);
+			GetBlowIni()->WriteBlowKey(l_data[1], l_data[2], l_data[3]);
 
 			return 1;
 		}
@@ -505,33 +516,45 @@ EXPORT_SIG(int) FiSH_WriteKey10(HWND mWnd, HWND aWnd, char *data, char *parms, B
 }
 
 
-EXPORT_SIG(int) FiSH_GetKey(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+EXPORT_SIG(int) FiSH_GetKey10(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
 	if(data && *data)
 	{
-		bool l_cbc;
-		std::string l_key = GetBlowIni()->GetBlowKey(data, l_cbc);
+		string_vector l_data = SplitString(data, " ");
+		/* <network> <contact> */
 
-		if(l_cbc)
+		if(l_data.size() >= 2)
 		{
-			// :TODO: find out if there's a better way for UI integration and so forth
-			l_key.insert(0, "cbc:");
+			bool l_cbc;
+			std::string l_key = GetBlowIni()->GetBlowKey(l_data[0], l_data[1], l_cbc);
+
+			if(l_cbc)
+			{
+				// :TODO: find out if there's a better way for UI integration and so forth
+				l_key.insert(0, "cbc:");
+			}
+
+			strcpy_s(data, 900, l_key.c_str());
+
+			return 3;
 		}
-
-		strcpy_s(data, 900, l_key.c_str());
-
-		return 3;
 	}
 
 	return 1;
 }
 
 
-EXPORT_SIG(int) FiSH_DelKey(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+EXPORT_SIG(int) FiSH_DelKey10(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
 	if(data && *data)
 	{
-		GetBlowIni()->DeleteBlowKey(data);
+		string_vector l_data = SplitString(data, " ");
+		/* <network> <contact> */
+
+		if(l_data.size() >= 2)
+		{
+			GetBlowIni()->DeleteBlowKey(l_data[0], l_data[1]);
+		}
 	}
 
 	return 1;

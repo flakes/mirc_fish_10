@@ -153,7 +153,7 @@ alias -l FiSH.WriteKey {
   else var %cur_contact = $2
   if ($3- == $null) return
 
-  $dll(%FiSH_dll,FiSH_WriteKey10,$1 %cur_contact $3-)
+  $dll(%FiSH_dll,FiSH_WriteKey10,$1 $network %cur_contact $3-)
 
   var %info = *** FiSH: Key for %cur_contact set to *censored* $iif($gettok($3-,1,58) == cbc, (CBC Mode), )
 
@@ -183,7 +183,7 @@ alias FiSH.showkey {
   if ($1 == /query) var %cur_contact = $active
   else var %cur_contact = $1
 
-  %theKey = $dll(%FiSH_dll,FiSH_GetKey, %cur_contact)
+  %theKey = $dll(%FiSH_dll,FiSH_GetKey10, $network %cur_contact)
   if (%theKey != $null) {
     window -dCo +l @Blowcrypt-Key -1 -1 500 80
     aline @Blowcrypt-Key Key for %cur_contact :
@@ -199,7 +199,7 @@ alias FiSH.showkey {
 alias FiSH.removekey {
   if ($1 == /query) var %cur_contact = $active
   else var %cur_contact = $1
-  $dll(%FiSH_dll,FiSH_DelKey,%cur_contact)
+  $dll(%FiSH_dll,FiSH_DelKey10,$network %cur_contact)
   echo $color(Mode text) -at *** FiSH: Key for %cur_contact has been removed
 }
 

@@ -12,6 +12,12 @@ protected:
 	std::string m_iniBlowKey;
 	bool m_noLegacy;
 
+	std::string GetBlowKey(const std::string& a_name, bool& ar_cbc) const;
+	bool DeleteBlowKey(const std::string& a_name) const;
+	bool WriteBlowKey(const std::string& a_name, const std::string& a_value) const;
+	bool GetSectionBool(const std::string& a_name, const wchar_t* a_key, bool a_default) const;
+
+	static std::string FixContactName(const std::string& a_name);
 public:
 	CBlowIni(std::wstring a_iniPath = L"");
 	void SetIniPath(std::wstring a_iniPath);
@@ -21,13 +27,14 @@ public:
 	std::string GetString(const wchar_t* a_key, const wchar_t* a_default = NULL) const;
 	bool GetBool(const wchar_t* a_key, bool a_default) const;
 	int GetInt(const wchar_t* a_key, int a_default = 0) const;
+	
+	bool NoLegacy() const { return m_noLegacy; }
 
 	/* blow.ini-specific methods */
-	static std::string FixContactName(const std::string& a_name);
-	std::string GetBlowKey(const std::string& a_name, bool& ar_cbc) const;
-	bool DeleteBlowKey(const std::string& a_name) const;
-	bool WriteBlowKey(const std::string& a_name, const std::string& a_value) const;
-	bool GetSectionBool(const std::string& a_name, const wchar_t* a_key, bool a_default) const;
+	std::string GetBlowKey(const std::string& a_network, const std::string& a_contact, bool& ar_cbc) const;
+	bool DeleteBlowKey(const std::string& a_network, const std::string& a_contact) const;
+	bool WriteBlowKey(const std::string& a_network, const std::string& a_contact, const std::string& a_value) const;
+	bool GetSectionBool(const std::string& a_network, const std::string& a_contact, const wchar_t* a_key, bool a_default) const;
 };
 
 typedef std::vector<std::string> string_vector;
