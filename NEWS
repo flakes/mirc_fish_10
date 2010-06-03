@@ -1,4 +1,7 @@
 
+== 2010-06-03 ==
+	* Test build with multi-network support. Complete changelog will follow with the official release.
+
 == 2010-05-20 ==
 	* Added Mircryption compatible CBC mode!
 		Use "cbc:KEYHERE" as key to activate. Incoming messages encrypted using the "old"
