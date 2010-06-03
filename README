@@ -83,10 +83,17 @@ Supported mIRC versions: mIRC 7 only!
 	www.donationcoder.com/Software/Mouser/mircryption/extra_cbcinfo.php
 
 	FiSH 10 is the first add-on to deploy a fully backwards compatible DH1080 key exchange
-	that AUTOMATICALLY enables the more secure CBC encryption mode, if both parties use
-	FiSH 10. You won't notice a difference, but your messages will be encrypted	more securely
+	that AUTOMATICALLY enables the more secure CBC encryption mode if both parties use
+	FiSH 10. You won't notice a difference, but your messages will be encrypted stronger
 	than ever. Key exchanges with users of older versions and other scripts are completely
 	unimpaired.
+
+	There are however at least two broken DH1080 implementations that take the remainder of
+	the string in DH1080_(INIT|FINISH) instead of splitting at space characters:
+		- "[G]Script (OrbitIRC)" and "Trillian Astra".
+	You can use the right-click menu in queries to selectively disable CBC mode key exchange
+	for those users. Please note that this is only a problem if you initiate the key exchange,
+	not if they do.
 
 == ABOUT ==
 
@@ -141,13 +148,14 @@ Supported mIRC versions: mIRC 7 only!
 
 	FiSH 10 is incompatible to the following applications. Please whitelist mirc.exe in these:
 		- "AdMuncher"
-
 	This is because FiSH 10 integrates itself into mIRC similarly to these apps.
+
+	Using the right-click menu in mIRC might damage your blow.ini file. mIRC >= 7.05 is not affected.
+		References in the mIRC forums: http://bit.ly/9VbR9t and http://bit.ly/cbYdRg
 
 == THE FUTURE ==
 
 	- A feature that tries to avoid sending truncated fish messages and splits the message into
 		several lines automatically (with an option to turn it off).
 	- Make FiSH 10 work in good old mIRC 6.
-	- Per-network nick and channel key storage.
-		Challenges: Backwards compatibility
+	- Add support for Micryption's DH1080_INIT_cbc and DH1080_FINISH_cbc method.

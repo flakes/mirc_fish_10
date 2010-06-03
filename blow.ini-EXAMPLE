@@ -22,6 +22,10 @@ mark_encrypted=" 12·"
 MyIP_service=checkip.dyndns.org
 ;www.checkip.org / www.whatismyip.com / www.myip.dk / yourip.dentar.com / iplookup.flashfxp.com
 
+; this setting speeds up FiSH a little at the expense of making blow.ini files created by the
+; old FiSH script unusable. You should however always use it when making a new blow.ini file.
+no_legacy=1
+
 [#chan1]
 key=+OK wHat.EveR/uzQx./f0l/2jN/rdq1VQZ/eZ.Csn7r/10jvq0N32pU54.mjsG/8m
 encrypt_topic=1
