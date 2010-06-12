@@ -1,4 +1,7 @@
 
+== 2010-06-12 ==
+	* Updated test build, fixed issue 14 (no_legacy = 1 was mostly broken).
+
 == 2010-06-03 ==
 	* Test build with multi-network support. Complete changelog will follow with the official release.
 
