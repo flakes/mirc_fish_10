@@ -76,7 +76,11 @@ std::string CBlowIni::GetBlowKey(const std::string& a_name, bool& ar_cbc) const
 	if(m_noLegacy)
 	{
 		const std::wstring l_iniSectionW = UnicodeFromCp(CP_UTF8, l_iniSection);
-		l_blowKey = UnicodeToCp(CP_UTF8, GetStringW(l_iniSectionW.c_str()));
+
+		wchar_t l_buf[4096] = {0};
+		::GetPrivateProfileStringW(l_iniSectionW.c_str(), L"key", L"", l_buf, 4095, m_iniPath.c_str());
+
+		l_blowKey = UnicodeToCp(CP_UTF8, l_buf);
 	}
 	else
 	{
@@ -90,7 +94,11 @@ std::string CBlowIni::GetBlowKey(const std::string& a_name, bool& ar_cbc) const
 		{
 			// fallback for INI filenames with non-ANSI characters:
 			const std::wstring l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
-			l_blowKey = UnicodeToCp(CP_ACP, GetStringW(l_iniSectionW.c_str()));
+
+			wchar_t l_buf[4096] = {0};
+			::GetPrivateProfileStringW(l_iniSectionW.c_str(), L"key", L"", l_buf, 4095, m_iniPath.c_str());
+
+			l_blowKey = UnicodeToCp(CP_ACP, l_buf);
 		}
 		else
 		{
