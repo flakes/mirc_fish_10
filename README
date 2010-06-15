@@ -159,3 +159,4 @@ Supported mIRC versions: mIRC 7 only!
 		several lines automatically (with an option to turn it off).
 	- Make FiSH 10 work in good old mIRC 6.
 	- Add support for Micryption's DH1080_INIT_cbc and DH1080_FINISH_cbc method.
+	- Make a DH1080 specs document
