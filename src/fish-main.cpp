@@ -267,7 +267,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 		 /* fall through */
 	case 0:
 		l_newMsg += l_trailing;
-		if(l_ini->GetSectionBool(l_networkName, l_contact, L"mark_encrypted", l_ini->GetBool(L"mark_encrypted", false)))
+		if(l_ini->GetSectionBool(l_networkName, l_contact, L"mark_encrypted", !l_ini->GetStringW(L"mark_encrypted", L"").empty()))
 		{ // try local setting and use global setting as default ^^
 			int l_markPos = l_ini->GetInt(L"mark_position"); // 1 = append, 2 = prepend, 0 = disabled
 			if(l_markPos > 0 && l_markPos <= 2)
