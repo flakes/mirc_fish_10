@@ -24,6 +24,7 @@ MyIP_service=checkip.dyndns.org
 
 ; this setting speeds up FiSH a little at the expense of making blow.ini files created by the
 ; old FiSH script unusable. You should however always use it when making a new blow.ini file.
+; If you change/remove this, you have to re-code this ini file in ANSI (at least if your mark_encrypted has any UTF-8 chars)!
 no_legacy=1
 
 [#chan1]
