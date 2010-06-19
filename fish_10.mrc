@@ -226,6 +226,11 @@ alias FiSH.prefix {
   }
 }
 
+alias FiSH.showmyip {
+  window -dCo +l @Local-IP -1 -1 500 80
+  aline @Local-IP Your external IP address :
+  aline -p @Local-IP $dll(%FiSH_dll,FiSH_GetMyIP,FiSH)
+}
 
 
 menu channel {
@@ -273,6 +278,7 @@ menu status,channel,nicklist,query {
   ...Enable :set %autoset_localip [On]
   ...Disable :set %autoset_localip [Off]
   ..Copy local IP to clipboard: clipboard $dll(%FiSH_dll,FiSH_GetMyIP,FiSH)
+  ..Show local IP :FiSH.showmyip
   .Misc config
   ..Encrypt outgoing $iif($readini(%blow_ini,FiSH,process_outgoing) == 0, [Off], [On])
   ...Enable :writeini -n %blow_ini FiSH process_outgoing 1
