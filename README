@@ -5,7 +5,7 @@ This is an encryption addon for mIRC, it is based on FiSH v1.30 and is compatibl
 original 'blowcrypt/bloW' script as well as Mircryption and other clients.
 It supports private chat, channel, topic encryption and comes with a secure key-exchange
 system (DH1080). In addition to the regular ECB Blowfish mode, it also supports the more
-secure BCB mode.
+secure CBC mode.
 
 Supported mIRC versions: mIRC 7 only!
 	You can download the latest beta from www.mirc.com/beta.html
