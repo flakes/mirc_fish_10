@@ -77,6 +77,12 @@ Supported mIRC versions: mIRC 7 only!
 	time stamps. I do consider adding support for psyBNC's network prefix thing at some
 	point though, since there seems to be a bunch of people actually using that.
 
+== Multi-network support ==
+
+	The old FiSH never supported using different keys for #chan on NetworkOne, and #chan
+	on NetworkTwo. The new FiSH does fully support this while still maintaining blow.ini
+	backwards compatibility in all directions.
+
 == CBC MODE ==
 
 	FiSH 10 implements Mircryption's CBC mode, as defined here:
@@ -98,9 +104,8 @@ Supported mIRC versions: mIRC 7 only!
 == ABOUT ==
 
 	fish_10.mrc is a 1:1 copy of FiSH.mrc, with some modifications to account for proper
-	Windows Vista and 7 support and to facilitate DLL loading.
-	It has undergone and will undergo more changes to improve CBC mode integration
-	and awareness.
+	Windows Vista and 7 support, to facilitate DLL loading, for CBC mode and
+	multi-network awareness.
 
 	I would like to thank RXD for the work he has put into the FiSH addon over the last
 	few years. However, he has been slow with updates and unwilling to open source a
@@ -150,8 +155,9 @@ Supported mIRC versions: mIRC 7 only!
 		- "AdMuncher"
 	This is because FiSH 10 integrates itself into mIRC similarly to these apps.
 
-	Using the right-click menu in mIRC might damage your blow.ini file. mIRC >= 7.05 is not affected.
+	Using the right-click menu in mIRC might damage your blow.ini file in mIRC <= 7.04!
 		References in the mIRC forums: http://bit.ly/9VbR9t and http://bit.ly/cbYdRg
+	Update mIRC to 7.05 or later to fix this.
 
 == THE FUTURE ==
 

@@ -1,4 +1,15 @@
 
+== 2010-06-19 ==
+	* Final build with multi-network support. Read about it in README. You can now use different keys for
+		channels of the same name on different networks.
+	* Added no_legacy setting to blow.ini. Find out about it in README.BLOWINI.
+	* Made regular "Set Key" right click menu entry use ANSI mode, like in old FiSH,
+		and added a new entry "Set Key (UTF-8)" in case someone needs it.
+	* Updated OpenSSL libraries to 1.0.0a
+	* Added context menu entry that allows to selectively disable CBC key exchange mode for a contact.
+	* Fixed "CBC Mode" display when setting a key.
+	* Fixed topic decryption on topic changes.
+
 == 2010-06-12 ==
 	* Updated test build, fixed issue 14 (no_legacy = 1 was mostly broken).
 
