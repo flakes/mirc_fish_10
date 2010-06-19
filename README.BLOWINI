@@ -1,0 +1,96 @@
+
+This file explains all settings and their implications in blow.ini.
+
+== [FiSH] section ==
+
+	* Name: process_incoming
+		Value: 0 or 1
+		Default: 1
+		Enables/disables processing (decryption) of incoming IRC messages (topics, notices, etc.).
+		You will generally not want to disable this.
+
+	* Name: process_outgoing
+		Value: 0 or 1
+		Default: 1
+		Enables/disables processing (encryption) of messages (topics, notices, etc.) sent to IRC.
+		You will generally not want to disable this.
+
+	* Name: plain_prefix
+		Value (example): "PLAIN "
+		Default: "+p "
+		IRC messages starting with this prefix will not be encypted, even if the channel/user is
+		equipped with an active key. You usually want to include a trailing space in this setting,
+		so you have to put the entire thing in quotation marks. Evaluated case-sensitively.
+		Example:
+			/msg #chan Hi, I will be encrypted!
+			/msg #chan PLAIN Hi, I won't be encrypted...
+
+	* Name: encrypt_action
+		Value: 0 or 1
+		Default: 0
+		Whether to encrypt actions you send (e.g. /me says hi!).
+
+	* Name: encrypt_notice
+		Value: 0 or 1
+		Default: 0
+		Whether to encrypt notices you send (e.g. /notice MyFriend check this: www.example.org/secret).
+
+	* Name: mark_encrypted
+		Value: Crypt mark string
+		Default: (no default)
+		Whether to add a (usually short) string to crypted messages so they can be distinguished from
+		plain text messages more easily. You can use $chr(N) and $+ (mIRC syntax) here.
+
+	* Name: mark_position
+		Value: 1, 2 or 0
+		Default: 0
+		Defines the position where the string from mark_encrypted will be added to the crypted message.
+		1 means append, 2 means prepend and 0 disables the crypt mark entirely.
+
+	* Name: MyIP_service
+		Value: a URL
+		Default: (no default)
+		Add a website URL or host name like one of these here:
+			checkip.dyndns.org / www.checkip.org / yourip.dentar.com / iplookup.flashfxp.com / ip4.me
+		Used by FiSH's "Local IP" menu to determine your external IP address (e.g. for DCC).
+
+	* Name: no_legacy
+		Value: 0 or 1
+		Default: 0
+		This setting speeds up FiSH processing a little at the expense of destroying backwards
+		compatibility to old blow.ini files. You should always use it when creating a new blow.ini file.
+		Here are the changes in detail:
+			- Use UTF-8 mode for blow.ini file instead of ACP mode (system code page mode)
+			- On key updates, write [$network:$contact] sections only, omit [$contact] backwards compatibility entry.
+			- Do not read from [$contact] sections, only try [$network:$contact].
+				[$network:$contact] will be prefered if no_legacy isn't 1, and [$contact] will be used as fallback.
+		You can not change this setting on the fly (while mIRC is running), you need to restart mIRC to have it take effect.
+
+== Contact sections, e.g. [#chan], [EFNet:#fish10] or [duude] ==
+
+	* Name: key
+		Value: (the blowfish key)
+		Default: (no default)
+		If the value of this setting starts with +OK, the rest of the message will be decrypted using the hardcoded
+		blow.ini blowfish key. If it doesn't, it will be assumed that the key is deposited in plain text.
+
+	* Name: cbc
+		Value: 0 or 1
+		Default: 0
+		If this is 1, messages to this contact will be encrypted in CBC mode (more secure) by default. If it isn't, the
+		standard ECB mode will be used. This only affects outgoing messages, the mode of incoming messages will always
+		be detected automatically and treated appropriately.
+
+	* Name: mark_encrypted
+		Value: 0 or 1
+		Default: 1 if global mark_encrypted is non-empty, 0 otherwise
+		You can use mark_encrypted = 0 to turn off the crypt mark on incoming messages for this contact.
+
+	* Name: encrypt_topic
+		Value: 0 or 1
+		Default: 0
+		Defines whether topics you set for this contact (which has to be a channel) will be encrypted or not.
+
+	* Name: date
+		Value: DD/MM/YYYY
+		Updated whenever a new key is set. Not used for anything else.
