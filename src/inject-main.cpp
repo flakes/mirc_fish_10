@@ -95,6 +95,9 @@ int WSAAPI my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 		{
 			bool l_modified = l_sock->OnSending(false, buf, len);
 
+			// if no data has been exchanged, and OnSending returns false,
+			// this means that the first "packet"/line is not CAP LS,
+			// so it's not an IRC connection.
 			if(!l_modified && !l_sock->HasExchangedData())
 			{
 				::EnterCriticalSection(&s_socketsLock);
@@ -224,6 +227,8 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 
 		bool l_modified = l_sock->OnSending(true, (const char*)buf, num);
 
+		// same as in my_send, if the first line is not CAP LS,
+		// then forget about this socket.
 		if(!l_modified && !l_sock->HasExchangedData())
 		{
 			::EnterCriticalSection(&s_socketsLock);
@@ -266,8 +271,8 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 		::LeaveCriticalSection(&s_socketsLock);
 
 		// in case mIRC ever gets DCC-over-SSL support,
-		// we will be prepared:
-		if(!l_sock->HasExchangedData())
+		// we will be prepared (also see my_recv):
+		if(!l_sock->HasExchangedData() && !l_sock->IsSSLShakingHands())
 		{
 			::EnterCriticalSection(&s_socketsLock);
 			s_sockets.erase(s);
