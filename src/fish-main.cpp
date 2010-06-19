@@ -341,7 +341,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, cons
 		return NULL;
 
 	// check notice encryption setting:
-	if(l_cmd_type == CMD_NOTICE && !l_ini->GetBool(L"notice", false))
+	if(l_cmd_type == CMD_NOTICE && !l_ini->GetBool(L"encrypt_notice", false))
 		return NULL;
 
 	// split line:
@@ -396,7 +396,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, cons
 	std::string l_newMsg;
 
 	// check for plain prefix...
-	const std::string l_plainPrefix = l_ini->GetString(L"plain_prefix", L"+p");
+	const std::string l_plainPrefix = l_ini->GetString(L"plain_prefix", L"+p ");
 	if(!l_plainPrefix.empty() && l_message.find(l_plainPrefix) == 0)
 	{
 		l_newMsg = l_line.substr(0, l_msgPos + 2) + l_message.substr(l_plainPrefix.size()) + "\n";
