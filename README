@@ -155,9 +155,10 @@ Supported mIRC versions: mIRC 7 only!
 		- "AdMuncher"
 	This is because FiSH 10 integrates itself into mIRC similarly to these apps.
 
-	Using the right-click menu in mIRC might damage your blow.ini file in mIRC <= 7.04!
-		References in the mIRC forums: http://bit.ly/9VbR9t and http://bit.ly/cbYdRg
-	Update mIRC to 7.05 or later to fix this.
+	If you continue to use your old blow.ini file, and have been using a non-ANSI-compatible crypt
+	mark (such as the default middot "·"), using any right click menu from within mIRC will convert
+	your blow.ini file from ANSI to UTF-8 which will effectively destroy FiSH 10's ability to
+	properly read it. If enough people complain, I'll add a work-around.
 
 == THE FUTURE ==
 
