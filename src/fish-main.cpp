@@ -273,7 +273,9 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 			if(l_markPos > 0 && l_markPos <= 2)
 			{
 				const std::string l_mark =
-					UnicodeToCp(CP_UTF8, l_ini->GetStringW(L"mark_encrypted"));
+					SimpleMIRCParser(
+						UnicodeToCp(CP_UTF8,
+							l_ini->GetStringW(L"mark_encrypted")));
 
 				if(l_markPos == 1)
 					l_newMsg.append(l_mark);

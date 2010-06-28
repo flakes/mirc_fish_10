@@ -257,3 +257,59 @@ const string_vector SplitString(const std::string& a_in, const char *a_delimiter
 	return l_result;
 }
 
+
+std::string SimpleMIRCParser(const std::string a_str)
+{
+	std::string l_result;
+	std::string::size_type l_pos = a_str.find('$'), l_prevPos = 0;
+
+	while(l_pos != std::string::npos)
+	{
+		auto l_newPos = std::string::npos;
+
+		l_result += a_str.substr(l_prevPos, l_pos - l_prevPos);
+
+		if(l_pos < a_str.size() - 1)
+		{
+			if(a_str[l_pos + 1] == '+')
+			{
+				if(l_result.size() > 0 && l_result[l_result.size() - 1] == ' ') l_result.erase(l_result.size() - 1);
+				l_newPos = l_pos + 2;
+				if(l_newPos < a_str.size() - 1 && a_str[l_newPos] == ' ') l_newPos++;
+			}
+			else if(a_str.substr(l_pos + 1, 4) == "chr(")
+			{
+				auto l_endPos = a_str.find(')', l_pos + 6);
+
+				if(l_endPos != std::string::npos)
+				{
+					std::string l_buf = a_str.substr(l_pos + 5, l_endPos - l_pos - 5);
+					int l_code = atoi(l_buf.c_str());
+
+					if(l_code > 0)
+					{
+						l_result += (char)l_code;
+						l_newPos = l_endPos + 1;
+					}
+				}
+			}
+		}
+
+		if(l_newPos == std::string::npos)
+		{
+			l_result += '$';
+			l_newPos = l_pos + 1;
+		}
+
+		l_prevPos = l_newPos;
+		l_pos = a_str.find('$', l_prevPos);
+	}
+
+	if(l_prevPos < a_str.size())
+	{
+		l_result += a_str.substr(l_prevPos);
+	}
+
+	return l_result;
+}
+
