@@ -245,7 +245,7 @@ const string_vector SplitString(const std::string& a_in, const char *a_delimiter
 		if(l_delimLen == 1) { l_pos = a_in.find_first_not_of(a_delimiter, l_pos); l_pos--; }
 		l_result.push_back(a_in.substr(l_prevPos, l_pos - l_prevPos));
 		l_prevPos = l_pos + l_delimLen;
-		if(l_result.size() == a_limit) break;
+		if(l_result.size() == a_limit - 1) break;
 		l_pos = a_in.find(a_delimiter, l_prevPos);
 	}
 
