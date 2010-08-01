@@ -1,10 +1,15 @@
 
+== 2010-08-01 ==
+	* Fixed nasty bug that caused FiSH_encrypt_msg to fail with *messages* that contained spaces
+	  and FiSH_WriteKey10 with *keys* that contained spaces.
+	* Added support for $chr(N) and $+ in mark_encrypted as suggested in bug #13.
+
 == 2010-06-19 ==
 	* Final build with multi-network support. Read about it in README. You can now use different keys for
-		channels of the same name on different networks.
+	  channels of the same name on different networks.
 	* Added no_legacy setting to blow.ini. Find out about it in README.BLOWINI.
 	* Made regular "Set Key" right click menu entry use ANSI mode, like in old FiSH,
-		and added a new entry "Set Key (UTF-8)" in case someone needs it.
+	  and added a new entry "Set Key (UTF-8)" in case someone needs it.
 	* Added context menu entry that allows to selectively disable CBC key exchange mode for a contact.
 	* Fixed "CBC Mode" display when setting a key.
 	* Fixed topic decryption on topic changes.
@@ -20,11 +25,11 @@
 
 == 2010-05-20 ==
 	* Added Mircryption compatible CBC mode!
-		Use "cbc:KEYHERE" as key to activate. Incoming messages encrypted using the "old"
-		ECB mode still display fine.
+	  Use "cbc:KEYHERE" as key to activate. Incoming messages encrypted using the "old"
+	  ECB mode still display fine.
 	* Added first-ever CBC mode DH1080 key exchange!
-		Two FiSH 10 users doing a DH1080 key exchange will now automatically use the new
-		CBC mode. Key exchanges with old users are completely unimpaired!
+	  Two FiSH 10 users doing a DH1080 key exchange will now automatically use the new
+	  CBC mode. Key exchanges with old users are completely unimpaired!
 
 == 2010-05-19 ==
 	* Fixed issue #7 (DCC downloads stalling at 99%)
@@ -33,8 +38,8 @@
 	* Fixed issue #6 (Topic support broken for channel names that contain more than one # sign)
 	* Re-prepend cut off channel modes in UnrealIRCD's /list.
 	* Added FiSH.dll compatible FiSH_encrypt_msg and FiSH_decrypt_msg exports to
-		fish_10.dll, for use from mIRC script, e.g. like this:
-		echo -a $dll(fish_10.dll,FiSH_encrypt_msg,KEYHERE MESSAGEHERE)
+	  fish_10.dll, for use from mIRC script, e.g. like this:
+	  echo -a $dll(fish_10.dll,FiSH_encrypt_msg,KEYHERE MESSAGEHERE)
 	* Added some debug info to the "patch failed" message (which patch failed)
 	* Some internal minor changes
 
