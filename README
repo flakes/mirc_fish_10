@@ -7,8 +7,8 @@ It supports private chat, channel, topic encryption and comes with a secure key-
 system (DH1080). In addition to the regular ECB Blowfish mode, it also supports the more
 secure CBC mode.
 
-Supported mIRC versions: mIRC 7 only!
-	You can download the latest beta from www.mirc.com/beta.html
+Supported mIRC versions: mIRC 7.x only!
+	You can download the latest version from www.mirc.com
 
 == INSTALLING ==
 
@@ -158,7 +158,8 @@ Supported mIRC versions: mIRC 7 only!
 	If you continue to use your old blow.ini file, and have been using a non-ANSI-compatible crypt
 	mark (such as the default middot "·"), using any right click menu from within mIRC will convert
 	your blow.ini file from ANSI to UTF-8 which will effectively destroy FiSH 10's ability to
-	properly read it. If enough people complain, I'll add a work-around.
+	properly read the crypt mark.
+	The suggested workaround is using $chr(183) instead of "·".
 
 == THE FUTURE ==
 
