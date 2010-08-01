@@ -286,9 +286,14 @@ std::string SimpleMIRCParser(const std::string a_str)
 					std::string l_buf = a_str.substr(l_pos + 5, l_endPos - l_pos - 5);
 					int l_code = atoi(l_buf.c_str());
 
-					if(l_code > 0)
+					if(l_code > 0 && l_code <= std::numeric_limits<wchar_t>::max())
 					{
-						l_result += (char)l_code;
+						wchar_t l_char = (wchar_t)l_code;
+						char l_utfBuf[8] = {0};
+
+						::WideCharToMultiByte(CP_UTF8, 0, &l_char, 1, l_utfBuf, 7, NULL, NULL);
+
+						l_result += l_utfBuf;
 						l_newPos = l_endPos + 1;
 					}
 				}
