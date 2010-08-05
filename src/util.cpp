@@ -318,3 +318,84 @@ std::string SimpleMIRCParser(const std::string a_str)
 	return l_result;
 }
 
+
+/* Source: glib (GNU Lesser General Public License) */
+
+#define CONTINUATION_CHAR                           \
+ do {                                     \
+  if ((*(unsigned char *)p & 0xc0) != 0x80) /* 10xxxxxx */ \
+    goto error;                                     \
+  val <<= 6;                                        \
+  val |= (*(unsigned char *)p) & 0x3f;                     \
+ } while(0);
+
+#define UNICODE_VALID(Char)                   \
+	((Char) < 0x110000 &&                     \
+	(((Char) & 0xFFFFF800) != 0xD800) &&     \
+	((Char) < 0xFDD0 || (Char) > 0xFDEF) &&  \
+	((Char) & 0xFFFE) != 0xFFFE)
+
+
+bool Utf8Validate(const char* a_str)
+{
+	unsigned int val = 0, min = 0;
+	const char *p;
+
+	for (p = a_str; *p; p++)
+	{
+		if (*(unsigned char *)p < 128)
+			/* done */;
+		else 
+		{
+			const char *last;
+	  
+			last = p;
+			if ((*(unsigned char *)p & 0xe0) == 0xc0) /* 110xxxxx */
+			{
+				if ((*(unsigned char *)p & 0x1e) == 0)
+					goto error;
+				p++;
+				if ((*(unsigned char *)p & 0xc0) != 0x80) /* 10xxxxxx */
+					goto error;
+			}
+			else
+			{
+				if ((*(unsigned char *)p & 0xf0) == 0xe0) /* 1110xxxx */
+				{
+					min = (1 << 11);
+					val = *(unsigned char *)p & 0x0f;
+					goto TWO_REMAINING;
+				}
+				else if ((*(unsigned char *)p & 0xf8) == 0xf0) /* 11110xxx */
+				{
+					min = (1 << 16);
+					val = *(unsigned char *)p & 0x07;
+				}
+				else
+					goto error;
+	      
+				p++;
+				CONTINUATION_CHAR;
+				TWO_REMAINING:
+				p++;
+				CONTINUATION_CHAR;
+				p++;
+				CONTINUATION_CHAR;
+	      
+				if (val < min)
+					goto error;
+
+				if (!UNICODE_VALID(val))
+					goto error;
+			} 
+	  
+			continue;
+	  
+			error:
+				return (last != 0);
+		}
+	}
+
+	return (p != 0);
+}
+

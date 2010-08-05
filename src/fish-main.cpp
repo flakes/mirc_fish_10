@@ -273,11 +273,23 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 			int l_markPos = l_ini->GetInt(L"mark_position"); // 1 = append, 2 = prepend, 0 = disabled
 			if(l_markPos > 0 && l_markPos <= 2)
 			{
-				const std::string l_mark =
+				std::string l_mark =
 					SimpleMIRCParser(
 						UnicodeToCp(CP_UTF8,
 							l_ini->GetStringW(L"mark_encrypted")));
 
+#if 0
+				bool l_msgValid = Utf8Validate(l_newMsg.c_str();
+				bool l_markValid = Utf8Validate(l_mark.c_str());
+
+				if(!l_msgValid && l_markValid)
+				{
+					// prevent total message corruption by using
+					// "neutral" crypt-mark
+					l_mark = " \x0315*\x03";
+				}
+#endif
+				
 				if(l_markPos == 1)
 					l_newMsg.append(l_mark);
 				else
