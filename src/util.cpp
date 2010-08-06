@@ -186,7 +186,7 @@ std::string Base64_Decode(const std::string& a_input)
 	l_b64 = BIO_new(BIO_f_base64());
 	if(l_b64)
 	{
-		char *l_buf = new char[3];
+		char *l_buf = new char[256];
 		BIO_set_flags(l_b64, BIO_FLAGS_BASE64_NO_NL);
 		
 		l_mem = BIO_new_mem_buf((void*)a_input.c_str(), a_input.size());
@@ -194,7 +194,7 @@ std::string Base64_Decode(const std::string& a_input)
 		{
 			int l_bytesRead;
 			l_b64 = BIO_push(l_b64, l_mem);
-			while((l_bytesRead = BIO_read(l_b64, l_buf, 3)) > 0)
+			while((l_bytesRead = BIO_read(l_b64, l_buf, 256)) > 0)
 			{
 				l_result.append(l_buf, l_bytesRead);
 			}
