@@ -53,6 +53,15 @@ int CBlowIni::GetInt(const wchar_t* a_key, int a_default) const
 }
 
 
+bool CBlowIni::SetInt(const wchar_t* a_key, int a_value) const
+{
+	wchar_t l_buf[20] = {0};
+	swprintf_s(l_buf, 19, L"%d", a_value);
+
+	return (::WritePrivateProfileStringW(INI_SECTION, a_key, l_buf, m_iniPath.c_str()) != FALSE);
+}
+
+
 std::string CBlowIni::FixContactName(const std::string& a_name)
 {
 	std::string l_result;
@@ -299,4 +308,51 @@ bool CBlowIni::GetSectionBool(const std::string& a_network, const std::string& a
 	{
 		return GetSectionBool(a_network + ":" + a_contact, a_key, GetSectionBool(a_contact, a_key, a_default));
 	}
+}
+
+
+bool CBlowIni::SetSectionValue(const std::string& a_name, const wchar_t* a_key, const std::wstring& a_value) const
+{
+	const std::string l_iniSection = FixContactName(a_name);
+	std::wstring l_iniSectionW;
+
+	bool l_success = true;
+
+	if(m_noLegacy)
+	{
+		l_iniSectionW = UnicodeFromCp(CP_UTF8, l_iniSection);
+		l_success = (::WritePrivateProfileStringW(l_iniSectionW.c_str(), a_key, a_value.c_str(), m_iniPath.c_str()) != 0);
+	}
+	else
+	{
+		const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath),
+			l_ansiValue = UnicodeToCp(CP_ACP, a_value),
+			l_ansiKey = UnicodeToCp(CP_ACP, a_key);
+
+		l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
+
+		if(::WritePrivateProfileStringA(l_iniSection.c_str(), l_ansiKey.c_str(), l_ansiValue.c_str(), l_ansiFileName.c_str()) == 0)
+		{
+			l_success = (::WritePrivateProfileStringW(l_iniSectionW.c_str(), a_key, a_value.c_str(), m_iniPath.c_str()) != 0);
+		}
+	}
+
+	return l_success;
+}
+
+
+bool CBlowIni::SetSectionBool(const std::string& a_network, const std::string& a_contact, const wchar_t* a_key, bool a_value) const
+{
+	wchar_t l_buf[3] = {0};
+	swprintf_s(l_buf, 2, L"%d", (a_value ? 1 : 0));
+
+	bool l_result = SetSectionValue(a_network + ":" + a_contact, a_key, l_buf);
+
+	if(!m_noLegacy)
+	{
+		// (over)write, legacy style:
+		l_result = SetSectionValue(a_contact, a_key, l_buf) || l_result;
+	}
+
+	return l_result;
 }

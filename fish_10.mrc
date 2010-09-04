@@ -28,8 +28,8 @@ on *:START: {
 ; *** auto-keyXchange ***
 on *:OPEN:?:{
   if (%autokeyx == [On]) {
-    var %tmp1 = $readini %blow_ini $nick key
-    if (($len(%tmp1) > 0) || (+OK isin $1)) {
+    var %tmp1 = $dll(%FiSH_dll,FiSH_GetKey10,$network $nick)
+    if ($len(%tmp1) > 0) {
       FiSH.DH1080_INIT $nick
     }
     unset %tmp1
@@ -43,8 +43,8 @@ on *:OPEN:?:{
 ; *** (or even delete the whole section from here)
 on *:INPUT:*:{
   if (($left($1,1) == /) || (!$1) || (%mark_outgoing != [On])) return
-  if ($readini(%blow_ini,FiSH,process_outgoing) == 0) return
-  if ($len($readini(%blow_ini,$target,key)) > 1) {
+  if ($dll(%FiSH_dll,INI_GetBool,process_outgoing) == 0) return
+  if ($len($dll(%FiSH_dll,FiSH_GetKey10,$network $target)) > 1) {
     var %tmp1 = $readini %blow_ini FiSH plain_prefix
     if (%tmp1 == $null) { %tmp1 = +p }
     var %pfxlen = $len(%tmp1)
@@ -94,7 +94,7 @@ on *:CONNECT:{
 on *:NICK:{
   if (($nick == $me) || ($upper($newnick) == $upper($nick))) { return }
   if (($query($newnick) == $null) || (%NickTrack != [On])) { return }
-  var %ky_tmp = $readini %blow_ini $nick key
+  var %ky_tmp = $dll(%FiSH_dll,FiSH_GetKey10,$network $nick)
   if ($len(%ky_tmp) > 4) {
     writeini -n %blow_ini $newnick key %ky_tmp
     writeini -n %blow_ini $newnick dh1080_cbc $readini(%blow_ini,$nick,dh1080_cbc)
@@ -213,7 +213,7 @@ alias FiSH.DH1080_INIT {
   %FiSH.prv_key = $gettok(%tempkey, 1, 32)
   %FiSH.pub_key = $gettok(%tempkey, 2, 32)
   unset %tempkey
-  .NOTICE %cur_contact DH1080_INIT %FiSH.pub_key $iif($readini(%blow_ini,%cur_contact,dh1080_cbc) == 0,, CBC)
+  .NOTICE %cur_contact DH1080_INIT %FiSH.pub_key $iif($dll(%FiSH_dll,INI_GetSectionBool,$network %cur_contact dh1080_cbc 1) == 0,, CBC)
   echo $color(Mode text) -tm $nick *** FiSH: Sent my DH1080 public key to %cur_contact $+ , waiting for reply ...
 }
 
@@ -280,10 +280,10 @@ menu status,channel,nicklist,query {
   ..Copy local IP to clipboard: clipboard $dll(%FiSH_dll,FiSH_GetMyIP,FiSH)
   ..Show local IP :FiSH.showmyip
   .Misc config
-  ..Encrypt outgoing $iif($readini(%blow_ini,FiSH,process_outgoing) == 0, [Off], [On])
+  ..Encrypt outgoing $iif($dll(%FiSH_dll,INI_GetBool,process_outgoing) == 0, [Off], [On])
   ...Enable :writeini -n %blow_ini FiSH process_outgoing 1
   ...Disable :writeini -n %blow_ini FiSH process_outgoing 0
-  ..Decrypt incoming $iif($readini(%blow_ini,FiSH,process_incoming) == 0, [Off], [On])
+  ..Decrypt incoming $iif($dll(%FiSH_dll,INI_GetBool,process_incoming) == 0, [Off], [On])
   ...Enable :writeini -n %blow_ini FiSH process_incoming 1
   ...Disable :writeini -n %blow_ini FiSH process_incoming 0
   ..-
@@ -310,10 +310,10 @@ menu status,channel,nicklist,query {
   ..NickTracker $+ $chr(32) $+ %NickTrack
   ...Enable :set %NickTrack [On]
   ...Disable :set %NickTrack [Off]
-  ..Encrypt NOTICE $iif($readini(%blow_ini,FiSH,encrypt_notice) == 1, [On], [Off])
+  ..Encrypt NOTICE $iif($dll(%FiSH_dll,INI_GetBool,encrypt_notice) == 1, [On], [Off])
   ...Enable :writeini -n %blow_ini FiSH encrypt_notice 1
   ...Disable :writeini -n %blow_ini FiSH encrypt_notice 0
-  ..Encrypt ACTION $iif($readini(%blow_ini,FiSH,encrypt_action) == 1, [On], [Off])
+  ..Encrypt ACTION $iif($dll(%FiSH_dll,INI_GetBool,encrypt_action) == 1, [On], [Off])
   ...Enable :writeini -n %blow_ini FiSH encrypt_action 1
   ...Disable :writeini -n %blow_ini FiSH encrypt_action 0
   ..-
@@ -327,12 +327,12 @@ menu channel {
   .Misc config
   ..Crypt-Mark (Incoming)
   ...-
-  ...Only for $chan $iif($readini(%blow_ini,$chan,mark_encrypted) == 0, [Off], [On])
-  ....Enable :writeini -n %blow_ini $chan mark_encrypted 1
-  ....Disable :writeini -n %blow_ini $chan mark_encrypted 0
-  ..Encrypt TOPIC $iif($readini(%blow_ini,$chan,encrypt_topic) == 1, [On], [Off])
-  ...Enable :writeini -n %blow_ini $chan encrypt_topic 1
-  ...Disable :writeini -n %blow_ini $chan encrypt_topic 0
+  ...Only for $chan $iif($dll(%FiSH_dll,INI_GetSectionBool,$network $chan mark_encrypted $dll(%FiSH_dll,INI_GetBool,mark_encrypted)) == 0, [Off], [On])
+  ....Enable :dll %FiSH_dll INI_SetSectionBool $network $chan mark_encrypted 1
+  ....Disable :dll %FiSH_dll INI_SetSectionBool $network $chan mark_encrypted 0
+  ..Encrypt TOPIC $iif($dll(%FiSH_dll,INI_GetSectionBool,$network $chan encrypt_topic 0) == 1, [On], [Off])
+  ...Enable :dll %FiSH_dll INI_SetSectionBool $network $chan encrypt_topic 1
+  ...Disable :dll %FiSH_dll INI_SetSectionBool $network $chan encrypt_topic 0
 }
 
 menu query {
@@ -340,10 +340,10 @@ menu query {
   .Misc config
   ..Crypt-Mark (Incoming)
   ...-
-  ...Only for $1 $iif($readini(%blow_ini,$1,mark_encrypted) == 0, [Off], [On])
-  ....Enable :writeini -n %blow_ini $1 mark_encrypted 1
-  ....Disable :writeini -n %blow_ini $1 mark_encrypted 0
-  ..CBC key exchange $iif($readini(%blow_ini,$1,dh1080_cbc) == 0, [Off], [On])
-  ...Enable :writeini -n %blow_ini $1 dh1080_cbc 1
-  ...Disable :writeini -n %blow_ini $1 dh1080_cbc 0
+  ...Only for $1 $iif($dll(%FiSH_dll,INI_GetSectionBool,$network $1 mark_encrypted $dll(%FiSH_dll,INI_GetBool,mark_encrypted)) == 0, [Off], [On])
+  ....Enable :dll %FiSH_dll INI_SetSectionBool $network $1 mark_encrypted 1
+  ....Disable :dll %FiSH_dll INI_SetSectionBool $network $1 mark_encrypted 1
+  ..CBC key exchange $iif($dll(%FiSH_dll,INI_GetSectionBool,$network $1 dh1080_cbc 1) == 1, [On], [Off])
+  ...Enable :dll %FiSH_dll INI_SetSectionBool $network $1 dh1080_cbc 1
+  ...Disable :dll %FiSH_dll INI_SetSectionBool $network $1 dh1080_cbc 0
 }

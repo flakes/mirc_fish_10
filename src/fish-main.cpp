@@ -699,6 +699,105 @@ EXPORT_SIG(int) FiSH_GetMyIP(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL
 }
 
 
+EXPORT_SIG(int) INI_GetBool(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+{
+	if(!data || !*data)
+		return 0;
+
+	auto l_ini = GetBlowIni();
+	
+	const std::wstring l_key = UnicodeFromCp(CP_UTF8, data);
+	bool b = l_ini->GetBool(l_key.c_str(), false);
+
+	sprintf_s(data, 900, "%d", (b ? 1 : 0));
+
+	return 3;
+}
+
+
+bool STR_TO_BOOL(const char* s)
+{
+	return (!s || !*s || *s == '0' || !_stricmp(s, "false") ? 0 : 1);
+}
+
+bool STR_TO_BOOL(const std::string& ss)
+{
+	return STR_TO_BOOL(ss.c_str());
+}
+
+
+EXPORT_SIG(int) INI_SetBool(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+{
+	if(data && *data)
+	{
+		const string_vector l_data = SplitString(data, " ", 2);
+
+		if(l_data.size() >= 2)
+		{
+			auto l_ini = GetBlowIni();
+
+			const std::wstring l_key = UnicodeFromCp(CP_UTF8, l_data[0]);
+
+			l_ini->SetInt(l_key.c_str(), STR_TO_BOOL(l_data[1]));
+
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+
+EXPORT_SIG(int) INI_GetSectionBool(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+{
+	if(data && *data)
+	{
+		const string_vector l_data = SplitString(data, " ", 4);
+		/* <network> <contact> <keyname> <default> */
+
+		if(l_data.size() >= 4)
+		{
+			auto l_ini = GetBlowIni();
+			
+			const std::wstring l_key = UnicodeFromCp(CP_UTF8, l_data[2]);
+			bool l_default = STR_TO_BOOL(l_data[3]);
+
+			bool b = l_ini->GetSectionBool(l_data[0], l_data[1], l_key.c_str(), l_default);
+
+			sprintf_s(data, 900, "%d", (b ? 1 : 0));
+
+			return 3;
+		}
+	}
+
+	return 0;
+}
+
+
+EXPORT_SIG(int) INI_SetSectionBool(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+{
+	if(data && *data)
+	{
+		const string_vector l_data = SplitString(data, " ", 4);
+		/* <network> <contact> <keyname> <value> */
+
+		if(l_data.size() >= 4)
+		{
+			auto l_ini = GetBlowIni();
+			
+			const std::wstring l_key = UnicodeFromCp(CP_UTF8, l_data[2]);
+			bool l_value = STR_TO_BOOL(l_data[3]);
+
+			l_ini->SetSectionBool(l_data[0], l_data[1], l_key.c_str(), l_value);
+
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+
 /* dummy call to show compililation date */
 
 extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)

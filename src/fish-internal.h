@@ -16,6 +16,7 @@ protected:
 	bool DeleteBlowKey(const std::string& a_name) const;
 	bool WriteBlowKey(const std::string& a_name, const std::string& a_value) const;
 	bool GetSectionBool(const std::string& a_name, const wchar_t* a_key, bool a_default) const;
+	bool SetSectionValue(const std::string& a_name, const wchar_t* a_key, const std::wstring& a_value) const;
 
 	static std::string FixContactName(const std::string& a_name);
 public:
@@ -27,6 +28,7 @@ public:
 	std::string GetString(const wchar_t* a_key, const wchar_t* a_default = NULL) const;
 	bool GetBool(const wchar_t* a_key, bool a_default) const;
 	int GetInt(const wchar_t* a_key, int a_default = 0) const;
+	bool SetInt(const wchar_t* a_key, int a_value) const;
 	
 	bool NoLegacy() const { return m_noLegacy; }
 
@@ -35,6 +37,7 @@ public:
 	bool DeleteBlowKey(const std::string& a_network, const std::string& a_contact) const;
 	bool WriteBlowKey(const std::string& a_network, const std::string& a_contact, const std::string& a_value) const;
 	bool GetSectionBool(const std::string& a_network, const std::string& a_contact, const wchar_t* a_key, bool a_default) const;
+	bool SetSectionBool(const std::string& a_network, const std::string& a_contact, const wchar_t* a_key, bool a_value) const;
 };
 
 typedef std::vector<std::string> string_vector;
