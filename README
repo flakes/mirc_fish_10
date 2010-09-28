@@ -58,8 +58,7 @@ Supported mIRC versions: mIRC 7.x only!
 	(Hint for Vista and above: Hit Ctrl + C to copy the message box contents into the clipboard,
 	then paste into your bug report using Ctrl + V)
 
-	If you downloaded the ZIP file with the OpenSSL DLL files included, you might have to
-	install this too:
+	If you get an error like "/dll: unable to open file" on startup, install this:
 	www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2
 
 	When mIRC updates, FiSH 10 should just continue to work in 99% of the cases, unlike
@@ -103,8 +102,8 @@ Supported mIRC versions: mIRC 7.x only!
 
 == ABOUT ==
 
-	fish_10.mrc is a 1:1 copy of FiSH.mrc, with some modifications to account for proper
-	Windows Vista and 7 support, to facilitate DLL loading, for CBC mode and
+	fish_10.mrc is mostly a 1:1 copy of FiSH.mrc, with quite a number of modifications to
+	enable proper Windows Vista and 7 support, to facilitate DLL loading, for CBC mode and
 	multi-network awareness.
 
 	I would like to thank RXD for the work he has put into the FiSH addon over the last

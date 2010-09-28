@@ -1,4 +1,9 @@
 
+== 2010-09-28 ==
+	* Fixed issues with no_legacy = 1, most notably encrypt_topic and other contact specific
+	  settings being broken.
+	* Fixed topic-not-being-decrypted issue with no_legacy=1. Kudos to _pac.
+
 == 2010-08-01 ==
 	* Fixed nasty bug that caused FiSH_encrypt_msg to fail with *messages* that contained spaces
 	  and FiSH_WriteKey10 with *keys* that contained spaces.
