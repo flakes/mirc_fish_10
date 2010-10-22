@@ -50,6 +50,11 @@ Supported mIRC versions: mIRC 7.x only!
 		- If that is the case, FiSH 10 is now ready for action!
 		- Connect to your networks and do your thing.
 
+	If you get an error like "/dll: unable to open file" on startup, install this:
+	www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2
+	Don't install the x64 version, even if you have a 64-bit OS. mIRC and FiSH are 32-bit,
+	so you need the x86 version!
+
 	If an error like "patching ... failed" shows up, something seems wrong with your setup.
 	It could be something simple like an incompatible OpenSSL DLL, something weird like
 	your AV scanner, or a bug in FiSH 10. If you made sure you installed the latest version,
@@ -57,9 +62,6 @@ Supported mIRC versions: mIRC 7.x only!
 	http://github.com/flakes/mirc_fish_10/issues
 	(Hint for Vista and above: Hit Ctrl + C to copy the message box contents into the clipboard,
 	then paste into your bug report using Ctrl + V)
-
-	If you get an error like "/dll: unable to open file" on startup, install this:
-	www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2
 
 	When mIRC updates, FiSH 10 should just continue to work in 99% of the cases, unlike
 	the previous solution. And it's open source, pretty cool, he?
