@@ -1,0 +1,15 @@
+EXPORTS
+	FiSH_SetIniPath
+	DH1080_comp
+	DH1080_gen
+	FiSH_WriteKey10
+	FiSH_GetKey10
+	FiSH_DelKey10
+	FiSH_GetMyIP
+	FiSH_decrypt_msg
+	FiSH_encrypt_msg
+	INI_GetBool
+	INI_SetBool
+	INI_GetSectionBool
+	INI_SetSectionBool
+	_callMe
