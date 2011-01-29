@@ -31,6 +31,7 @@ public:
 	bool SetInt(const wchar_t* a_key, int a_value) const;
 	
 	bool NoLegacy() const { return m_noLegacy; }
+	bool IsWritable() const;
 
 	/* blow.ini-specific methods */
 	std::string GetBlowKey(const std::string& a_network, const std::string& a_contact, bool& ar_cbc) const;

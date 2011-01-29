@@ -458,6 +458,12 @@ EXPORT_SIG(int) FiSH_SetIniPath(HWND mWnd, HWND aWnd, char *data, char *parms, B
 		auto l_ini = GetBlowIni();
 
 		l_ini->SetIniPath(UnicodeFromCp(CP_UTF8, data));
+
+		if(!l_ini->IsWritable())
+		{
+			strcpy_s(data, 900, "/echo -a *** FiSH 10 *** WARNING: blow.ini is not writable! FiSH will not function correctly. ***");
+			return 2;
+		}
 	}
 
 	return 1;

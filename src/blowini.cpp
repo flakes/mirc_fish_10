@@ -23,6 +23,15 @@ void CBlowIni::SetIniPath(std::wstring a_iniPath)
 }
 
 
+bool CBlowIni::IsWritable() const
+{
+	wchar_t l_buf[20] = {0};
+	swprintf_s(l_buf, 19, L"%d", time(NULL));
+
+	return (::WritePrivateProfileStringW(L"Test", L"StartUp", l_buf, m_iniPath.c_str()) != 0);
+}
+
+
 std::wstring CBlowIni::GetStringW(const wchar_t* a_key, const wchar_t* a_default) const
 {
 	wchar_t l_buf[4096] = {0};
