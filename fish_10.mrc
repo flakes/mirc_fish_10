@@ -280,10 +280,10 @@ menu status,channel,nicklist,query {
   ..Copy local IP to clipboard: clipboard $dll(%FiSH_dll,FiSH_GetMyIP,FiSH)
   ..Show local IP :FiSH.showmyip
   .Misc config
-  ..Encrypt outgoing $iif($dll(%FiSH_dll,INI_GetBool,process_outgoing,1) == 0, [Off], [On])
+  ..Encrypt outgoing $iif($dll(%FiSH_dll,INI_GetBool,process_outgoing 1) == 0, [Off], [On])
   ...Enable :writeini -n %blow_ini FiSH process_outgoing 1
   ...Disable :writeini -n %blow_ini FiSH process_outgoing 0
-  ..Decrypt incoming $iif($dll(%FiSH_dll,INI_GetBool,process_incoming,1) == 0, [Off], [On])
+  ..Decrypt incoming $iif($dll(%FiSH_dll,INI_GetBool,process_incoming 1) == 0, [Off], [On])
   ...Enable :writeini -n %blow_ini FiSH process_incoming 1
   ...Disable :writeini -n %blow_ini FiSH process_incoming 0
   ..-
