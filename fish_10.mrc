@@ -43,7 +43,7 @@ on *:OPEN:?:{
 ; *** (or even delete the whole section from here)
 on *:INPUT:*:{
   if (($left($1,1) == /) || (!$1) || (%mark_outgoing != [On])) return
-  if ($dll(%FiSH_dll,INI_GetBool,process_outgoing,1) == 0) return
+  if ($dll(%FiSH_dll,INI_GetBool,process_outgoing 1) == 0) return
   if ($len($dll(%FiSH_dll,FiSH_GetKey10,$network $target)) > 1) {
     var %tmp1 = $readini %blow_ini FiSH plain_prefix
     if (%tmp1 == $null) { %tmp1 = +p }
@@ -86,7 +86,7 @@ on *:INPUT:*:{
 
 on *:CONNECT:{
   if (%autoset_localip == [On]) {
-    localinfo FiSH.OWNZ $dll(%FiSH_dll,FiSH_GetMyIP,FiSH)
+    localinfo FiSH.OWNZ $dll(%FiSH_dll,FiSH_GetMyIP,NOT_USED)
   }
 }
 
