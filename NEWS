@@ -1,4 +1,12 @@
 
+== 2011-03-15 ==
+  * Updated FiSH_encrypt_msg and FiSH_decrypt_msg DLL routines (for use from within .mrc scripts)
+    to be fully backwards-compatible again (keys with characters >=0x80 were broken).
+  * Added FiSH_DecryptMsg10 and FiSH_EncryptMsg10 DLL routines with the following signature:
+	  <decode_utf8|raw_bytes> <key> <base64data>
+	  Use these if you need to work with UTF-8 encoded keys, e.g.:
+	  //echo -a $dll(%FiSH_DLL,FiSH_EncryptMsg10,raw_bytes üütf§KEY message here blah blah)
+
 == 2011-02-12 ==
   * Fixed another syntax error in fish_10.mrc
   * Updated OpenSSL to 1.0.0d

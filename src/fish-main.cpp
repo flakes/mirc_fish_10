@@ -582,45 +582,136 @@ EXPORT_SIG(int) FiSH_DelKey10(HWND mWnd, HWND aWnd, char *data, char *parms, BOO
 }
 
 
-EXPORT_SIG(int) FiSH_decrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+static int _FiSH_DecryptMsg_Internal(std::string& a_data)
+{
+	const string_vector l_data = SplitString(a_data, " ", 3);
+	/* <decode_utf8|raw_bytes> <key> <base64data> */
+
+	if(l_data.size() >= 3)
+	{
+		std::string l_key = l_data[1], l_message = l_data[2];
+
+		if(_stricmp(l_data[0].c_str(), "decode_utf8") == 0)
+		{
+			l_key = UnicodeToCp(CP_ACP, UnicodeFromCp(CP_UTF8, l_key));
+		}
+
+		if(l_message.find("+OK ") == 0)
+			l_message.erase(0, 4);
+		else if(l_message.find("mcps ") == 0)
+			l_message.erase(0, 5);
+
+		std::string l_decrypted;
+		bool l_cbc = HasCBCPrefix(l_key, true);
+
+		if(!l_cbc && !l_message.empty() && l_message[0] == '*')
+		{
+			l_cbc = true;
+			l_message.erase(0, 1);
+		}
+
+		int l_result = blowfish_decrypt_auto(l_cbc, l_message, l_decrypted, l_key);
+
+		if(l_result == 1)
+		{
+			l_decrypted += "&";
+		}
+		else if(l_result < 0)
+		{
+			l_decrypted += "=[FiSH: DECRYPTION FAILED!]=";
+		}
+
+		a_data = l_decrypted;
+
+		return 3;
+	}
+
+	return 0;
+}
+
+
+EXPORT_SIG(int) FiSH_DecryptMsg10(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
 	if(data && *data)
 	{
-		const string_vector l_data = SplitString(data, " ", 2);
+		std::string l_tmp(data);
+		int l_res = _FiSH_DecryptMsg_Internal(l_tmp);
 
-		if(l_data.size() >= 2)
+		if(l_res > 0)
 		{
-			std::string l_key = l_data[0], l_message = l_data[1];
+			strncpy_s(data, 900, l_tmp.c_str(), 899);
+			return l_res;
+		}
+	}
 
-			if(l_message.find("+OK ") == 0)
-				l_message.erase(0, 4);
-			else if(l_message.find("mcps ") == 0)
-				l_message.erase(0, 5);
+	return 0;
+}
 
-			std::string l_decrypted;
-			bool l_cbc = HasCBCPrefix(l_key, true);
 
-			if(!l_cbc && !l_message.empty() && l_message[0] == '*')
-			{
-				l_cbc = true;
-				l_message.erase(0, 1);
-			}
+EXPORT_SIG(int) FiSH_decrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+{
+	// de-UTF8 for b/c:
+	if(data && *data)
+	{
+		std::string l_tmp("decode_utf8 ");
+		l_tmp.append(data);
+		int l_res = _FiSH_DecryptMsg_Internal(l_tmp);
 
-			int l_result = blowfish_decrypt_auto(l_cbc, l_message, l_decrypted, l_key);
+		if(l_res > 0)
+		{
+			strncpy_s(data, 900, l_tmp.c_str(), 899);
+			return l_res;
+		}
+	}
 
-			if(l_result == 1)
-			{
-				l_decrypted += "&";
-			}
-			else if(l_result < 0)
-			{
-				l_decrypted += "=[FiSH: DECRYPTION FAILED!]=";
-			}
+	return 0;
+}
 
-			// use strncpy so strcpy_s doesn't terminate if l_decrypted.size() > 899
-			strncpy_s(data, 900, l_decrypted.c_str(), 899);
 
-			return 3;
+static int _FiSH_EncryptMsg_Internal(std::string& a_data)
+{
+	const string_vector l_data = SplitString(a_data, " ", 3);
+
+	if(l_data.size() >= 3)
+	{
+		std::string l_key = l_data[1], l_message = l_data[2];
+		std::string l_encrypted;
+
+		if(_stricmp(l_data[0].c_str(), "decode_utf8") == 0)
+		{
+			l_key = UnicodeToCp(CP_ACP, UnicodeFromCp(CP_UTF8, l_key));
+		}
+
+		if(!HasCBCPrefix(l_key, true))
+		{
+			blowfish_encrypt(l_message, l_encrypted, l_key);
+		}
+		else
+		{
+			blowfish_encrypt_cbc(l_message, l_encrypted, l_key);
+			l_encrypted.insert(0, "*"); // mark CBC mode "message"
+		}
+
+		a_data = l_encrypted;
+
+		return 3;
+	}
+
+	return 0;
+}
+
+
+EXPORT_SIG(int) FiSH_EncryptMsg10(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+{
+	if(data && *data)
+	{
+		std::string l_tmp(data);
+		int l_res = _FiSH_EncryptMsg_Internal(l_tmp);
+
+		if(l_res > 0)
+		{
+			strncpy_s(data, 900, l_tmp.c_str(), 899);
+			return l_res;
 		}
 	}
 
@@ -630,28 +721,17 @@ EXPORT_SIG(int) FiSH_decrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, 
 
 EXPORT_SIG(int) FiSH_encrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
+	// de-UTF8 for b/c:
 	if(data && *data)
 	{
-		const string_vector l_data = SplitString(data, " ", 2);
+		std::string l_tmp("decode_utf8 ");
+		l_tmp.append(data);
+		int l_res = _FiSH_EncryptMsg_Internal(l_tmp);
 
-		if(l_data.size() >= 2)
+		if(l_res > 0)
 		{
-			std::string l_key = l_data[0], l_message = l_data[1];
-			std::string l_encrypted;
-
-			if(!HasCBCPrefix(l_key, true))
-			{
-				blowfish_encrypt(l_message, l_encrypted, l_key);
-			}
-			else
-			{
-				blowfish_encrypt_cbc(l_message, l_encrypted, l_key);
-				l_encrypted.insert(0, "*"); // mark CBC mode "message"
-			}
-
-			strncpy_s(data, 900, l_encrypted.c_str(), 899);
-
-			return 3;
+			strncpy_s(data, 900, l_tmp.c_str(), 899);
+			return l_res;
 		}
 	}
 

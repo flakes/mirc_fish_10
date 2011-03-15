@@ -8,6 +8,8 @@ EXPORTS
 	FiSH_GetMyIP
 	FiSH_decrypt_msg
 	FiSH_encrypt_msg
+	FiSH_DecryptMsg10
+	FiSH_EncryptMsg10
 	INI_GetBool
 	INI_SetBool
 	INI_GetSectionBool

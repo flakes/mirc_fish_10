@@ -11,13 +11,11 @@ encrypt_action=0
 
 ;*append crypt-mark at end of message
 mark_position=1
-;mark_encrypted=" ·"
 mark_encrypted=" 12·"
 
 ;*prefix crypt-mark example
 ;mark_position=2
 ;mark_encrypted="12> "
-;mark_encrypted="12· "
 
 MyIP_service=checkip.dyndns.org
 ;www.checkip.org / yourip.dentar.com / iplookup.flashfxp.com / ip4.me

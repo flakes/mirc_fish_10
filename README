@@ -45,8 +45,8 @@ Supported mIRC versions: mIRC 7.x only!
 		- Install the script: //load -rs $shortfn($nofile($mircexe) $+ fish_10.mrc)
 		- Shut down mIRC, and start it again
 		- Two lines like this should show up (and no error popup):
-			*** FiSH 10 *** by [c&f] *** fish_inject.dll compiled XXX XX 2010 12:00:00 ***
-			*** FiSH 10 *** by [c&f] *** fish_10.dll     compiled XXX XX 2010 12:00:00 ***
+			*** FiSH 10 *** by [c&f] *** fish_inject.dll compiled XXX XX 2011 12:00:00 ***
+			*** FiSH 10 *** by [c&f] *** fish_10.dll     compiled XXX XX 2011 12:00:00 ***
 		- If that is the case, FiSH 10 is now ready for action!
 		- Connect to your networks and do your thing.
 
