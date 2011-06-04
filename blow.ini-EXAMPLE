@@ -11,7 +11,7 @@ encrypt_action=0
 
 ;*append crypt-mark at end of message
 mark_position=1
-mark_encrypted=" 12·"
+mark_encrypted=" 12$chr(183)"
 
 ;*prefix crypt-mark example
 ;mark_position=2

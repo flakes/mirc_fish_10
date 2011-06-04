@@ -52,7 +52,7 @@ on *:INPUT:*:{
       var %tmp1 = $readini %blow_ini FiSH mark_encrypted
 
       if (%mark_style == $null) { %mark_style = 2 }
-      if (%tmp1 == $null) { %tmp1 = $chr(2) $+ $chr(3) $+ 12· $+ $chr(3) $+ $chr(2) }
+      if (%tmp1 == $null) { %tmp1 = $chr(2) $+ $chr(3) $+ 12Â· $+ $chr(3) $+ $chr(2) }
 
       ;### <mynick> own encrypted text [default crypt mark] ###
       if (%mark_style == 1) {
