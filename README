@@ -152,6 +152,8 @@ Supported mIRC versions: mIRC 7.x only!
 
 == KNOWN ISSUES ==
 
+	If you are using a SOCKS or HTTP proxy then FiSH 10 won't work for you. Sorry.
+
 	FiSH 10 is incompatible to the following applications. Please whitelist mirc.exe in these:
 		- "AdMuncher"
 	This is because FiSH 10 integrates itself into mIRC similarly to these apps.
@@ -161,6 +163,10 @@ Supported mIRC versions: mIRC 7.x only!
 	your blow.ini file from ANSI to UTF-8 which will effectively destroy FiSH 10's ability to
 	properly read the crypt mark.
 	The suggested workaround is using $chr(183) instead of "·".
+
+	When using psyBNC's multi-network feature (network prefixes), it's VITAL that you define one of
+	your networks as "main network". Otherwise, psyBNC won't send a NETWORK name when connecting
+	and all DH1080 key exchanges as well as some other things will fail silently.
 
 == THE FUTURE ==
 
