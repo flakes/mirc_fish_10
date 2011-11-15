@@ -1,4 +1,10 @@
 
+== 2011-11-15 ==
+  * Enabled mIRC6-compatibility encrypted ACTION (/me) workaround to actually work (incoming messages).
+  * Fixed outgoing encrypted /me ACTIONs. They were missing their last character.
+  * Proper support of UTF-8 encoded cryptmarks when using no_legacy=1 mode without $chr() workaround.
+  * Updated OpenSSL to 1.0.0e
+
 == 2011-03-15 ==
   * Updated FiSH_encrypt_msg and FiSH_decrypt_msg DLL routines (for use from within .mrc scripts)
     to be fully backwards-compatible again (keys with characters >=0x80 were broken).
