@@ -399,7 +399,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, cons
 			return NULL;
 		else
 		{
-			l_message = l_message.substr(8, l_message.size() - 10); // strip trailing \x01 too
+			l_message = l_message.substr(8, l_message.size() - 8 - 1); // strip trailing \x01 too
 			l_cmd_type = CMD_ACTION;
 		}
 	}
