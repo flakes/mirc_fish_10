@@ -287,10 +287,35 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 			int l_markPos = l_ini->GetInt(L"mark_position"); // 1 = append, 2 = prepend, 0 = disabled
 			if(l_markPos > 0 && l_markPos <= 2)
 			{
-				std::string l_mark =
-					SimpleMIRCParser(
-						UnicodeToCp(CP_UTF8,
-							l_ini->GetStringW(L"mark_encrypted")));
+				const std::wstring l_markWide = l_ini->GetStringW(L"mark_encrypted");
+				std::string l_mark;
+
+				if(l_ini->NoLegacy())
+				{
+					std::string l_markDumb;
+					// if the .ini file is UTF-8 encoded, UnicodeToCp would double-encode
+					// the characters, so try this dumbfolded approach of conversion.
+
+					for each(wchar_t ch in l_markWide)
+					{
+						if(ch && ch <= std::numeric_limits<unsigned char>::max()) l_markDumb += (unsigned char)ch;
+					}
+
+					if(l_markDumb.empty() || !Utf8Validate(l_markDumb.c_str()))
+					{
+						l_mark = UnicodeToCp(CP_UTF8, l_markWide);
+					}
+					else
+					{
+						l_mark = l_markDumb;
+					}
+				}
+				else
+				{
+					l_mark = UnicodeToCp(CP_UTF8, l_markWide);
+				}
+
+				l_mark = SimpleMIRCParser(l_mark);
 
 #if 0
 				bool l_msgValid = Utf8Validate(l_newMsg.c_str();
