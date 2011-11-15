@@ -258,6 +258,20 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 
 	int l_decryptionResult = blowfish_decrypt_auto(l_cbc, l_message, l_newMsg, l_blowKey);
 
+	if(l_decryptionResult == 0)
+	{
+		// compatibility fix
+		// (we only encode the actual MSG part of CTCP ACTIONs, but the old FiSH.dll and some scripts etc.
+		// encode the whole thing including \x01 and so on)
+		if(l_cmd_type == CMD_PRIVMSG && l_newMsg.find("\x01""ACTION ") == 0)
+		{
+			l_newMsg.erase(0, 8);
+			if(l_newMsg.size() > 0 && l_newMsg[l_newMsg.size() - 1] == 0x01) l_newMsg.erase(l_newMsg.size() - 1);
+			l_cmd_type = CMD_ACTION;
+		}
+		// this obviously needs to be done before appending the crypt mark... fixed 2011-11.
+	}
+
 	switch(l_decryptionResult)
 	{
 	case -1:
@@ -297,16 +311,6 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 			}
 		}
 		break;
-	}
-
-	// compatibility fix
-	// (we only encode the actual MSG part of CTCP ACTIONs, but the old FiSH.dll and some scripts etc.
-	// encode the whole thing including \x01 and so on)
-	if(l_cmd_type == CMD_PRIVMSG && l_newMsg.find("\x01""ACTION ") == 0)
-	{
-		l_newMsg.erase(0, 8);
-		if(l_newMsg.size() > 0 && l_newMsg[l_newMsg.size() - 1] == 0x01) l_newMsg.erase(l_newMsg.size() - 1);
-		l_cmd_type = CMD_ACTION;
 	}
 
 	// form new line:
