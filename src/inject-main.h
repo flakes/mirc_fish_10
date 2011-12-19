@@ -51,6 +51,7 @@ public:
 	bool OnSending(bool a_ssl, const char* a_data, size_t a_len);
 	void OnSendingSSLHandshakePacket() { m_sslShakingHands = true; }
 
+	void OnBeforeReceive(bool a_ssl);
 	void OnAfterReceive(const char* a_data, size_t a_len);
 
 	bool IsSSL() const { return m_ssl; }

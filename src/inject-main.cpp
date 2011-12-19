@@ -146,6 +146,8 @@ int WSAAPI my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 
 		::LeaveCriticalSection(&s_socketsLock);
 
+		l_sock->OnBeforeReceive(false);
+
 		// important for receiving files via DCC:
 		// IRC server connections will always have sent data before receiving any.
 		if(!l_sock->HasExchangedData())
@@ -269,6 +271,8 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 		auto l_sock = it->second;
 
 		::LeaveCriticalSection(&s_socketsLock);
+
+		l_sock->OnBeforeReceive(true);
 
 		// in case mIRC ever gets DCC-over-SSL support,
 		// we will be prepared (also see my_recv):

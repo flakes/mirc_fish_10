@@ -57,6 +57,14 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 	return true;
 }
 
+void CSocketInfo::OnBeforeReceive(bool a_ssl)
+{
+	if(m_sslShakingHands && a_ssl)
+	{
+		m_sslShakingHands = false;
+	}
+}
+
 void CSocketInfo::OnAfterReceive(const char* a_data, size_t a_len)
 {
 	m_receivingBuffer.append(a_data, a_len);
