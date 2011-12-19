@@ -22,7 +22,7 @@ Supported mIRC versions: mIRC 7.x only!
 
 	Alright, now on to the actual installing procedure. If you have not been using FiSH.dll
 	before, or if you are installing mIRC 7 from scratch, you can skip this paragraph.
-		- Unload FiSH.mrc from mIRC like so: //unload -rs $shortfn($nofile($mircexe)) $+ FiSH.mrc)
+		- Unload FiSH.mrc from mIRC like so: //unload -rs $shortfn($nofile($mircexe) $+ FiSH.mrc)
 		(- Unload blow.mrc, blowcrypt.mrc, mircryption.mrc, etc.)
 		- Delete FiSH.dll
 		- Delete FiSH.mrc
