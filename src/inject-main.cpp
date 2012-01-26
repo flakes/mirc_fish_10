@@ -57,6 +57,19 @@ static CRITICAL_SECTION s_socketsLock;
 
 /* pointers to utility methods from shared libs */
 static SSL_get_fd_proc _SSL_get_fd;
+static SSL_state_proc _SSL_state;
+
+/* from ssl.h */
+#define SSL_ST_CONNECT			0x1000
+#define SSL_ST_ACCEPT			0x2000
+#define SSL_ST_MASK			0x0FFF
+#define SSL_ST_INIT			(SSL_ST_CONNECT|SSL_ST_ACCEPT)
+#define SSL_ST_BEFORE			0x4000
+#define SSL_ST_OK			0x03
+#define SSL_ST_RENEGOTIATE		(0x04|SSL_ST_INIT)
+
+#define SSL_is_init_finished(a)		(_SSL_state(a) == SSL_ST_OK)
+#define SSL_in_init(a)			(_SSL_state(a)&SSL_ST_INIT)
 
 
 /* patched connect call */
@@ -266,17 +279,21 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	::EnterCriticalSection(&s_socketsLock);
 	auto it = s_sockets.find(s);
 
-	if(it != s_sockets.end())
+	// terminate our internal handshake flag if the handshake is complete:
+	if(it != s_sockets.end() && SSL_is_init_finished(ssl))
+	{
+		it->second->OnBeforeReceive(true);
+	}
+
+	if(it != s_sockets.end() && !it->second->IsSSLShakingHands())
 	{
 		auto l_sock = it->second;
 
 		::LeaveCriticalSection(&s_socketsLock);
 
-		l_sock->OnBeforeReceive(true);
-
 		// in case mIRC ever gets DCC-over-SSL support,
 		// we will be prepared (also see my_recv):
-		if(!l_sock->HasExchangedData() && !l_sock->IsSSLShakingHands())
+		if(!l_sock->HasExchangedData())
 		{
 			::EnterCriticalSection(&s_socketsLock);
 			s_sockets.erase(s);
@@ -284,6 +301,8 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 
 			return s_lpfn_SSL_read(ssl, buf, num);
 		}
+
+		// the following is for IRC sockets only:
 
 		while(!l_sock->HasReceivedLine())
 		{
@@ -370,6 +389,7 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 
 		// OpenSSL utility methods:
 		_SSL_get_fd = (SSL_get_fd_proc)::GetProcAddress(hInstSSLeay, "SSL_get_fd");
+		_SSL_state = (SSL_state_proc)::GetProcAddress(hInstSSLeay, "SSL_state");
 
 		// check if it worked:
 		if(s_patchConnect->patched() && s_patchRecv->patched() && s_patchSend->patched() &&
