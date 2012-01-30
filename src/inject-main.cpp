@@ -279,21 +279,21 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	::EnterCriticalSection(&s_socketsLock);
 	auto it = s_sockets.find(s);
 
-	// terminate our internal handshake flag if the handshake is complete:
-	if(it != s_sockets.end() && SSL_is_init_finished(ssl))
-	{
-		it->second->OnBeforeReceive(true);
-	}
-
-	if(it != s_sockets.end() && !it->second->IsSSLShakingHands())
+	if(it != s_sockets.end())
 	{
 		auto l_sock = it->second;
 
 		::LeaveCriticalSection(&s_socketsLock);
 
+		// terminate our internal handshake flag if the handshake is complete:
+		if(SSL_is_init_finished(ssl))
+		{
+			l_sock->OnBeforeReceive(true);
+		}
+
 		// in case mIRC ever gets DCC-over-SSL support,
 		// we will be prepared (also see my_recv):
-		if(!l_sock->HasExchangedData())
+		if(!l_sock->HasExchangedData() && !it->second->IsSSLShakingHands())
 		{
 			::EnterCriticalSection(&s_socketsLock);
 			s_sockets.erase(s);
@@ -393,7 +393,8 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 
 		// check if it worked:
 		if(s_patchConnect->patched() && s_patchRecv->patched() && s_patchSend->patched() &&
-			(!hInstSSLeay || (s_patchSSLWrite->patched() && s_patchSSLRead->patched())))
+			(!hInstSSLeay || (s_patchSSLWrite->patched() && s_patchSSLRead->patched())) &&
+			(_SSL_get_fd != NULL) && (_SSL_state != NULL))
 		{
 			info->mKeep = TRUE;
 

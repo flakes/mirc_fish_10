@@ -15,7 +15,7 @@ typedef int(WSAAPI* closesocket_proc)(SOCKET);
 typedef int(__cdecl* SSL_write_proc)(void *ssl, const void *buf, int num);
 typedef int(__cdecl* SSL_read_proc)(void *ssl, void *buf, int num);
 
-typedef int(__cdecl* SSL_state_proc)(void *ssl);
+typedef int(__cdecl* SSL_state_proc)(const void *ssl);
 typedef int(__cdecl* SSL_get_fd_proc)(const void *ssl);
 
 /* from mIRC help file (like some more of the comments below) */
