@@ -1,4 +1,8 @@
 
+== 2012-01-30 ==
+  * Fixed an issue identified by someone on IRC: when using sockopen -e (SSL) sockets and receiving stuff
+    before writing to the socket, the writes would always fail.
+
 == 2011-11-17 ==
   * Enabled mIRC6-compatibility encrypted ACTION (/me) workaround to actually work (incoming messages).
   * Fixed outgoing encrypted /me ACTIONs. They were missing their last character.

@@ -295,11 +295,16 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 		// we will be prepared (also see my_recv):
 		if(!l_sock->HasExchangedData() && !it->second->IsSSLShakingHands())
 		{
-			::EnterCriticalSection(&s_socketsLock);
-			s_sockets.erase(s);
-			::LeaveCriticalSection(&s_socketsLock);
+			int l_sslRet = s_lpfn_SSL_read(ssl, buf, num);
 
-			return s_lpfn_SSL_read(ssl, buf, num);
+			if(l_sslRet > -1) // don't act on SSL_ERROR_WANT_WRITE etc.
+			{
+				::EnterCriticalSection(&s_socketsLock);
+				s_sockets.erase(s);
+				::LeaveCriticalSection(&s_socketsLock);
+			}
+
+			return l_sslRet;
 		}
 
 		// the following is for IRC sockets only:
@@ -481,6 +486,9 @@ void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function,
 {
 	wchar_t _tid[20];
 	swprintf_s(_tid, 20, L"[%08x] ", GetCurrentThreadId());
+
+	::EnterCriticalSection(&s_socketsLock); // mis-use, but safe currently
+
 	OutputDebugStringW(_tid);
 	OutputDebugStringA(a_function);
 	if(!a_message.empty())
@@ -493,6 +501,8 @@ void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function,
 	{
 		OutputDebugStringA("\n");
 	}
+
+	::LeaveCriticalSection(&s_socketsLock);
 }
 #endif
 
