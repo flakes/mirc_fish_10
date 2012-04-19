@@ -1,4 +1,7 @@
 
+== 2012-04-19 ==
+  * OpenSSL update to 1.0.1a (preventing a possible security issue)
+
 == 2012-01-30 ==
   * Fixed an issue identified by someone on IRC: when using sockopen -e (SSL) sockets and receiving stuff
     before writing to the socket, the writes would always fail.
