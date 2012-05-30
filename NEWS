@@ -1,29 +1,32 @@
 
+== 2012-05-30 ==
+	* OpenSSL update to 1.0.1c (some IRC servers were not working with 1.0.1a, thanks to who reported this)
+
 == 2012-04-19 ==
-  * OpenSSL update to 1.0.1a (preventing a possible security issue)
+	^* OpenSSL update to 1.0.1a (preventing a possible security issue)
 
 == 2012-01-30 ==
-  * Fixed an issue identified by someone on IRC: when using sockopen -e (SSL) sockets and receiving stuff
-    before writing to the socket, the writes would always fail.
-  * Updated OpenSSL to 1.0.0g
+	* Fixed an issue identified by someone on IRC: when using sockopen -e (SSL) sockets and receiving stuff
+	  before writing to the socket, the writes would always fail.
+	* Updated OpenSSL to 1.0.0g
 
 == 2011-11-17 ==
-  * Enabled mIRC6-compatibility encrypted ACTION (/me) workaround to actually work (incoming messages).
-  * Fixed outgoing encrypted /me ACTIONs. They were missing their last character.
-  * Proper support of UTF-8 encoded cryptmarks when using no_legacy=1 mode without $chr() workaround.
-  * Updated OpenSSL to 1.0.0e
+	* Enabled mIRC6-compatibility encrypted ACTION (/me) workaround to actually work (incoming messages).
+	* Fixed outgoing encrypted /me ACTIONs. They were missing their last character.
+	* Proper support of UTF-8 encoded cryptmarks when using no_legacy=1 mode without $chr() workaround.
+	* Updated OpenSSL to 1.0.0e
 
 == 2011-03-15 ==
-  * Updated FiSH_encrypt_msg and FiSH_decrypt_msg DLL routines (for use from within .mrc scripts)
-    to be fully backwards-compatible again (keys with characters >=0x80 were broken).
-  * Added FiSH_DecryptMsg10 and FiSH_EncryptMsg10 DLL routines with the following signature:
+	* Updated FiSH_encrypt_msg and FiSH_decrypt_msg DLL routines (for use from within .mrc scripts)
+	  to be fully backwards-compatible again (keys with characters >=0x80 were broken).
+	* Added FiSH_DecryptMsg10 and FiSH_EncryptMsg10 DLL routines with the following signature:
 	  <decode_utf8|raw_bytes> <key> <base64data>
 	  Use these if you need to work with UTF-8 encoded keys, e.g.:
 	  //echo -a $dll(%FiSH_DLL,FiSH_EncryptMsg10,raw_bytes üütf§KEY message here blah blah)
 
 == 2011-02-12 ==
-  * Fixed another syntax error in fish_10.mrc
-  * Updated OpenSSL to 1.0.0d
+	* Fixed another syntax error in fish_10.mrc
+	* Updated OpenSSL to 1.0.0d
 
 == 2011-02-05 ===
 	* Fixed issue 23, identified by ex0a (outgoing crypt mark did not respect process_outgoing default).
