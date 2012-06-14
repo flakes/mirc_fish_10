@@ -1,9 +1,12 @@
 
+== 2012-06-14 ==
+	* Fixed a slight incompatibility with fresh mIRC 7.25 installations that caused decryption and encryption to stop working
+
 == 2012-05-30 ==
 	* OpenSSL update to 1.0.1c (some IRC servers were not working with 1.0.1a, thanks to who reported this)
 
 == 2012-04-19 ==
-	^* OpenSSL update to 1.0.1a (preventing a possible security issue)
+	* OpenSSL update to 1.0.1a (preventing a possible security issue)
 
 == 2012-01-30 ==
 	* Fixed an issue identified by someone on IRC: when using sockopen -e (SSL) sockets and receiving stuff
