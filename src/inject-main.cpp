@@ -165,11 +165,19 @@ int WSAAPI my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 		// IRC server connections will always have sent data before receiving any.
 		if(!l_sock->HasExchangedData())
 		{
+			int l_ret = a_lpfn_recv(s, buf, len, flags);
+
+			// ignore spurious recv()s during connection startup:
+			if(l_ret < 1)
+			{
+				return l_ret;
+			}
+
 			::EnterCriticalSection(&s_socketsLock);
 			s_sockets.erase(s);
 			::LeaveCriticalSection(&s_socketsLock);
 
-			return a_lpfn_recv(s, buf, len, flags);
+			return l_ret;
 		}
 
 		while(!l_sock->HasReceivedLine())
