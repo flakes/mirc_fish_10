@@ -294,22 +294,27 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 		::LeaveCriticalSection(&s_socketsLock);
 
 		// terminate our internal handshake flag if the handshake is complete:
-		if(SSL_is_init_finished(ssl))
+		if(l_sock->IsSSLShakingHands() && SSL_is_init_finished(ssl))
 		{
 			l_sock->OnBeforeReceive(true);
 		}
 
 		// in case mIRC ever gets DCC-over-SSL support,
 		// we will be prepared (also see my_recv):
-		if(!l_sock->HasExchangedData() && !it->second->IsSSLShakingHands())
+		if(!l_sock->HasExchangedData() && !l_sock->IsSSLShakingHands())
 		{
 			int l_sslRet = s_lpfn_SSL_read(ssl, buf, num);
 
 			if(l_sslRet > -1) // don't act on SSL_ERROR_WANT_WRITE etc.
 			{
-				::EnterCriticalSection(&s_socketsLock);
-				s_sockets.erase(s);
-				::LeaveCriticalSection(&s_socketsLock);
+				if(l_sock->OnSuccessfulReadDuringInit() > 1)
+					// since mIRC 7.25, read is occasionally called before sending CAP LS
+					// pray to the gods that it's only called once, or it will break again.
+				{
+					::EnterCriticalSection(&s_socketsLock);
+					s_sockets.erase(s);
+					::LeaveCriticalSection(&s_socketsLock);
+				}
 			}
 
 			return l_sslRet;

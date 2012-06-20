@@ -6,6 +6,7 @@ CSocketInfo::CSocketInfo(SOCKET s)
 	m_socket = s;
 	m_ssl = m_sslShakingHands = false;
 	m_dataExchanged = false;
+	m_numSuccessfulReads = 0;
 }
 
 /**

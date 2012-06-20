@@ -34,6 +34,8 @@ protected:
 	SOCKET m_socket;
 	bool m_ssl, m_sslShakingHands;
 	bool m_dataExchanged;
+	// this is a workaround for when mIRC calls SSL_read before sending CAP LS:
+	int m_numSuccessfulReads;
 
 	// for unencrypted data, ready to be fetched from outside:
 	std::string m_sendBuffer;
@@ -54,6 +56,7 @@ public:
 
 	void OnBeforeReceive(bool a_ssl);
 	void OnAfterReceive(const char* a_data, size_t a_len);
+	int OnSuccessfulReadDuringInit() { return ++m_numSuccessfulReads; };
 
 	bool IsSSL() const { return m_ssl; }
 	bool IsSSLShakingHands() const { return m_sslShakingHands; }
