@@ -1,6 +1,11 @@
 
+== 2012-06-20 ==
+	* Added a workaround for the previous incompatibility with fresh mIRC 7.25 installations, this time
+	  for SSL-enabled connections. Sorry for the trouble.
+
 == 2012-06-14 ==
-	* Fixed a slight incompatibility with fresh mIRC 7.25 installations that caused decryption and encryption to stop working
+	* Fixed a slight incompatibility with fresh mIRC 7.25 installations that caused decryption and
+	  encryption to stop working.
 
 == 2012-05-30 ==
 	* OpenSSL update to 1.0.1c (some IRC servers were not working with 1.0.1a, thanks to who reported this)
