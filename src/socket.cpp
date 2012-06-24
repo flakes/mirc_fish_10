@@ -4,9 +4,8 @@
 CSocketInfo::CSocketInfo(SOCKET s) :
 	m_socket(s),
 	m_state(MSCK_INITIALIZING),
-	m_ssl(false),
-	m_bytesSent(0), m_bytesReceived(0),
-	m_sslHandshakeComplete(false)
+	m_ssl(false), m_sslHandshakeComplete(false),
+	m_bytesSent(0), m_bytesReceived(0)
 {
 	::InitializeCriticalSection(&m_opLock);
 }
@@ -66,13 +65,26 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 
 				m_state = MSCK_TLS_HANDSHAKE;
 			}
-			else if(*a_data == 0x04 && a_len > sizeof(socks4_conn_request_t))
+			else if(*a_data == 0x04 && a_len > sizeof(socks4_conn_request_t)) // PROXY: SOCKS4/SOCKS4a
+			{
+				socks4_conn_request_t l_req;
+				memcpy_s(&l_req, sizeof(socks4_conn_request_t), a_data, sizeof(socks4_conn_request_t));
+
+				if(l_req.version == 0x04 && l_req.command == 0x01 && l_req.port > 0 && l_req.ip_addr > 0)
+				{
+					// seems legit enough...
+
+					m_state = MSCK_SOCKS4_HANDSHAKE;
+				}
+				else
+				{
+					m_state = MSCK_NOT_IRC;
+				}
+			}
+			else if(*a_data == 0x05 && a_len > sizeof(socks5_greeting_t)) // PROXY: SOCKS5
 			{
 			}
-			else if(*a_data == 0x05 && a_len > sizeof(socks5_greeting_t))
-			{
-			}
-			else if(a_len >= 19 && strncmp("CONNECT ", a_data, 8) == 0)
+			else if(a_len >= 19 && strncmp("CONNECT ", a_data, 8) == 0) // PROXY: HTTP
 			{
 				char _dummy1[300];
 				unsigned int _dummy2;
@@ -96,6 +108,7 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 			}
 		}
 		else if(l_bytesSentBefore == 0 && a_ssl && m_sslHandshakeComplete)
+			// after the TLS handshake, it's a normal IRC stream, maybe, at least:
 		{
 			if(a_len >= 7 && (memcmp(a_data, "CAP LS\n", 7) == 0 || memcmp(a_data, "CAP LS\r\n", 8) == 0))
 			{
@@ -208,6 +221,26 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 
 		m_state = MSCK_NOT_IRC;
 	}
+	else if(m_state == MSCK_SOCKS4_HANDSHAKE)
+	{
+		if(l_bytesReceivedBefore == 0 && a_len == sizeof(socks4_conn_response_t))
+		{
+			socks4_conn_response_t l_resp;
+			memcpy_s(&l_resp, sizeof(socks4_conn_response_t), a_data, sizeof(socks4_conn_response_t));
+
+			if(l_resp.nulbyte == 0 && l_resp.status == 0x5A)
+			{
+				INJECT_DEBUG_MSG("SOCKS4 proxy response is okay!");
+
+				OnProxyHandshakeComplete();
+				return;
+			}
+		}
+
+		INJECT_DEBUG_MSG("Received bad or unrecognized SOCKS4 proxy response.");
+
+		m_state = MSCK_NOT_IRC;
+	}
 	else if(m_bytesReceived > 2048) // 2 KB ought to be enough for any IRC pre-register message
 	{
 		INJECT_DEBUG_MSG("Received too much data without any signs for IRC activity.");
@@ -242,7 +275,6 @@ bool CSocketInfo::HasReceivedLine() const
 
 std::string CSocketInfo::ReadFromRecvBuffer(size_t a_max)
 {
-	INJECT_DEBUG_MSG("");
 	std::string l_tmp = m_receivedBuffer.substr(0, a_max);
 	m_receivedBuffer.erase(0, a_max);
 	return l_tmp;

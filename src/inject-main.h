@@ -14,7 +14,9 @@ typedef enum {
 	MSCK_INITIALIZING = 0,
 	MSCK_TLS_HANDSHAKE,
 	MSCK_SOCKS4_HANDSHAKE,
-	MSCK_SOCKS5_HANDSHAKE,
+	MSCK_SOCKS5_GREETING,
+	MSCK_SOCKS5_AUTHENTICATION,
+	MSCK_SOCKS5_CONNECTION,
 	MSCK_HTTP_PROXY_HANDSHAKE,
 	MSCK_IRC_IDENTIFIED,
 	MSCK_NOT_IRC
@@ -93,10 +95,40 @@ typedef struct {
 } socks4_conn_request_t;
 
 typedef struct {
-	uint8_t version;
+	uint8_t nulbyte;
+	uint8_t status; // 0x5a = request granted
+	uint16_t junk1;
+	uint32_t junk2;
+} socks4_conn_response_t;
+
+typedef struct {
+	uint8_t version; // must be 0x05
 	uint8_t num_auth_methods;
 	// field 3: authentication methods, variable length, 1 byte per method supported
 } socks5_greeting_t;
+
+typedef struct {
+	uint8_t version; // must be 0x05
+	uint8_t auth_method;
+} socks5_greeting_response_t;
+
+typedef struct {
+	uint8_t version; // must be 0x05
+	uint8_t command; // 0x01 = establish a TCP/IP stream connection
+	uint8_t reserved1;
+	uint8_t addr_type;
+	// field 5: destination address of: 4 bytes for IPv4 address / 1 byte of name length followed by the name for Domain name / 16 bytes for IPv6 address
+	// field 6: port number in a network byte order, 2 bytes
+} socks5_conn_request_t;
+
+typedef struct {
+	uint8_t version; // must be 0x05
+	uint8_t status; // 0x00 = request granted
+	uint8_t reserved1;
+	uint8_t addr_type;
+	// field 5: destination address of: 4 bytes for IPv4 address / 1 byte of name length followed by the name for Domain name / 16 bytes for IPv6 address
+	// field 6: port number in a network byte order, 2 bytes
+} socks5_conn_response_t;
 
 
 /* function signature typedefs */
