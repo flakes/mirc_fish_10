@@ -148,7 +148,7 @@ int WSAAPI my_send(SOCKET s, const char FAR * buf, int len, int flags)
 }
 
 
-/* patched recv call */
+/* patched recv calls */
 int WSAAPI my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_proc a_lpfn_recv)
 {
 	if(!s || !buf || len < 1)
@@ -157,7 +157,9 @@ int WSAAPI my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 	::EnterCriticalSection(&s_socketsLock);
 	auto it = s_sockets.find(s);
 
-	if(it != s_sockets.end() && !it->second->IsSSL())
+	if(it != s_sockets.end()
+		&& !it->second->IsSSL()  // ignore SSL connections, they have been handled in SSL_read
+		&& it->second->GetState() != MSCK_NOT_IRC)
 	{
 		auto l_sock = it->second;
 
@@ -329,7 +331,9 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	::EnterCriticalSection(&s_socketsLock);
 	auto it = s_sockets.find(s);
 
-	if(it != s_sockets.end() && it->second->IsSSL())
+	if(it != s_sockets.end()
+		&& it->second->IsSSL()
+		&& it->second->GetState() != MSCK_NOT_IRC)
 	{
 		auto l_sock = it->second;
 
@@ -544,7 +548,7 @@ extern "C" int __stdcall UnloadDll(int mTimeout)
 
 extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
-	strcpy_s(data, 900, "/echo -a *** FiSH 10 *** by [c&f] *** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***");
+	strcpy_s(data, 900, "/echo -a *** FiSH 10.2 *** by [c&f] *** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***");
 	return 2;
 }
 

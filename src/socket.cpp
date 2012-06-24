@@ -18,12 +18,6 @@ void CSocketInfo::Lock()
 }
 
 
-bool CSocketInfo::TryLock()
-{
-	return (::TryEnterCriticalSection(&m_opLock) == TRUE);
-}
-
-
 void CSocketInfo::Unlock()
 {
 	::LeaveCriticalSection(&m_opLock);
@@ -218,6 +212,12 @@ std::string CSocketInfo::ReadFromRecvBuffer(size_t a_max)
 	std::string l_tmp = m_receivedBuffer.substr(0, a_max);
 	m_receivedBuffer.erase(0, a_max);
 	return l_tmp;
+}
+
+
+void CSocketInfo::Discard()
+{
+	m_state = MSCK_NOT_IRC;
 }
 
 

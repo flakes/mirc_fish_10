@@ -76,7 +76,6 @@ public:
 	// that tried to reconnect a lot, although usually all calls to one socket originate
 	// from the same thread.
 	void Lock();
-	bool TryLock();
 	void Unlock();
 
 	// use this for completely unexpected cases:

@@ -922,7 +922,7 @@ EXPORT_SIG(int) INI_SetSectionBool(HWND mWnd, HWND aWnd, char *data, char *parms
 
 extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
-	strcpy_s(data, 900, "/echo -a *** FiSH 10 *** by [c&f] *** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***");
+	strcpy_s(data, 900, "/echo -a *** FiSH 10.2 *** by [c&f] *** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***");
 	return 2;
 }
 
