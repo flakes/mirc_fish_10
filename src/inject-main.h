@@ -2,6 +2,7 @@
 
 #include <ws2tcpip.h>
 #include <windows.h>
+#include <stdint.h>
 #include <memory>
 #include <map>
 #include "patcher.h"
@@ -98,16 +99,16 @@ public:
 	source: http://en.wikipedia.org/wiki/SOCKS **/
 
 typedef struct {
-	BYTE version; // field 1: SOCKS version number, 1 byte, must be 0x04 for this version
-	BYTE command; // field 2: command code, 1 byte: 0x01 = establish a TCP/IP stream connection / 0x02 = establish a TCP/IP port binding
-	unsigned short port;
-	//uint32_t ip_addr;
+	uint8_t version; // field 1: SOCKS version number, 1 byte, must be 0x04 for this version
+	uint8_t command; // field 2: command code, 1 byte: 0x01 = establish a TCP/IP stream connection / 0x02 = establish a TCP/IP port binding
+	uint16_t port;
+	uint32_t ip_addr;
 	// :TODO: + variable length field 5
 } socks4_conn_request_t;
 
 typedef struct {
-	BYTE version;
-	BYTE num_auth_methods;
+	uint8_t version;
+	uint8_t num_auth_methods;
 	// field 3: authentication methods, variable length, 1 byte per method supported
 } socks5_greeting_t;
 

@@ -43,12 +43,12 @@ static CPatch* s_patchSSLWrite;
 static CPatch* s_patchSSLRead;
 
 /* pointers to original/previous call locations */
-static connect_proc		s_lpfn_connect;
-static send_proc		s_lpfn_send, s_lpfn_send_legacy;
-static recv_proc		s_lpfn_recv, s_lpfn_recv_legacy;
-static closesocket_proc	s_lpfn_closesocket;
-static SSL_write_proc	s_lpfn_SSL_write;
-static SSL_read_proc	s_lpfn_SSL_read;
+static connect_proc     s_lpfn_connect;
+static send_proc        s_lpfn_send, s_lpfn_send_legacy;
+static recv_proc        s_lpfn_recv, s_lpfn_recv_legacy;
+static closesocket_proc s_lpfn_closesocket;
+static SSL_write_proc   s_lpfn_SSL_write;
+static SSL_read_proc    s_lpfn_SSL_read;
 
 /* active sockets */
 typedef std::map<SOCKET, std::shared_ptr<CSocketInfo> > MActiveSocks;
@@ -57,19 +57,19 @@ static CRITICAL_SECTION s_socketsLock;
 
 /* pointers to utility methods from shared libs */
 static SSL_get_fd_proc _SSL_get_fd;
-static SSL_state_proc _SSL_state;
+static SSL_state_proc  _SSL_state;
 
 /* from ssl.h */
-#define SSL_ST_CONNECT		0x1000
-#define SSL_ST_ACCEPT		0x2000
-#define SSL_ST_MASK			0x0FFF
-#define SSL_ST_INIT			(SSL_ST_CONNECT|SSL_ST_ACCEPT)
-#define SSL_ST_BEFORE		0x4000
-#define SSL_ST_OK			0x03
-#define SSL_ST_RENEGOTIATE	(0x04|SSL_ST_INIT)
+#define SSL_ST_CONNECT      0x1000
+#define SSL_ST_ACCEPT       0x2000
+#define SSL_ST_MASK         0x0FFF
+#define SSL_ST_INIT         (SSL_ST_CONNECT|SSL_ST_ACCEPT)
+#define SSL_ST_BEFORE       0x4000
+#define SSL_ST_OK           0x03
+#define SSL_ST_RENEGOTIATE  (0x04|SSL_ST_INIT)
 
-#define SSL_is_init_finished(a)	(_SSL_state(a) == SSL_ST_OK)
-#define SSL_in_init(a)			(_SSL_state(a)&SSL_ST_INIT)
+#define SSL_is_init_finished(a) (_SSL_state(a) == SSL_ST_OK)
+#define SSL_in_init(a)          (_SSL_state(a)&SSL_ST_INIT)
 
 
 /* patched connect call */
@@ -208,13 +208,13 @@ int WSAAPI my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 				l_sock->OnReceiving(false, l_localBuf, l_ret);
 			}
 
-			// yay we got a complete line in the buffer.
+			// yay, there is a complete line in the buffer.
 
 			const std::string l_tmp = l_sock->ReadFromRecvBuffer(len);
 
 			l_sock->Unlock();
 
-			memcpy(buf, l_tmp.c_str(), l_tmp.size());
+			memcpy_s(buf, len, l_tmp.c_str(), l_tmp.size());
 
 			return l_tmp.size();
 		}
@@ -303,7 +303,7 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 		else
 		{
 			l_sock->Unlock();
-			// fall through to normal send operation
+			// fall through to normal SSL_write call
 		}
 	}
 	else
@@ -320,9 +320,6 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 {
 	if(!ssl || !buf || num < 0)
 		return s_lpfn_SSL_read(ssl, buf, num);
-
-	// 1. if local (modified) buffer, read from that
-	// 2. else if line incomplete, or empty local buffer, call s_lpfn_SSL_read
 
 	SOCKET s = (SOCKET)_SSL_get_fd(ssl);
 
@@ -370,6 +367,8 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 		else
 		{
 			// it's an IRC connection, so let's rock.
+			// 1. if local (modified) buffer, read from that
+			// 2. else if line incomplete, or empty local buffer, call s_lpfn_SSL_read
 
 			while(!l_sock->HasReceivedLine())
 			{
@@ -389,13 +388,13 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 				l_sock->OnReceiving(true, l_localBuf, l_sslRet);
 			}
 
-			// yay we got a complete line in the buffer.
+			// yay, there is a complete line in the buffer.
 
 			const std::string l_tmp = l_sock->ReadFromRecvBuffer(num);
 
 			l_sock->Unlock();
 
-			memcpy(buf, l_tmp.c_str(), l_tmp.size());
+			memcpy_s(buf, num, l_tmp.c_str(), l_tmp.size());
 
 			return l_tmp.size();
 		}

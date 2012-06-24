@@ -78,6 +78,20 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 			else if(*a_data == 0x05 && a_len > sizeof(socks5_greeting_t))
 			{
 			}
+			else if(a_len >= 19 && strncmp("CONNECT ", a_data, 8) == 0)
+			{
+				char _dummy1[300];
+				unsigned int _dummy2;
+
+				if(sscanf_s(a_data, "CONNECT %299s HTTP/1.%u\r\n", _dummy1, 299, &_dummy2) == 2)
+				{
+					m_state = MSCK_HTTP_PROXY_HANDSHAKE;
+				}
+				else
+				{
+					m_state = MSCK_NOT_IRC;
+				}
+			}
 			else
 			{
 				// this ain't nothing we know about :(
@@ -93,6 +107,12 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 			{
 				m_state = MSCK_IRC_IDENTIFIED;
 			}
+		}
+		else if(m_bytesSent > 2048)
+		{
+			INJECT_DEBUG_MSG("Sent too much data without any signs for IRC activity.");
+
+			m_state = MSCK_NOT_IRC;
 		}
 	}
 	

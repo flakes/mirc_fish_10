@@ -26,7 +26,7 @@ static CRITICAL_SECTION s_socketMapLock;
 /* for use from fish_inject.dll */
 EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 {
-	if(*a_line != ':')
+	if(!a_socket || !a_line || a_len < 1 || *a_line != ':')
 		return NULL;
 
 	if(strstr(a_line, " ") == strstr(a_line, " 005 "))
@@ -355,6 +355,9 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 /* for use from fish_inject.dll */
 EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 {
+	if(!a_socket || !a_line || a_len < 1)
+		return NULL;
+
 	auto l_ini = GetBlowIni();
 
 	if(!l_ini->GetBool(L"process_outgoing", true))
