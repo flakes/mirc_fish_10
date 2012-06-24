@@ -83,6 +83,17 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 			}
 			else if(*a_data == 0x05 && a_len > sizeof(socks5_greeting_t)) // PROXY: SOCKS5
 			{
+				socks5_greeting_t l_gre;
+				memcpy_s(&l_gre, sizeof(socks5_greeting_t), a_data, sizeof(socks5_greeting_t));
+
+				if(l_gre.version == 0x05 && l_gre.num_auth_methods < 5)
+				{
+					m_state = MSCK_SOCKS5_GREETING;
+				}
+				else
+				{
+					m_state = MSCK_NOT_IRC;
+				}
 			}
 			else if(a_len >= 19 && strncmp("CONNECT ", a_data, 8) == 0) // PROXY: HTTP
 			{
@@ -121,6 +132,24 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 
 			m_state = MSCK_NOT_IRC;
 		}
+	}
+	else if(m_state == MSCK_SOCKS5_AUTHENTICATION)
+	{
+		if(a_len > sizeof(socks5_conn_request_t))
+		{
+			socks5_conn_request_t l_req;
+			memcpy_s(&l_req, sizeof(socks5_conn_request_t), a_data, sizeof(socks5_conn_request_t));
+
+			if(l_req.version == 0x05 && l_req.command == 0x01 && l_req.addr_type <= 0x04 && l_req.reserved1 == 0)
+			{
+				m_state = MSCK_SOCKS5_CONNECTION;
+				return false;
+			}
+		}
+
+		INJECT_DEBUG_MSG("SOCKS5 after-auth packet doesn't match.");
+
+		m_state = MSCK_NOT_IRC;
 	}
 	
 	if(m_state == MSCK_IRC_IDENTIFIED)
@@ -238,6 +267,40 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 		}
 
 		INJECT_DEBUG_MSG("Received bad or unrecognized SOCKS4 proxy response.");
+
+		m_state = MSCK_NOT_IRC;
+	}
+	else if(m_state == MSCK_SOCKS5_GREETING)
+	{
+		if(l_bytesReceivedBefore == 0 && a_len == sizeof(socks5_greeting_response_t))
+		{
+			socks5_greeting_response_t l_resp;
+			memcpy_s(&l_resp, sizeof(socks5_greeting_response_t), a_data, sizeof(socks5_greeting_response_t));
+
+			if(l_resp.version == 0x05 && l_resp.auth_method != 0xFF)
+			{
+				m_state = MSCK_SOCKS5_AUTHENTICATION;
+				return;
+			}
+		}
+
+		m_state = MSCK_NOT_IRC;
+	}
+	else if(m_state == MSCK_SOCKS5_CONNECTION)
+	{
+		if(a_len > sizeof(socks5_conn_response_t))
+		{
+			socks5_conn_response_t l_resp;
+			memcpy_s(&l_resp, sizeof(socks5_conn_response_t), a_data, sizeof(socks5_conn_response_t));
+
+			if(l_resp.version == 0x05 && l_resp.status == 0 && l_resp.addr_type <= 0x04 && l_resp.reserved1 == 0)
+			{
+				INJECT_DEBUG_MSG("SOCKS5 proxy response is okay!");
+
+				OnProxyHandshakeComplete();
+				return;
+			}
+		}
 
 		m_state = MSCK_NOT_IRC;
 	}
