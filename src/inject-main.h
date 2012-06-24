@@ -27,15 +27,34 @@ typedef struct {
 } LOADINFO;
 
 
+typedef enum {
+	MSCK_INITIALIZING = 0,
+	MSCK_TLS_HANDSHAKE,
+	MSCK_SOCKS4_HANDSHAKE,
+	MSCK_SOCKS5_HANDSHAKE,
+	MSCK_HTTP_PROXY_HANDSHAKE,
+	MSCK_IRC_IDENTIFIED,
+	MSCK_NOT_IRC
+} MIRC_SOCKET_STATE;
+
+
 /*  */
 class CSocketInfo
 {
 protected:
 	SOCKET m_socket;
-	bool m_ssl, m_sslShakingHands;
-	bool m_dataExchanged;
-	// this is a workaround for when mIRC calls SSL_read before sending CAP LS:
-	int m_numSuccessfulReads;
+	MIRC_SOCKET_STATE m_state;
+
+	bool m_ssl;
+	bool m_sslHandshakeComplete;
+	
+	size_t m_bytesSent;
+	size_t m_bytesReceived;
+
+	CRITICAL_SECTION m_opLock;
+
+	/** the following buffer variables only activate when the connection
+		has been determined to be an IRC connection! **/
 
 	// for unencrypted data, ready to be fetched from outside:
 	std::string m_sendBuffer;
@@ -47,26 +66,52 @@ protected:
 
 public:
 	CSocketInfo(SOCKET s);
+	virtual ~CSocketInfo();
+
+	MIRC_SOCKET_STATE GetState() const { return m_state; }
+	bool IsSSL() const { return m_ssl; }
+
+	// using a locking mechanism for some crashes that were happening on connections
+	// that tried to reconnect a lot, although usually all calls to one socket originate
+	// from the same thread.
+	void Lock();
+	bool TryLock();
+	void Unlock();
+
+	// use this for completely unexpected cases:
+	void Discard();
+
+	void OnSSLHandshakeComplete();
 
 	/**
 	 * @return Modified data placed in m_sendBuffer yes/no
 	 **/
 	bool OnSending(bool a_ssl, const char* a_data, size_t a_len);
-	void OnSendingSSLHandshakePacket() { m_sslShakingHands = true; }
-
-	void OnBeforeReceive(bool a_ssl);
-	void OnAfterReceive(const char* a_data, size_t a_len);
-	int OnSuccessfulReadDuringInit() { return ++m_numSuccessfulReads; };
-
-	bool IsSSL() const { return m_ssl; }
-	bool IsSSLShakingHands() const { return m_sslShakingHands; }
-	bool HasExchangedData() const { return m_dataExchanged; }
+	void OnReceiving(bool a_ssl, const char* a_data, size_t a_len);
 
 	std::string GetSendBuffer();
 	bool HasReceivedLine() const;
 	std::string ReadFromRecvBuffer(size_t a_max);
 };
 
+/** structs for SOCKS proxy detection.
+	source: http://en.wikipedia.org/wiki/SOCKS **/
+
+typedef struct {
+	BYTE version; // field 1: SOCKS version number, 1 byte, must be 0x04 for this version
+	BYTE command; // field 2: command code, 1 byte: 0x01 = establish a TCP/IP stream connection / 0x02 = establish a TCP/IP port binding
+	unsigned short port;
+	//uint32_t ip_addr;
+	// :TODO: + variable length field 5
+} socks4_conn_request_t;
+
+typedef struct {
+	BYTE version;
+	BYTE num_auth_methods;
+	// field 3: authentication methods, variable length, 1 byte per method supported
+} socks5_greeting_t;
+
+/** imports from main FiSH DLL **/
 
 namespace FiSH_DLL
 {
@@ -79,6 +124,7 @@ namespace FiSH_DLL
 	}
 };
 
+/** some debug helper business **/
 
 void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function, std::string a_message);
 

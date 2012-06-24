@@ -60,15 +60,15 @@ static SSL_get_fd_proc _SSL_get_fd;
 static SSL_state_proc _SSL_state;
 
 /* from ssl.h */
-#define SSL_ST_CONNECT			0x1000
-#define SSL_ST_ACCEPT			0x2000
+#define SSL_ST_CONNECT		0x1000
+#define SSL_ST_ACCEPT		0x2000
 #define SSL_ST_MASK			0x0FFF
 #define SSL_ST_INIT			(SSL_ST_CONNECT|SSL_ST_ACCEPT)
-#define SSL_ST_BEFORE			0x4000
+#define SSL_ST_BEFORE		0x4000
 #define SSL_ST_OK			0x03
-#define SSL_ST_RENEGOTIATE		(0x04|SSL_ST_INIT)
+#define SSL_ST_RENEGOTIATE	(0x04|SSL_ST_INIT)
 
-#define SSL_is_init_finished(a)		(_SSL_state(a) == SSL_ST_OK)
+#define SSL_is_init_finished(a)	(_SSL_state(a) == SSL_ST_OK)
 #define SSL_in_init(a)			(_SSL_state(a)&SSL_ST_INIT)
 
 
@@ -89,46 +89,48 @@ int WSAAPI my_connect(SOCKET s, const struct sockaddr FAR * name, int namelen)
 /* patched send calls */
 int WSAAPI my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, send_proc a_lpfn_send)
 {
+	if(!s || len < 1 || !buf)
+		return a_lpfn_send(s, buf, len, flags);
+
 	::EnterCriticalSection(&s_socketsLock);
 	auto it = s_sockets.find(s);
 
-	if(it != s_sockets.end() && !it->second->IsSSL() && len > 0)
+	if(it != s_sockets.end()
+		&& !it->second->IsSSL() // ignore SSL connections, they have been handled in SSL_write
+		&& it->second->GetState() != MSCK_NOT_IRC)
 	{
 		auto l_sock = it->second;
 
 		::LeaveCriticalSection(&s_socketsLock);
 
-		if(!l_sock->HasExchangedData() && buf != NULL && *buf == 22) // skip SSL handshake packets... oh lord...
-			// http://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_handshake_in_detail
-			// do this for the first packets only, of course.
+		l_sock->Lock();
+
+		bool l_modified = l_sock->OnSending(false, buf, len);
+		
+		if(l_modified)
 		{
-			l_sock->OnSendingSSLHandshakePacket();
+			const std::string l_buf = l_sock->GetSendBuffer();
+
+			l_sock->Unlock();
+
+			int l_result = a_lpfn_send(s, l_buf.c_str(), l_buf.size(), flags);
+
+			return (l_result > 0 ? len : l_result);
 		}
 		else
 		{
-			bool l_modified = l_sock->OnSending(false, buf, len);
-
-			// if no data has been exchanged, and OnSending returns false,
-			// this means that the first "packet"/line is not CAP LS,
-			// so it's not an IRC connection.
-			if(!l_modified && !l_sock->HasExchangedData())
-			{
-				::EnterCriticalSection(&s_socketsLock);
-				s_sockets.erase(s);
-				::LeaveCriticalSection(&s_socketsLock);
-			}
-
-			if(l_modified)
-			{
-				const std::string l_buf = l_sock->GetSendBuffer();
-				int l_result = a_lpfn_send(s, l_buf.c_str(), l_buf.size(), flags);
-
-				return (l_result > 0 ? len : l_result);
-			}
+			l_sock->Unlock();
+			// fall through to normal send operation
 		}
 	}
 	else
 	{
+		if(it != s_sockets.end() && it->second->GetState() == MSCK_NOT_IRC)
+		{
+			// "garbage collection" of sorts
+			s_sockets.erase(it);
+		}
+
 		::LeaveCriticalSection(&s_socketsLock);
 	}
 
@@ -149,61 +151,84 @@ int WSAAPI my_send(SOCKET s, const char FAR * buf, int len, int flags)
 /* patched recv call */
 int WSAAPI my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_proc a_lpfn_recv)
 {
+	if(!s || !buf || len < 1)
+		return a_lpfn_recv(s, buf, len, flags);
+
 	::EnterCriticalSection(&s_socketsLock);
 	auto it = s_sockets.find(s);
 
-	if(it != s_sockets.end() && !it->second->IsSSL() &&
-		!it->second->IsSSLShakingHands() && len > 0)
+	if(it != s_sockets.end() && !it->second->IsSSL())
 	{
 		auto l_sock = it->second;
 
 		::LeaveCriticalSection(&s_socketsLock);
 
-		l_sock->OnBeforeReceive(false);
+		l_sock->Lock();
 
-		// important for receiving files via DCC:
-		// IRC server connections will always have sent data before receiving any.
-		if(!l_sock->HasExchangedData())
+		if(l_sock->GetState() != MSCK_IRC_IDENTIFIED)
 		{
-			int l_ret = a_lpfn_recv(s, buf, len, flags);
+			// don't do much (anything) yet.
 
-			// ignore spurious recv()s during connection startup:
-			if(l_ret < 1)
+			l_sock->Unlock();
+
+			char *l_localBuf = new char[len];
+
+			int l_ret = a_lpfn_recv(s, l_localBuf, len, flags);
+
+			if(l_ret > 0)
 			{
-				return l_ret;
+				l_sock->Lock();
+				l_sock->OnReceiving(false, l_localBuf, l_ret);
+				l_sock->Unlock();
 			}
 
-			::EnterCriticalSection(&s_socketsLock);
-			s_sockets.erase(s);
-			::LeaveCriticalSection(&s_socketsLock);
+			delete[] l_localBuf;
 
 			return l_ret;
 		}
-
-		while(!l_sock->HasReceivedLine())
+		else
 		{
-			char l_localBuf[4150];
+			// it's an IRC connection, so let's rock.
 
-			int l_ret = a_lpfn_recv(s, l_localBuf, 4150, flags);
-
-			if(l_ret < 1)
+			while(!l_sock->HasReceivedLine())
 			{
-				return l_ret;
+				char l_localBuf[4150];
+
+				l_sock->Unlock();
+
+				int l_ret = a_lpfn_recv(s, l_localBuf, 4150, flags);
+
+				if(l_ret < 1)
+				{
+					return l_ret;
+				}
+
+				l_sock->Lock();
+
+				l_sock->OnReceiving(false, l_localBuf, l_ret);
 			}
 
-			l_sock->OnAfterReceive(l_localBuf, l_ret);
+			// yay we got a complete line in the buffer.
+
+			const std::string l_tmp = l_sock->ReadFromRecvBuffer(len);
+
+			l_sock->Unlock();
+
+			memcpy(buf, l_tmp.c_str(), l_tmp.size());
+
+			return l_tmp.size();
 		}
 
-		// yay we got a complete line in the buffer.
-
-		const std::string l_tmp = l_sock->ReadFromRecvBuffer(len);
-
-		memcpy(buf, l_tmp.c_str(), l_tmp.size());
-
-		return l_tmp.size();
+		// never reached
 	}
 	else
 	{
+		if(it != s_sockets.end() && it->second->GetState() == MSCK_NOT_IRC)
+		{
+			// "garbage collection" of sorts
+			s_sockets.erase(it);
+		}
+
 		::LeaveCriticalSection(&s_socketsLock);
 	}
 
@@ -237,34 +262,48 @@ int WSAAPI my_closesocket(SOCKET s)
 /* patched SSL_write call */
 int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 {
+	if(!ssl || num < 1 || !buf)
+		return s_lpfn_SSL_write(ssl, buf, num);
+
 	SOCKET s = (SOCKET)_SSL_get_fd(ssl);
+
+	if(!s)
+		return s_lpfn_SSL_write(ssl, buf, num);
 
 	::EnterCriticalSection(&s_socketsLock);
 	auto it = s_sockets.find(s);
 
-	if(it != s_sockets.end())
+	if(it != s_sockets.end()
+		&& it->second->IsSSL()
+		&& it->second->GetState() != MSCK_NOT_IRC)
 	{
 		auto l_sock = it->second;
 
 		::LeaveCriticalSection(&s_socketsLock);
 
-		bool l_modified = l_sock->OnSending(true, (const char*)buf, num);
+		l_sock->Lock();
 
-		// same as in my_send, if the first line is not CAP LS,
-		// then forget about this socket.
-		if(!l_modified && !l_sock->HasExchangedData())
+		if(l_sock->GetState() == MSCK_TLS_HANDSHAKE && SSL_is_init_finished(ssl))
 		{
-			::EnterCriticalSection(&s_socketsLock);
-			s_sockets.erase(s);
-			::LeaveCriticalSection(&s_socketsLock);
+			l_sock->OnSSLHandshakeComplete();
 		}
+
+		bool l_modified = l_sock->OnSending(true, (const char*)buf, num);
 
 		if(l_modified)
 		{
 			const std::string l_buf = l_sock->GetSendBuffer();
+
+			l_sock->Unlock();
+
 			int l_sslResult = s_lpfn_SSL_write(ssl, l_buf.c_str(), l_buf.size());
 
 			return (l_sslResult > 0 ? num : l_sslResult);
+		}
+		else
+		{
+			l_sock->Unlock();
+			// fall through to normal send operation
 		}
 	}
 	else
@@ -279,77 +318,96 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 /* patched SSL_read call */
 int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 {
+	if(!ssl || !buf || num < 0)
+		return s_lpfn_SSL_read(ssl, buf, num);
+
 	// 1. if local (modified) buffer, read from that
 	// 2. else if line incomplete, or empty local buffer, call s_lpfn_SSL_read
 
 	SOCKET s = (SOCKET)_SSL_get_fd(ssl);
 
+	if(!s)
+		return s_lpfn_SSL_read(ssl, buf, num);
+
 	::EnterCriticalSection(&s_socketsLock);
 	auto it = s_sockets.find(s);
 
-	if(it != s_sockets.end())
+	if(it != s_sockets.end() && it->second->IsSSL())
 	{
 		auto l_sock = it->second;
 
 		::LeaveCriticalSection(&s_socketsLock);
 
+		l_sock->Lock();
+
 		// terminate our internal handshake flag if the handshake is complete:
-		if(l_sock->IsSSLShakingHands() && SSL_is_init_finished(ssl))
+		if(l_sock->GetState() == MSCK_TLS_HANDSHAKE && SSL_is_init_finished(ssl))
 		{
-			l_sock->OnBeforeReceive(true);
+			l_sock->OnSSLHandshakeComplete();
 		}
 
-		// in case mIRC ever gets DCC-over-SSL support,
-		// we will be prepared (also see my_recv):
-		if(!l_sock->HasExchangedData() && !l_sock->IsSSLShakingHands())
+		if(l_sock->GetState() != MSCK_IRC_IDENTIFIED)
 		{
-			int l_sslRet = s_lpfn_SSL_read(ssl, buf, num);
+			// don't do much (anything) yet.
 
-			if(l_sslRet > -1) // don't act on SSL_ERROR_WANT_WRITE etc.
+			l_sock->Unlock();
+
+			char *l_localBuf = new char[num];
+
+			int l_ret = s_lpfn_SSL_read(ssl, l_localBuf, 1024);
+
+			if(l_ret > 0)
 			{
-				if(l_sock->OnSuccessfulReadDuringInit() > 1)
-					// since mIRC 7.25, read is occasionally called before sending CAP LS
-					// pray to the gods that it's only called once, or it will break again.
+				l_sock->Lock();
+				l_sock->OnReceiving(true, l_localBuf, l_ret);
+				l_sock->Unlock();
+			}
+
+			delete[] l_localBuf;
+
+			return l_ret;
+		}
+		else
+		{
+			// it's an IRC connection, so let's rock.
+
+			while(!l_sock->HasReceivedLine())
+			{
+				char l_localBuf[1024];
+
+				l_sock->Unlock();
+
+				int l_sslRet = s_lpfn_SSL_read(ssl, l_localBuf, 1024);
+
+				if(l_sslRet < 1)
 				{
-					::EnterCriticalSection(&s_socketsLock);
-					s_sockets.erase(s);
-					::LeaveCriticalSection(&s_socketsLock);
+					return l_sslRet;
 				}
+
+				l_sock->Lock();
+
+				l_sock->OnReceiving(true, l_localBuf, l_sslRet);
 			}
 
-			return l_sslRet;
+			// yay we got a complete line in the buffer.
+
+			const std::string l_tmp = l_sock->ReadFromRecvBuffer(num);
+
+			l_sock->Unlock();
+
+			memcpy(buf, l_tmp.c_str(), l_tmp.size());
+
+			return l_tmp.size();
 		}
 
-		// the following is for IRC sockets only:
-
-		while(!l_sock->HasReceivedLine())
-		{
-			char l_localBuf[1024];
-
-			int l_sslRet = s_lpfn_SSL_read(ssl, l_localBuf, 1024);
-
-			if(l_sslRet < 1)
-			{
-				return l_sslRet;
-			}
-
-			l_sock->OnAfterReceive(l_localBuf, l_sslRet);
-		}
-
-		// yay we got a complete line in the buffer.
-
-		const std::string l_tmp = l_sock->ReadFromRecvBuffer(num);
-
-		memcpy(buf, l_tmp.c_str(), l_tmp.size());
-
-		return l_tmp.size();
+		// never reached
 	}
 	else
 	{
 		::LeaveCriticalSection(&s_socketsLock);
-
-		return s_lpfn_SSL_read(ssl, buf, num);
 	}
+	
+	return s_lpfn_SSL_read(ssl, buf, num);
 }
 
 
