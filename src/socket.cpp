@@ -143,13 +143,8 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 			if(l_req.version == 0x05 && l_req.command == 0x01 && l_req.addr_type <= 0x04 && l_req.reserved1 == 0)
 			{
 				m_state = MSCK_SOCKS5_CONNECTION;
-				return false;
 			}
 		}
-
-		INJECT_DEBUG_MSG("SOCKS5 after-auth packet doesn't match.");
-
-		m_state = MSCK_NOT_IRC;
 	}
 	
 	if(m_state == MSCK_IRC_IDENTIFIED)
