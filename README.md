@@ -158,8 +158,6 @@ meeting in person.
 
 ## KNOWN ISSUES
 
-If you are using a SOCKS or HTTP proxy then FiSH 10 won't work for you. Sorry.
-
 FiSH 10 is incompatible to the following applications. Please whitelist mirc.exe in these:
 
 * "AdMuncher"
