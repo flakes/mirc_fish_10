@@ -1,4 +1,9 @@
 
+== 2012-06-25 ==
+	* Rewrote injection logic, fixing the 7.25 and hopefully also all possible future issues like these.
+	* Added support for IRC connections through SOCKS4, SOCKS5 and HTTP-CONNECT proxy servers.
+	* A bit of a testing release, please let me know if something breaks!
+
 == 2012-06-20 ==
 	* Added a workaround for the previous incompatibility with fresh mIRC 7.25 installations, this time
 	  for SSL-enabled connections. Sorry for the trouble.
