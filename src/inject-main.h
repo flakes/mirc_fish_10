@@ -65,6 +65,8 @@ protected:
 	std::string m_sendingBuffer;
 	std::string m_receivingBuffer;
 
+	void OnProxyHandshakeComplete();
+
 public:
 	CSocketInfo(SOCKET s);
 	virtual ~CSocketInfo();

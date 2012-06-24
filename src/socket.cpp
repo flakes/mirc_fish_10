@@ -150,6 +150,8 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 {
 	_ASSERT(m_ssl == a_ssl);
 
+	const size_t l_bytesReceivedBefore = m_bytesReceived;
+
 	m_bytesReceived += a_len;
 
 	if(m_state == MSCK_NOT_IRC)
@@ -183,12 +185,42 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 			}
 		}
 	}
+	else if(m_state == MSCK_HTTP_PROXY_HANDSHAKE)
+	{
+		if(l_bytesReceivedBefore == 0
+			&& a_len >= 18
+			&& memcmp("HTTP/1.", a_data, 7) == 0
+			&& (strstr(a_data, "\r\n\r\n") != NULL || strstr(a_data, "\n\n") != NULL))
+			// this will fail if the response is not received in one chunk...
+		{
+			unsigned int _dummy, l_httpCode = 0;
+
+			if(sscanf_s(a_data, "HTTP/1.%u %u %*s", &_dummy, &l_httpCode) && l_httpCode == 200)
+			{
+				OnProxyHandshakeComplete();
+				return;
+			}
+		}
+
+		INJECT_DEBUG_MSG("Received bad or unrecognized HTTP proxy response.");
+
+		m_state = MSCK_NOT_IRC;
+	}
 	else if(m_bytesReceived > 2048) // 2 KB ought to be enough for anybody
 	{
 		INJECT_DEBUG_MSG("Received too much data without any signs for IRC activity.");
 
 		m_state = MSCK_NOT_IRC;
 	}
+}
+
+
+void CSocketInfo::OnProxyHandshakeComplete()
+{
+	// similar to OnSSLHandshakeComplete.
+	m_state = MSCK_INITIALIZING;
+	m_bytesSent = 0;
+	m_bytesReceived = 0;
 }
 
 

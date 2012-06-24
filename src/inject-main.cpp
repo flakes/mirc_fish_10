@@ -182,6 +182,8 @@ int WSAAPI my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 				l_sock->Lock();
 				l_sock->OnReceiving(false, l_localBuf, l_ret);
 				l_sock->Unlock();
+
+				memcpy_s(buf, len, l_localBuf, l_ret);
 			}
 
 			delete[] l_localBuf;
@@ -298,9 +300,9 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 
 			l_sock->Unlock();
 
-			int l_sslResult = s_lpfn_SSL_write(ssl, l_buf.c_str(), l_buf.size());
+			int l_ret = s_lpfn_SSL_write(ssl, l_buf.c_str(), l_buf.size());
 
-			return (l_sslResult > 0 ? num : l_sslResult);
+			return (l_ret > 0 ? num : l_ret);
 		}
 		else
 		{
@@ -362,6 +364,8 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 				l_sock->Lock();
 				l_sock->OnReceiving(true, l_localBuf, l_ret);
 				l_sock->Unlock();
+
+				memcpy_s(buf, num, l_localBuf, l_ret);
 			}
 
 			delete[] l_localBuf;
@@ -380,16 +384,16 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 
 				l_sock->Unlock();
 
-				int l_sslRet = s_lpfn_SSL_read(ssl, l_localBuf, 1024);
+				int l_ret = s_lpfn_SSL_read(ssl, l_localBuf, 1024);
 
-				if(l_sslRet < 1)
+				if(l_ret < 1)
 				{
-					return l_sslRet;
+					return l_ret;
 				}
 
 				l_sock->Lock();
 
-				l_sock->OnReceiving(true, l_localBuf, l_sslRet);
+				l_sock->OnReceiving(true, l_localBuf, l_ret);
 			}
 
 			// yay, there is a complete line in the buffer.
