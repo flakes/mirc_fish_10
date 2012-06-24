@@ -8,25 +8,7 @@
 #include "patcher.h"
 
 
-/* function signature typedefs */
-typedef int(WSAAPI* connect_proc)(SOCKET s, const struct sockaddr FAR * name, int namelen);
-typedef int(WSAAPI* send_proc)(SOCKET, const char*, int, int);
-typedef int(WSAAPI* recv_proc)(SOCKET, char*, int, int);
-typedef int(WSAAPI* closesocket_proc)(SOCKET);
-typedef int(__cdecl* SSL_write_proc)(void *ssl, const void *buf, int num);
-typedef int(__cdecl* SSL_read_proc)(void *ssl, void *buf, int num);
-
-typedef int(__cdecl* SSL_state_proc)(const void *ssl);
-typedef int(__cdecl* SSL_get_fd_proc)(const void *ssl);
-
-/* from mIRC help file (like some more of the comments below) */
-typedef struct {
-	DWORD  mVersion;
-	HWND   mHwnd;
-	BOOL   mKeep;
-	BOOL   mUnicode;
-} LOADINFO;
-
+/** here comes the main socket logic class **/
 
 typedef enum {
 	MSCK_INITIALIZING = 0,
@@ -39,7 +21,6 @@ typedef enum {
 } MIRC_SOCKET_STATE;
 
 
-/*  */
 class CSocketInfo
 {
 protected:
@@ -65,6 +46,7 @@ protected:
 	std::string m_sendingBuffer;
 	std::string m_receivingBuffer;
 
+	// used internally:
 	void OnProxyHandshakeComplete();
 
 public:
@@ -83,6 +65,8 @@ public:
 	// use this for completely unexpected cases:
 	void Discard();
 
+	// handshake completition must be detected via external means,
+	// then reported with this method:
 	void OnSSLHandshakeComplete();
 
 	/**
@@ -95,6 +79,7 @@ public:
 	bool HasReceivedLine() const;
 	std::string ReadFromRecvBuffer(size_t a_max);
 };
+
 
 /** structs for SOCKS proxy detection.
 	source: http://en.wikipedia.org/wiki/SOCKS **/
@@ -113,6 +98,28 @@ typedef struct {
 	// field 3: authentication methods, variable length, 1 byte per method supported
 } socks5_greeting_t;
 
+
+/* function signature typedefs */
+typedef int(WSAAPI* connect_proc)(SOCKET s, const struct sockaddr FAR * name, int namelen);
+typedef int(WSAAPI* send_proc)(SOCKET, const char*, int, int);
+typedef int(WSAAPI* recv_proc)(SOCKET, char*, int, int);
+typedef int(WSAAPI* closesocket_proc)(SOCKET);
+typedef int(__cdecl* SSL_write_proc)(void *ssl, const void *buf, int num);
+typedef int(__cdecl* SSL_read_proc)(void *ssl, void *buf, int num);
+
+typedef int(__cdecl* SSL_state_proc)(const void *ssl);
+typedef int(__cdecl* SSL_get_fd_proc)(const void *ssl);
+
+
+/* from mIRC help file */
+typedef struct {
+	DWORD  mVersion;
+	HWND   mHwnd;
+	BOOL   mKeep;
+	BOOL   mUnicode;
+} LOADINFO;
+
+
 /** imports from main FiSH DLL **/
 
 namespace FiSH_DLL
@@ -125,6 +132,7 @@ namespace FiSH_DLL
 		__declspec(dllimport) void __stdcall _OnSocketClosed(SOCKET a_socket);
 	}
 };
+
 
 /** some debug helper business **/
 

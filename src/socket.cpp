@@ -197,6 +197,8 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 
 			if(sscanf_s(a_data, "HTTP/1.%u %u %*s", &_dummy, &l_httpCode) && l_httpCode == 200)
 			{
+				INJECT_DEBUG_MSG("HTTP proxy response is okay!");
+
 				OnProxyHandshakeComplete();
 				return;
 			}
@@ -206,7 +208,7 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 
 		m_state = MSCK_NOT_IRC;
 	}
-	else if(m_bytesReceived > 2048) // 2 KB ought to be enough for anybody
+	else if(m_bytesReceived > 2048) // 2 KB ought to be enough for any IRC pre-register message
 	{
 		INJECT_DEBUG_MSG("Received too much data without any signs for IRC activity.");
 
