@@ -55,7 +55,7 @@ Now that your mIRC installation is clean, we can move on to the actual installin
 * __Connect__ to your networks and do your thing.
 
 If you get an error like "/dll: unable to open file" on startup, install this:
-www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2
+http://www.microsoft.com/en-us/download/details.aspx?id=5582
 Don't install the x64 version, even if you have a 64-bit OS. mIRC and FiSH are 32-bit,
 so you need the x86 version!
 
