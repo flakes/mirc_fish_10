@@ -32,7 +32,7 @@ before, or if you are installing mIRC 7 from scratch, you can skip this paragrap
 
 Now that your mIRC installation is clean, we can move on to the actual installing part.
 
-* __Download__ the latest zip file from http://github.com/flakes/mirc_fish_10/downloads
+* __Download__ the latest zip file from http://syndicode.org/fish_10/
 		(if you haven't already)
 * __Shut down__ mIRC!
 * __Extract__ fish_10.dll, fish_inject.dll and fish_10.mrc to your mirc.exe folder.
@@ -76,11 +76,6 @@ Please don't message me on IRC.
 
 If you are an IRC enthusiast like I am, you should also check out ZNC, the best
 bouncer software available: http://en.znc.in/
-
-FiSH 10 does not contain any special code for decrypting psyBNC or sBNC logs.
-Why should it? ZNC's buffers play back just fine, including appended (not prepended)
-time stamps. I do consider adding support for psyBNC's network prefix thing at some
-point though, since there seems to be a bunch of people actually using that.
 
 ## Multi-network support
 
