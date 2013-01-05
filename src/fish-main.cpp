@@ -163,9 +163,50 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 	}
 	else
 	{
+		bool l_psyLogHack = false;
+
 		l_contact = l_line.substr(l_tmpPos + 1, l_msgPos - 2 - l_tmpPos - 1);
 
-		if(!l_contact.empty())
+		if(l_cmd_type == CMD_PRIVMSG && l_line.compare(0, 26, ":-psyBNC!psyBNC@lam3rz.de ") == 0)
+		{
+			// psyBNC private message log playback hack
+			// example <-psyBNC> Thu Dec 27 20:52:38 :(nick!ident@host) +OK blowcryptedtext
+			// example 2: <-psyBNC> lk~Thu Nov 29 00:01:43 :(nick!ident@host) +OK blowcryptedtext
+			// example 3: <-psyBNC> ef'Thu Nov 29 00:01:43 :(nick!ident@host) +OK blowcryptedtext
+
+			l_tmpPos = l_message.find(" :(");
+
+			if(l_tmpPos == std::string::npos || l_tmpPos == 0)
+				return NULL;
+
+			std::string::size_type l_endPos = l_message.find(") ", l_tmpPos + 3);
+
+			if(l_endPos == std::string::npos)
+				return NULL;
+
+			l_contact = l_message.substr(l_tmpPos + 3, l_endPos - l_tmpPos - 3);
+			std::string l_timestamp = l_message.substr(0, l_tmpPos);
+
+			l_tmpPos = l_timestamp.find_first_of("~'");
+
+			if(l_tmpPos != std::string::npos)
+			{
+				// move network prefix to nick.... :oh god why:
+				l_contact = l_timestamp.substr(0, l_tmpPos + 1) + l_contact;
+				l_timestamp.erase(0, l_tmpPos + 1);
+			}
+
+			l_leading = "[" + l_timestamp + "] <" + l_contact + "> ";
+			l_message.erase(0, l_endPos + 2);
+
+			// this *must* be a query message, so split off nick (in order to find the key later):
+			l_tmpPos = l_contact.find('!');
+			l_contact = (l_tmpPos != std::string::npos ? l_contact.substr(0, l_tmpPos) : "");
+
+			l_psyLogHack = true;
+		}
+
+		if(!l_contact.empty() && !l_psyLogHack)
 		{
 			switch(l_contact[0])
 			{
