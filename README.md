@@ -94,10 +94,10 @@ FiSH 10. You won't notice a difference, but your messages will be encrypted stro
 than ever. Key exchanges with users of older versions and other scripts are completely
 unimpaired.
 
-There are however at least two broken DH1080 implementations that take the remainder of
+There are however at least three broken DH1080 implementations that take the remainder of
 the string in `DH1080_(INIT|FINISH)` instead of splitting at space characters:
 
-* "[G]Script (OrbitIRC)" and "Trillian Astra".
+* "[G]Script (OrbitIRC)" ,"Trillian Astra" and "[FiSH-irssi] (https://github.com/markusn/FiSH-irssi)".
 
 You can use the right-click menu in queries to selectively disable CBC mode key exchange
 for those users. Please note that this is only a problem if you initiate the key exchange,
