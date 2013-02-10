@@ -61,8 +61,8 @@ so you need the x86 version!
 
 If an error like "patching ... failed" shows up, something seems wrong with your setup.
 It could be something simple like an incompatible OpenSSL DLL, something weird like
-your AV scanner, or a bug in FiSH 10. If you made sure you installed the latest version,
-you can check here for existing problem reports, or create a new one:
+your anti-virus program, or a bug in FiSH 10. If you made sure you installed the latest
+version, you can check here for existing problem reports, or create a new one:
 http://github.com/flakes/mirc_fish_10/issues
 (Hint for Vista and above: Hit Ctrl + C to copy the message box contents into the clipboard,
 then paste into your bug report using Ctrl + V)
@@ -71,8 +71,7 @@ When mIRC updates, FiSH 10 should just continue to work in 99% of the cases, unl
 the previous solution. And it's open source, pretty cool, he?
 
 You can report bugs at http://github.com/flakes/mirc_fish_10/issues
-or ask for help in the old FiSH.dll's forums: http://fish.secure.la/forum/
-Please don't message me on IRC.
+or ask for help in #fish10 on EFNet.
 
 If you are an IRC enthusiast like I am, you should also check out ZNC, the best
 bouncer software available: http://en.znc.in/
@@ -97,7 +96,7 @@ unimpaired.
 There are however at least three broken DH1080 implementations that take the remainder of
 the string in `DH1080_(INIT|FINISH)` instead of splitting at space characters:
 
-* "[G]Script (OrbitIRC)" ,"Trillian Astra" and "[FiSH-irssi] (https://github.com/markusn/FiSH-irssi)".
+* "[G]Script (OrbitIRC)", "Trillian Astra" and "[FiSH-irssi] (https://github.com/markusn/FiSH-irssi)".
 
 You can use the right-click menu in queries to selectively disable CBC mode key exchange
 for those users. Please note that this is only a problem if you initiate the key exchange,
@@ -113,7 +112,7 @@ I would like to thank RXD for the work he has put into the FiSH addon over the l
 few years. However, he has been slow with updates and unwilling to open source a
 simple mIRC addon like this, so someone had to take over!
 
-FiSH 10 is using "CPatch" by armagedescu, thanks. It contains some code from
+FiSH 10 utilizes "CPatch" by armagedescu, thanks. It contains some code from
 http://dirtirc.sourceforge.net/ (blowfish core) and some utility methods from
 http://code.google.com/p/infekt/ (which is an excellent NFO viewer by the way).
 The rest of the code is what I contributed myself and is licensed under the
@@ -129,7 +128,7 @@ You can read some lines about the in-memory patching in fish-inject.cpp. fish_in
 (compiled from fish-inject.cpp, patcher.cpp and socket.cpp) does the magic of intercepting
 the system calls and managing buffers. For complete lines, it calls into fish_10.dll which
 does the actual IRC parsing and encryption things.
-Key-exchange, getting the "outside" IP etc. is still handled by fish_10.mrc, like it
+Key-exchange, getting the public IP etc. is still handled by fish_10.mrc, like it
 has always been.
 
 ## SECURITY NOTE
@@ -147,7 +146,7 @@ And, obviously, DO NOT store any log files on unencrypted disks.
 When using DH1080, please be aware that DH1080 does NOT protect you against sophisticated man-
 in-the-middle attacks where the attacker is able to read and modify your IRC data stream in
 real time.
-You can spot an attacker like that by using the Show key right-click menu entry, and comparing
+You can spot an attacker like that by using the "Show key" right-click menu entry, and comparing
 the key contents via an absolutely man-in-the-middle-proof channel, such as via telephone or a
 meeting in person.
 

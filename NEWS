@@ -1,3 +1,7 @@
+== 2013-02-10 ==
+	* OpenSSL update to 1.0.1d
+	* Recompiled main DLLs with Visual Studio 2012 - may or may not improve performance.
+
 == 2013-01-06 ==
 	* Added support for psyBNC log buffer decryption...
 
