@@ -1,3 +1,6 @@
+== 2013-02-13 ==
+	* OpenSSL update to 1.0.1e [don't bother if you are running 2013-02-10 and not experiencing SSL issues]
+
 == 2013-02-10 ==
 	* OpenSSL update to 1.0.1d
 	* Recompiled main DLLs with Visual Studio 2012 - may or may not improve performance.
