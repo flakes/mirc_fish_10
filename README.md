@@ -44,7 +44,7 @@ Now that your mIRC installation is clean, we can move on to the actual installin
 * __Start mIRC__ back up. If your mIRC is automatically connecting on startup, you might
 	have to turn that off, or add a timer. It is extremely important that fish_10.mrc
 	always loads before ANY IRC connection is made.
-* __Install__ the script: `//echo $+(",$nofile($mircexe) $+ fish_10.mrc,")`
+* __Install__ the script: `//load -rs $+(",$nofile($mircexe) $+ fish_10.mrc,")`
 * __Shut down__ mIRC, and start it again
 * Two lines like this should show up (and no error popup):
 
