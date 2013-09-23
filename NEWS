@@ -1,3 +1,6 @@
+== 2013-09-23 ==
+	* Support log decryption from psyBNC 2.4 [don't bother unless you use it]
+
 == 2013-02-13 ==
 	* OpenSSL update to 1.0.1e [don't bother if you are running 2013-02-10 and not experiencing SSL issues]
 
