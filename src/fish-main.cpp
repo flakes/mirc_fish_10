@@ -167,7 +167,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 
 		l_contact = l_line.substr(l_tmpPos + 1, l_msgPos - 2 - l_tmpPos - 1);
 
-		if(l_cmd_type == CMD_PRIVMSG && l_line.compare(0, 17, ":-psyBNC!psyBNC@ ") == 0)
+		if(l_cmd_type == CMD_PRIVMSG && l_line.compare(0, 16, ":-psyBNC!psyBNC@") == 0)
 		{
 			// psyBNC private message log playback hack
 			// example <-psyBNC> Thu Dec 27 20:52:38 :(nick!ident@host) +OK blowcryptedtext
