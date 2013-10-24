@@ -178,7 +178,7 @@ std::string Base64_Encode(const std::string& a_input)
 
 std::string Base64_Decode(const std::string& a_input)
 {
-	BIO *l_mem, *l_b64;
+	BIO *l_b64;
 	std::string l_result;
 
 	if(a_input.size() == 0) return l_result;
@@ -189,7 +189,7 @@ std::string Base64_Decode(const std::string& a_input)
 		char *l_buf = new char[256];
 		BIO_set_flags(l_b64, BIO_FLAGS_BASE64_NO_NL);
 		
-		l_mem = BIO_new_mem_buf((void*)a_input.c_str(), a_input.size());
+		BIO *l_mem = BIO_new_mem_buf((void*)a_input.c_str(), a_input.size());
 		if(l_mem)
 		{
 			int l_bytesRead;
@@ -258,7 +258,7 @@ const string_vector SplitString(const std::string& a_in, const char *a_delimiter
 }
 
 
-std::string SimpleMIRCParser(const std::string a_str)
+std::string SimpleMIRCParser(const std::string& a_str)
 {
 	std::string l_result;
 	std::string::size_type l_pos = a_str.find('$'), l_prevPos = 0;

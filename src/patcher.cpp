@@ -13,10 +13,9 @@ bool CPatch::okToRewriteTragetInstructionSet(long addr, int& rw_len)
 {
 	bool instruction_found;
 	int read_len = 0;
-	int instruction_len;
 	do
 	{
-		instruction_len = 0;
+		int instruction_len = 0;
 		instruction_found = false;
 		if(*reinterpret_cast<char*>(addr) == (char)0xE9) //jmp XX XX XX XX
 		{

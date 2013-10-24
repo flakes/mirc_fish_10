@@ -33,14 +33,15 @@
 static bool s_loaded = false;
 
 /* CPatch instances */
-static CPatch* s_patchConnect;
-static CPatch* s_patchSend;
-static CPatch* s_patchRecv;
-static CPatch* s_patchSendLegacy;
-static CPatch* s_patchRecvLegacy;
-static CPatch* s_patchCloseSocket;
-static CPatch* s_patchSSLWrite;
-static CPatch* s_patchSSLRead;
+typedef std::shared_ptr<CPatch> PPatch;
+static PPatch s_patchConnect;
+static PPatch s_patchSend;
+static PPatch s_patchRecv;
+static PPatch s_patchSendLegacy;
+static PPatch s_patchRecvLegacy;
+static PPatch s_patchCloseSocket;
+static PPatch s_patchSSLWrite;
+static PPatch s_patchSSLRead;
 
 /* pointers to original/previous call locations */
 static connect_proc     s_lpfn_connect;
@@ -87,7 +88,7 @@ int WSAAPI my_connect(SOCKET s, const struct sockaddr FAR * name, int namelen)
 
 
 /* patched send calls */
-int WSAAPI my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, send_proc a_lpfn_send)
+static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, send_proc a_lpfn_send)
 {
 	if(!s || len < 1 || !buf)
 		return a_lpfn_send(s, buf, len, flags);
@@ -149,7 +150,7 @@ int WSAAPI my_send(SOCKET s, const char FAR * buf, int len, int flags)
 
 
 /* patched recv calls */
-int WSAAPI my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_proc a_lpfn_recv)
+static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_proc a_lpfn_recv)
 {
 	if(!s || !buf || len < 1)
 		return a_lpfn_recv(s, buf, len, flags);
@@ -431,86 +432,90 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 	{
 		::MessageBoxW(info->mHwnd, L"FiSH 10 does not support any mIRC version older "
 			L"than v7. Disabling.", L"Error", MB_ICONEXCLAMATION);
+
+		return;
 	}
 	else if(hInstSSLeay == NULL)
 	{
 		::MessageBoxW(info->mHwnd, L"FiSH 10 needs OpenSSL to be installed. Disabling. "
 			L"Go to www.mirc.com/ssl.html to install SSL.", L"Error", MB_ICONEXCLAMATION);
+
+		return;
+	}
+
+	::InitializeCriticalSection(&s_socketsLock);
+
+	HINSTANCE hInstWs2 = ::GetModuleHandleW(L"ws2_32.dll");
+
+	// patch WinSock calls:
+	connect_proc xconnect = (connect_proc)::GetProcAddress(hInstWs2, "connect");
+	send_proc xsend = (send_proc)::GetProcAddress(hInstWs2, "send");
+	recv_proc xrecv = (recv_proc)::GetProcAddress(hInstWs2, "recv");
+	closesocket_proc xclosesock = (closesocket_proc)::GetProcAddress(hInstWs2, "closesocket");
+
+	s_patchConnect = PPatch(new CPatch(xconnect, my_connect, s_lpfn_connect));
+	s_patchSend = PPatch(new CPatch(xsend, my_send, s_lpfn_send));
+	s_patchRecv = PPatch(new CPatch(xrecv, my_recv, s_lpfn_recv));
+	s_patchCloseSocket = PPatch(new CPatch(xclosesock, my_closesocket, s_lpfn_closesocket));
+
+	// patch legacy WinSock calls (may be used by OpenSSL DLLs):
+	HINSTANCE hInstWsOld = ::GetModuleHandleW(L"wsock32.dll");
+
+	send_proc xsend_legacy = (send_proc)::GetProcAddress(hInstWsOld, "send");
+	recv_proc xrecv_legacy = (recv_proc)::GetProcAddress(hInstWsOld, "recv");
+
+	if (xsend_legacy != NULL && xsend_legacy != xsend)
+		s_patchSendLegacy = PPatch(new CPatch(xsend_legacy, my_send_legacy, s_lpfn_send_legacy));
+	if (xrecv_legacy != NULL && xrecv_legacy != xrecv)
+		s_patchRecvLegacy = PPatch(new CPatch(xrecv_legacy, my_recv_legacy, s_lpfn_recv_legacy));
+
+	// patch OpenSSL calls:
+	SSL_write_proc xsslwrite = (SSL_write_proc)::GetProcAddress(hInstSSLeay, "SSL_write");
+	SSL_read_proc xsslread = (SSL_read_proc)::GetProcAddress(hInstSSLeay, "SSL_read");
+
+	s_patchSSLWrite = PPatch(new CPatch(xsslwrite, my_SSL_write, s_lpfn_SSL_write));
+	s_patchSSLRead = PPatch(new CPatch(xsslread, my_SSL_read, s_lpfn_SSL_read));
+
+	// OpenSSL utility methods:
+	_SSL_get_fd = (SSL_get_fd_proc)::GetProcAddress(hInstSSLeay, "SSL_get_fd");
+	_SSL_state = (SSL_state_proc)::GetProcAddress(hInstSSLeay, "SSL_state");
+
+	// check if it worked:
+	if(s_patchConnect->patched() && s_patchRecv->patched() && s_patchSend->patched() &&
+		(!hInstSSLeay || (s_patchSSLWrite->patched() && s_patchSSLRead->patched())) &&
+		(_SSL_get_fd != NULL) && (_SSL_state != NULL))
+	{
+		info->mKeep = TRUE;
+
+		s_loaded = true;
 	}
 	else
 	{
-		::InitializeCriticalSection(&s_socketsLock);
+		wchar_t wszPatchedInfo[50] = {0};
+		swprintf_s(wszPatchedInfo, 50, L"[%i%i%i%i%i%i%i%i]",
+			(s_patchConnect->patched() ? 1 : 0),
+			(s_patchSend->patched() ? 1 : 0),
+			(s_patchRecv->patched() ? 1 : 0),
+			(!s_patchRecvLegacy || s_patchRecvLegacy->patched() ? 1 : 0),
+			(!s_patchSendLegacy || s_patchSendLegacy->patched() ? 1 : 0),
+			(s_patchCloseSocket->patched() ? 1 : 0),
+			(s_patchSSLWrite->patched() ? 1 : 0),
+			(s_patchSSLRead->patched() ? 1 : 0));
 
-		HINSTANCE hInstWs2 = ::GetModuleHandleW(L"ws2_32.dll");
+		s_patchConnect.reset();
+		s_patchSend.reset();
+		s_patchRecv.reset();
+		s_patchRecvLegacy.reset();
+		s_patchSendLegacy.reset();
+		s_patchCloseSocket.reset();
+		s_patchSSLWrite.reset();
+		s_patchSSLRead.reset();
 
-		// patch WinSock calls:
-		connect_proc xconnect = (connect_proc)::GetProcAddress(hInstWs2, "connect");
-		send_proc xsend = (send_proc)::GetProcAddress(hInstWs2, "send");
-		recv_proc xrecv = (recv_proc)::GetProcAddress(hInstWs2, "recv");
-		closesocket_proc xclosesock = (closesocket_proc)::GetProcAddress(hInstWs2, "closesocket");
+		std::wstring l_errorInfo = L"FiSH 10 failed to load: Patching functions in memory was unsuccessful.";
+		l_errorInfo += L"\r\nDebug info: ";
+		l_errorInfo += wszPatchedInfo;
 
-		s_patchConnect = new CPatch(xconnect, my_connect, s_lpfn_connect);
-		s_patchSend = new CPatch(xsend, my_send, s_lpfn_send);
-		s_patchRecv = new CPatch(xrecv, my_recv, s_lpfn_recv);
-		s_patchCloseSocket = new CPatch(xclosesock, my_closesocket, s_lpfn_closesocket);
-
-		// patch legacy WinSock calls (may be used by OpenSSL DLLs):
-		HINSTANCE hInstWsOld = ::GetModuleHandleW(L"wsock32.dll");
-
-		send_proc xsend_legacy = (send_proc)::GetProcAddress(hInstWsOld, "send");
-		recv_proc xrecv_legacy = (recv_proc)::GetProcAddress(hInstWsOld, "recv");
-
-		if(xsend_legacy != NULL && xsend_legacy != xsend) s_patchSendLegacy = new CPatch(xsend_legacy, my_send_legacy, s_lpfn_send_legacy);
-		if(xrecv_legacy != NULL && xrecv_legacy != xrecv) s_patchRecvLegacy = new CPatch(xrecv_legacy, my_recv_legacy, s_lpfn_recv_legacy);
-
-		// patch OpenSSL calls:
-		SSL_write_proc xsslwrite = (SSL_write_proc)::GetProcAddress(hInstSSLeay, "SSL_write");
-		SSL_read_proc xsslread = (SSL_read_proc)::GetProcAddress(hInstSSLeay, "SSL_read");
-
-		s_patchSSLWrite = new CPatch(xsslwrite, my_SSL_write, s_lpfn_SSL_write);
-		s_patchSSLRead = new CPatch(xsslread, my_SSL_read, s_lpfn_SSL_read);
-
-		// OpenSSL utility methods:
-		_SSL_get_fd = (SSL_get_fd_proc)::GetProcAddress(hInstSSLeay, "SSL_get_fd");
-		_SSL_state = (SSL_state_proc)::GetProcAddress(hInstSSLeay, "SSL_state");
-
-		// check if it worked:
-		if(s_patchConnect->patched() && s_patchRecv->patched() && s_patchSend->patched() &&
-			(!hInstSSLeay || (s_patchSSLWrite->patched() && s_patchSSLRead->patched())) &&
-			(_SSL_get_fd != NULL) && (_SSL_state != NULL))
-		{
-			info->mKeep = TRUE;
-
-			s_loaded = true;
-		}
-		else
-		{
-			wchar_t wszPatchedInfo[50] = {0};
-			swprintf_s(wszPatchedInfo, 50, L"[%i%i%i%i%i%i%i%i]",
-				(s_patchConnect->patched() ? 1 : 0),
-				(s_patchSend->patched() ? 1 : 0),
-				(s_patchRecv->patched() ? 1 : 0),
-				(!s_patchRecvLegacy || s_patchRecvLegacy->patched() ? 1 : 0),
-				(!s_patchSendLegacy || s_patchSendLegacy->patched() ? 1 : 0),
-				(s_patchCloseSocket->patched() ? 1 : 0),
-				(s_patchSSLWrite->patched() ? 1 : 0),
-				(s_patchSSLRead->patched() ? 1 : 0));
-
-			delete s_patchConnect; s_patchConnect = NULL;
-			delete s_patchSend; s_patchSend = NULL;
-			delete s_patchRecv; s_patchRecv = NULL;
-			delete s_patchRecvLegacy; s_patchRecvLegacy = NULL;
-			delete s_patchSendLegacy; s_patchSendLegacy = NULL;
-			delete s_patchCloseSocket; s_patchCloseSocket = NULL;
-			delete s_patchSSLWrite; s_patchSSLWrite = NULL;
-			delete s_patchSSLRead; s_patchSSLRead = NULL;
-
-			std::wstring l_errorInfo = L"FiSH 10 failed to load: Patching functions in memory was unsuccessful.";
-			l_errorInfo += L"\r\nDebug info: ";
-			l_errorInfo += wszPatchedInfo;
-
-			::MessageBoxW(info->mHwnd, l_errorInfo.c_str(), L"Error", MB_ICONEXCLAMATION);
-		}
+		::MessageBoxW(info->mHwnd, l_errorInfo.c_str(), L"Error", MB_ICONEXCLAMATION);
 	}
 }
 
@@ -533,14 +538,17 @@ extern "C" int __stdcall UnloadDll(int mTimeout)
 	}
 	else
 	{
-		delete s_patchConnect;
-		delete s_patchSend;
-		delete s_patchRecv;
-		delete s_patchRecvLegacy;
-		delete s_patchSendLegacy;
-		delete s_patchCloseSocket;
-		delete s_patchSSLWrite;
-		delete s_patchSSLRead;
+		s_loaded = false;
+
+		s_patchConnect.reset();
+		s_patchSend.reset();
+		s_patchRecv.reset();
+		s_patchRecvLegacy.reset();
+		s_patchSendLegacy.reset();
+		s_patchCloseSocket.reset();
+		s_patchSSLWrite.reset();
+		s_patchSSLRead.reset();
+
 		::DeleteCriticalSection(&s_socketsLock);
 
 		return 0;
@@ -560,7 +568,7 @@ extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, 
 #ifdef _DEBUG
 /* blergh */
 
-void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function, std::string a_message)
+void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function, const std::string& a_message)
 {
 	wchar_t _tid[20];
 	swprintf_s(_tid, 20, L"[%08x] ", GetCurrentThreadId());

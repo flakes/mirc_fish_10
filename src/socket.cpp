@@ -59,7 +59,7 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 				m_state = MSCK_IRC_IDENTIFIED;
 			}
 			else if(*a_data == 22) // SSL/TLS handshake packet!
-			// http://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_handshake_in_detail
+			// http://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
 			{
 				m_ssl = true;
 

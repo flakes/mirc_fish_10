@@ -53,7 +53,7 @@ std::string Base64_Decode(const std::string& a_input);
 bool HasCBCPrefix(std::string& a_key, bool a_strip = false);
 void remove_bad_chars(std::string &str);
 const string_vector SplitString(const std::string& a_in, const char *a_delimiter, size_t a_limit = 0);
-std::string SimpleMIRCParser(const std::string a_str);
+std::string SimpleMIRCParser(const std::string& a_str);
 bool Utf8Validate(const char* a_str);
 
 /* from blowfish.cpp */

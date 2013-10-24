@@ -168,7 +168,7 @@ namespace FiSH_DLL
 
 /** some debug helper business **/
 
-void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function, std::string a_message);
+void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function, const std::string& a_message);
 
 #ifdef _DEBUG
 #define INJECT_DEBUG_MSG(A_MSG) _fishInjectDebugMsg(__FILE__, __LINE__, __FUNCTION__, A_MSG)

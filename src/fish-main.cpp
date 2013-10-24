@@ -464,8 +464,10 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, cons
 	// check for CTCPs:
 	if(l_message[0] == 0x01)
 	{
-		if(l_message.find("\x01""ACTION ") != 0 || !l_ini->GetBool(L"encrypt_action", false))
+		if(l_message.compare(0, 8, "\x01""ACTION ") != 0 || !l_ini->GetBool(L"encrypt_action", false))
+		{
 			return NULL;
+		}
 		else
 		{
 			l_message = l_message.substr(8, l_message.size() - 8 - 1); // strip trailing \x01 too
@@ -820,7 +822,7 @@ EXPORT_SIG(int) FiSH_GetMyIP(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL
 	if(l_lookupUrl.empty())
 		return 0;
 
-	if(l_lookupUrl.find(L"http://") != 0 && l_lookupUrl.find(L"https://") != 0)
+	if(l_lookupUrl.compare(0, 8, L"http://") != 0 && l_lookupUrl.compare(0, 9, L"https://") != 0)
 		l_lookupUrl.insert(0, L"http://");
 
 	const std::string l_response = HttpDownloadTextFile(l_lookupUrl);
