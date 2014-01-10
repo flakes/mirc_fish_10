@@ -304,7 +304,7 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 		// compatibility fix
 		// (we only encode the actual MSG part of CTCP ACTIONs, but the old FiSH.dll and some scripts etc.
 		// encode the whole thing including \x01 and so on)
-		if(l_cmd_type == CMD_PRIVMSG && l_newMsg.find("\x01""ACTION ") == 0)
+		if(l_cmd_type == CMD_PRIVMSG && l_newMsg.compare(0, 8, "\x01""ACTION ") == 0)
 		{
 			l_newMsg.erase(0, 8);
 			if(l_newMsg.size() > 0 && l_newMsg[l_newMsg.size() - 1] == 0x01) l_newMsg.erase(l_newMsg.size() - 1);
@@ -357,18 +357,6 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 				}
 
 				l_mark = SimpleMIRCParser(l_mark);
-
-#if 0
-				bool l_msgValid = Utf8Validate(l_newMsg.c_str();
-				bool l_markValid = Utf8Validate(l_mark.c_str());
-
-				if(!l_msgValid && l_markValid)
-				{
-					// prevent total message corruption by using
-					// "neutral" crypt-mark
-					l_mark = " \x0315*\x03";
-				}
-#endif
 
 				if(l_markPos == 1)
 					l_newMsg.append(l_mark);

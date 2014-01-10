@@ -142,24 +142,15 @@ std::string CBlowIni::GetBlowKey(const std::string& a_name, bool& ar_cbc) const
 
 std::string CBlowIni::GetBlowKey(const std::string& a_network, const std::string& a_contact, bool& ar_cbc) const
 {
-#if 0
-	if(a_network.empty())
-	{
-		return GetBlowKey(a_contact, ar_cbc);
-	}
-	else
-#endif
-	{
-		std::string l_result = GetBlowKey(a_network + ":" + a_contact, ar_cbc);
+	std::string l_result = GetBlowKey(a_network + ":" + a_contact, ar_cbc);
 
-		if(!m_noLegacy && l_result.empty())
-		{
-			// fall back to legacy non-network name-prefixed section:
-			l_result = GetBlowKey(a_contact, ar_cbc);
-		}
-
-		return l_result;
+	if(!m_noLegacy && l_result.empty())
+	{
+		// fall back to legacy non-network name-prefixed section:
+		l_result = GetBlowKey(a_contact, ar_cbc);
 	}
+
+	return l_result;
 }
 
 
