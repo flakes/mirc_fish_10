@@ -1,3 +1,8 @@
+== 2014-01-11 ==
+	* OpenSSL update to 1.0.1f (fixes some security issues)
+	* Restored working order on SSE 1-only CPUs
+	* Some internal changes to memory management
+
 == 2013-09-23 ==
 	* Support log decryption from psyBNC 2.4 [don't bother unless you use it]
 
