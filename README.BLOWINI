@@ -51,7 +51,7 @@ This file explains all settings and their implications in blow.ini.
 		Value: a URL
 		Default: (no default)
 		Add a website URL or host name like one of these here:
-			checkip.dyndns.org / www.checkip.org / yourip.dentar.com / iplookup.flashfxp.com / ip4.me
+			checkip.dyndns.org / iplookup.flashfxp.com / ip4.me / www.ipchicken.com / ifconfig.me
 		Used by FiSH's "Local IP" menu to determine your external IP address (e.g. for DCC).
 
 	* Name: no_legacy
