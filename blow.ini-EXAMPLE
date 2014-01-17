@@ -18,19 +18,11 @@ mark_encrypted=" 12$chr(183)"
 ;mark_encrypted="12> "
 
 MyIP_service=checkip.dyndns.org
-;www.checkip.org / yourip.dentar.com / iplookup.flashfxp.com / ip4.me
+;iplookup.flashfxp.com / ip4.me / www.ipchicken.com / ifconfig.me
 
 ; this setting speeds up FiSH a little at the expense of making blow.ini files created by the
 ; old FiSH script unusable. You should however always use it when making a new blow.ini file.
 ; If you change/remove this, you have to re-code this ini file in ANSI (at least if your mark_encrypted has any UTF-8 chars)!
 no_legacy=1
 
-[#chan1]
-key=+OK wHat.EveR/uzQx./f0l/2jN/rdq1VQZ/eZ.Csn7r/10jvq0N32pU54.mjsG/8m
-encrypt_topic=1
-date=14/08/2003
-
-[user2]
-key=+OK vERy.seKuRE.Key/bE
-mark_encrypted=0
-date=14/06/2003
+; entries for your channels and chat partners will appear here.
