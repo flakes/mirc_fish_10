@@ -1,8 +1,10 @@
 #include "inject-main.h"
+#include "inject-socket.h"
 
 
-CSocketInfo::CSocketInfo(SOCKET s) :
+CSocketInfo::CSocketInfo(SOCKET s, const PInjectEngines& engines) :
 	m_socket(s),
+	m_engines(engines),
 	m_state(MSCK_INITIALIZING),
 	m_ssl(false), m_sslHandshakeComplete(false),
 	m_bytesSent(0), m_bytesReceived(0)
@@ -160,18 +162,12 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 
 			INJECT_DEBUG_MSG(l_line);
 
-			char* l_szNewLine = FiSH_DLL::_OnOutgoingIRCLine(m_socket, l_line.c_str(), l_line.size());
+			if (m_engines->OnOutgoingLine(m_socket, l_line))
+			{
+				INJECT_DEBUG_MSG("encrypted:"); INJECT_DEBUG_MSG(l_line);
+			}
 
-			if(l_szNewLine)
-			{
-				INJECT_DEBUG_MSG("encrypted:"); INJECT_DEBUG_MSG(l_szNewLine);
-				l_chunk += l_szNewLine;
-				FiSH_DLL::_FreeString(l_szNewLine);
-			}
-			else
-			{
-				l_chunk += l_line;
-			}
+			l_chunk += l_line;
 		}
 
 		m_sendBuffer = l_chunk;
@@ -207,18 +203,12 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 
 			INJECT_DEBUG_MSG(l_line);
 
-			char* l_szNewLine = FiSH_DLL::_OnIncomingIRCLine(m_socket, l_line.c_str(), l_line.size());
+			if (m_engines->OnIncomingLine(m_socket, l_line))
+			{
+				INJECT_DEBUG_MSG("decrypted:"); INJECT_DEBUG_MSG(l_line);
+			}
 
-			if(l_szNewLine)
-			{
-				INJECT_DEBUG_MSG("decrypted:"); INJECT_DEBUG_MSG(l_szNewLine);
-				m_receivedBuffer += l_szNewLine;
-				FiSH_DLL::_FreeString(l_szNewLine);
-			}
-			else
-			{
-				m_receivedBuffer += l_line;
-			}
+			m_receivedBuffer += l_line;
 		}
 	}
 	else if(m_state == MSCK_HTTP_PROXY_HANDSHAKE)

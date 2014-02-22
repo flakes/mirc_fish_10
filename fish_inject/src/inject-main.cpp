@@ -1,4 +1,8 @@
 #include "inject-main.h"
+#include "patcher.h"
+#include "inject-socket.h"
+#include "inject-engines.h"
+#include "simple-thread-lock.h"
 
 /******************************************************************************
 
@@ -29,6 +33,9 @@
 
 ******************************************************************************/
 
+/* global vars */
+HMODULE g_hModule = NULL;
+
 /* static vars */
 static bool s_loaded = false;
 
@@ -52,9 +59,10 @@ static SSL_write_proc   s_lpfn_SSL_write;
 static SSL_read_proc    s_lpfn_SSL_read;
 
 /* active sockets */
-typedef std::map<SOCKET, std::shared_ptr<CSocketInfo> > MActiveSocks;
+typedef std::map<SOCKET, std::shared_ptr<CSocketInfo>> MActiveSocks;
 static MActiveSocks s_sockets;
-static CRITICAL_SECTION s_socketsLock;
+static CSimpleThreadLock s_socketsAccess;
+static PInjectEngines s_engines;
 
 /* pointers to utility methods from shared libs */
 static SSL_get_fd_proc _SSL_get_fd;
@@ -78,9 +86,9 @@ int WSAAPI my_connect(SOCKET s, const struct sockaddr FAR * name, int namelen)
 {
 	if(s != NULL)
 	{
-		::EnterCriticalSection(&s_socketsLock);
-		s_sockets[s] = std::shared_ptr<CSocketInfo>(new CSocketInfo(s));
-		::LeaveCriticalSection(&s_socketsLock);
+		CSimpleScopedLock lock(s_socketsAccess);
+
+		s_sockets[s] = std::shared_ptr<CSocketInfo>(new CSocketInfo(s, s_engines));
 	}
 
 	return s_lpfn_connect(s, name, namelen);
@@ -93,7 +101,7 @@ static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 	if(!s || len < 1 || !buf)
 		return a_lpfn_send(s, buf, len, flags);
 
-	::EnterCriticalSection(&s_socketsLock);
+	s_socketsAccess.Lock();
 	auto it = s_sockets.find(s);
 
 	if(it != s_sockets.end()
@@ -102,7 +110,7 @@ static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 	{
 		auto l_sock = it->second;
 
-		::LeaveCriticalSection(&s_socketsLock);
+		s_socketsAccess.Unlock();
 
 		l_sock->Lock();
 
@@ -132,7 +140,7 @@ static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 			s_sockets.erase(it);
 		}
 
-		::LeaveCriticalSection(&s_socketsLock);
+		s_socketsAccess.Unlock();
 	}
 
 	return a_lpfn_send(s, buf, len, flags);
@@ -155,7 +163,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 	if(!s || !buf || len < 1)
 		return a_lpfn_recv(s, buf, len, flags);
 
-	::EnterCriticalSection(&s_socketsLock);
+	s_socketsAccess.Lock();
 	auto it = s_sockets.find(s);
 
 	if(it != s_sockets.end()
@@ -164,7 +172,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 	{
 		auto l_sock = it->second;
 
-		::LeaveCriticalSection(&s_socketsLock);
+		s_socketsAccess.Unlock();
 
 		l_sock->Lock();
 
@@ -234,7 +242,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 			s_sockets.erase(it);
 		}
 
-		::LeaveCriticalSection(&s_socketsLock);
+		s_socketsAccess.Unlock();
 	}
 
 	return a_lpfn_recv(s, buf, len, flags);
@@ -254,11 +262,13 @@ int WSAAPI my_recv(SOCKET s, char FAR * buf, int len, int flags)
 /* patched closesocket call */
 int WSAAPI my_closesocket(SOCKET s)
 {
-	::EnterCriticalSection(&s_socketsLock);
-	s_sockets.erase(s);
-	::LeaveCriticalSection(&s_socketsLock);
+	{
+		CSimpleScopedLock lock(s_socketsAccess);
 
-	FiSH_DLL::_OnSocketClosed(s);
+		s_sockets.erase(s);
+	}
+
+	s_engines->OnSocketClosed(s);
 
 	return s_lpfn_closesocket(s);
 }
@@ -275,7 +285,7 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 	if(!s)
 		return s_lpfn_SSL_write(ssl, buf, num);
 
-	::EnterCriticalSection(&s_socketsLock);
+	s_socketsAccess.Lock();
 	auto it = s_sockets.find(s);
 
 	if(it != s_sockets.end()
@@ -284,7 +294,7 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 	{
 		auto l_sock = it->second;
 
-		::LeaveCriticalSection(&s_socketsLock);
+		s_socketsAccess.Unlock();
 
 		l_sock->Lock();
 
@@ -313,7 +323,7 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 	}
 	else
 	{
-		::LeaveCriticalSection(&s_socketsLock);
+		s_socketsAccess.Unlock();
 	}
 
 	return s_lpfn_SSL_write(ssl, buf, num);
@@ -331,7 +341,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	if(!s)
 		return s_lpfn_SSL_read(ssl, buf, num);
 
-	::EnterCriticalSection(&s_socketsLock);
+	s_socketsAccess.Lock();
 	auto it = s_sockets.find(s);
 
 	if(it != s_sockets.end()
@@ -340,7 +350,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	{
 		auto l_sock = it->second;
 
-		::LeaveCriticalSection(&s_socketsLock);
+		s_socketsAccess.Unlock();
 
 		l_sock->Lock();
 
@@ -412,13 +422,11 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	}
 	else
 	{
-		::LeaveCriticalSection(&s_socketsLock);
+		s_socketsAccess.Unlock();
 	}
 	
 	return s_lpfn_SSL_read(ssl, buf, num);
 }
-
-
 
 /* You can keep a DLL loaded by including a LoadDll() routine in your DLL, which mIRC calls the first time you load the DLL. */
 
@@ -443,7 +451,7 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 		return;
 	}
 
-	::InitializeCriticalSection(&s_socketsLock);
+	s_engines = PInjectEngines(new CInjectEngines());
 
 	HINSTANCE hInstWs2 = ::GetModuleHandleW(L"ws2_32.dll");
 
@@ -488,6 +496,8 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 		info->mKeep = TRUE;
 
 		s_loaded = true;
+
+		s_engines->LoadRegister(L"fish_10.dll");
 	}
 	else
 	{
@@ -532,8 +542,6 @@ extern "C" int __stdcall UnloadDll(int mTimeout)
 */
 	if(mTimeout == 1)
 	{
-		if(!s_loaded) ::DeleteCriticalSection(&s_socketsLock);
-
 		return (s_loaded ? 0 : 1);
 	}
 	else
@@ -549,7 +557,7 @@ extern "C" int __stdcall UnloadDll(int mTimeout)
 		s_patchSSLWrite.reset();
 		s_patchSSLRead.reset();
 
-		::DeleteCriticalSection(&s_socketsLock);
+		s_engines.reset();
 
 		return 0;
 	}
@@ -565,6 +573,21 @@ extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, 
 }
 
 
+/* DllMain */
+
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+	if (fdwReason == DLL_PROCESS_ATTACH)
+	{
+		g_hModule = static_cast<HMODULE>(hinstDLL);
+	}
+
+	return TRUE;
+}
+
+
+
 #ifdef _DEBUG
 /* blergh */
 
@@ -573,7 +596,7 @@ void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function,
 	wchar_t _tid[20];
 	swprintf_s(_tid, 20, L"[%08x] ", GetCurrentThreadId());
 
-	::EnterCriticalSection(&s_socketsLock); // mis-use, but safe currently
+	CSimpleScopedLock lock(s_socketsAccess); // mis-use, but safe currently
 
 	OutputDebugStringW(_tid);
 	OutputDebugStringA(a_function);
@@ -587,8 +610,6 @@ void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function,
 	{
 		OutputDebugStringA("\n");
 	}
-
-	::LeaveCriticalSection(&s_socketsLock);
 }
 #endif
 

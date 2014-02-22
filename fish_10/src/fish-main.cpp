@@ -1,4 +1,5 @@
 #include "fish-internal.h"
+#include "fish-inject-engine.h"
 
 
 static CRITICAL_SECTION s_iniLock;
@@ -23,8 +24,8 @@ std::map<HANDLE, std::string> s_socketMap;
 static CRITICAL_SECTION s_socketMapLock;
 
 
-/* for use from fish_inject.dll */
-EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
+/* called from fish_inject.dll */
+char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 {
 	if(!a_socket || !a_line || a_len < 1 || *a_line != ':')
 		return NULL;
@@ -381,8 +382,8 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnIncomingIRCLine(HANDLE a_socket, cons
 }
 
 
-/* for use from fish_inject.dll */
-EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
+/* called from fish_inject.dll */
+char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 {
 	if(!a_socket || !a_line || a_len < 1)
 		return NULL;
@@ -497,15 +498,15 @@ EXPORT_SIG(__declspec(dllexport) char*) _OnOutgoingIRCLine(HANDLE a_socket, cons
 }
 
 
-/* for use from fish_inject.dll */
-EXPORT_SIG(__declspec(dllexport) void) _FreeString(const char* a_str)
+/* called from fish_inject.dll */
+void _FreeString(const char* a_str)
 {
 	if(a_str) delete[] a_str;
 }
 
 
 /* called from fish_inject.dll */
-EXPORT_SIG(__declspec(dllexport) void) _OnSocketClosed(HANDLE a_socket)
+void _OnSocketClosed(HANDLE a_socket)
 {
 	::EnterCriticalSection(&s_socketMapLock);
 	s_socketMap.erase(a_socket);
@@ -958,6 +959,11 @@ extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, 
 }
 
 
+/* Engine export for fish_inject.dll */
+
+EXPORT_FISH_INJECT_ENGINE(_OnIncomingIRCLine, _OnOutgoingIRCLine, _OnSocketClosed, _FreeString)
+
+
 /* DllMain for initialization purposes */
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -976,4 +982,3 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 	return TRUE;
 }
-
