@@ -97,6 +97,11 @@ bool CInjectEngines::OnOutgoingLine(SOCKET socket, std::string& a_line) const
 
 	for (const auto& engine : m_engines)
 	{
+		if (!engine.second->is_postprocessor && modified)
+		{
+			continue;
+		}
+
 		char *engine_result = engine.second->OnOutgoingIRCLine((HANDLE)socket, a_line.c_str(), a_line.size());
 
 		if (engine_result)
@@ -122,6 +127,11 @@ bool CInjectEngines::OnIncomingLine(SOCKET socket, std::string& a_line) const
 
 	for (const auto& engine : m_engines)
 	{
+		if (!engine.second->is_postprocessor && modified)
+		{
+			continue;
+		}
+
 		char *engine_result = engine.second->OnIncomingIRCLine((HANDLE)socket, a_line.c_str(), a_line.size());
 
 		if (engine_result)

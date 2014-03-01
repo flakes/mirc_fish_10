@@ -955,6 +955,7 @@ MIRC_DLL_EXPORT(INI_SetSectionBool)
 
 DECLARE_FISH_INJECT_ENGINE(g_engine_export, _OnIncomingIRCLine, _OnOutgoingIRCLine, _OnSocketClosed, _FreeString, false)
 
+// not happy with this yet:
 static PFishEngineRegistration reg;
 
 /* mIRC interface to keep DLL loaded */
@@ -963,6 +964,7 @@ MIRC_EXPORT_SIG(void) LoadDll(LOADINFO* info)
 {
 	info->mKeep = TRUE;
 
+	// not happy with this yet:
 	reg = PFishEngineRegistration(new CFishEngineRegistration(&g_engine_export));
 	reg->RegisterUsingDll();
 }
