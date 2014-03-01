@@ -1,5 +1,6 @@
 #include "fish-internal.h"
 #include "fish-inject-engine.h"
+#include "mircdll.h"
 
 
 static CRITICAL_SECTION s_iniLock;
@@ -515,7 +516,7 @@ void _OnSocketClosed(HANDLE a_socket)
 
 
 /* for use from MSL */
-EXPORT_SIG(int) FiSH_SetIniPath(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(FiSH_SetIniPath)
 {
 	if(data && *data)
 	{
@@ -535,7 +536,7 @@ EXPORT_SIG(int) FiSH_SetIniPath(HWND mWnd, HWND aWnd, char *data, char *parms, B
 
 // in: nothing
 // out: "%priv_key %pub_key"
-EXPORT_SIG(int) DH1080_gen(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(DH1080_gen)
 {
 	std::string l_privKey, l_pubKey;
 
@@ -556,7 +557,7 @@ EXPORT_SIG(int) DH1080_gen(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL s
 
 // in: "%priv_key %pub_key"
 // out: shared secret
-EXPORT_SIG(int) DH1080_comp(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(DH1080_comp)
 {
 	if(data && *data)
 	{
@@ -576,7 +577,7 @@ EXPORT_SIG(int) DH1080_comp(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL 
 }
 
 
-EXPORT_SIG(int) FiSH_WriteKey10(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(FiSH_WriteKey10)
 {
 	if(data && *data)
 	{
@@ -601,7 +602,7 @@ EXPORT_SIG(int) FiSH_WriteKey10(HWND mWnd, HWND aWnd, char *data, char *parms, B
 }
 
 
-EXPORT_SIG(int) FiSH_GetKey10(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(FiSH_GetKey10)
 {
 	if(data && *data)
 	{
@@ -629,7 +630,7 @@ EXPORT_SIG(int) FiSH_GetKey10(HWND mWnd, HWND aWnd, char *data, char *parms, BOO
 }
 
 
-EXPORT_SIG(int) FiSH_DelKey10(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(FiSH_DelKey10)
 {
 	if(data && *data)
 	{
@@ -694,7 +695,7 @@ static int _FiSH_DecryptMsg_Internal(std::string& a_data)
 }
 
 
-EXPORT_SIG(int) FiSH_DecryptMsg10(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(FiSH_DecryptMsg10)
 {
 	if(data && *data)
 	{
@@ -712,7 +713,7 @@ EXPORT_SIG(int) FiSH_DecryptMsg10(HWND mWnd, HWND aWnd, char *data, char *parms,
 }
 
 
-EXPORT_SIG(int) FiSH_decrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(FiSH_decrypt_msg)
 {
 	// de-UTF8 for b/c:
 	if(data && *data)
@@ -765,7 +766,7 @@ static int _FiSH_EncryptMsg_Internal(std::string& a_data)
 }
 
 
-EXPORT_SIG(int) FiSH_EncryptMsg10(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(FiSH_EncryptMsg10)
 {
 	if(data && *data)
 	{
@@ -783,7 +784,7 @@ EXPORT_SIG(int) FiSH_EncryptMsg10(HWND mWnd, HWND aWnd, char *data, char *parms,
 }
 
 
-EXPORT_SIG(int) FiSH_encrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(FiSH_encrypt_msg)
 {
 	// de-UTF8 for b/c:
 	if(data && *data)
@@ -803,7 +804,7 @@ EXPORT_SIG(int) FiSH_encrypt_msg(HWND mWnd, HWND aWnd, char *data, char *parms, 
 }
 
 
-EXPORT_SIG(int) FiSH_GetMyIP(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(FiSH_GetMyIP)
 {
 	auto l_ini = GetBlowIni();
 	std::wstring l_lookupUrl = l_ini->GetStringW(L"MyIP_service");
@@ -849,7 +850,7 @@ EXPORT_SIG(int) FiSH_GetMyIP(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL
 }
 
 
-EXPORT_SIG(int) INI_GetBool(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(INI_GetBool)
 {
 	if(!data || !*data)
 		return 0;
@@ -867,18 +868,18 @@ EXPORT_SIG(int) INI_GetBool(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL 
 }
 
 
-bool STR_TO_BOOL(const char* s)
+static bool STR_TO_BOOL(const char* s)
 {
 	return (!s || !*s || *s == '0' || !_stricmp(s, "false") ? 0 : 1);
 }
 
-bool STR_TO_BOOL(const std::string& ss)
+static bool STR_TO_BOOL(const std::string& ss)
 {
 	return STR_TO_BOOL(ss.c_str());
 }
 
 
-EXPORT_SIG(int) INI_SetBool(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(INI_SetBool)
 {
 	if(data && *data)
 	{
@@ -900,7 +901,7 @@ EXPORT_SIG(int) INI_SetBool(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL 
 }
 
 
-EXPORT_SIG(int) INI_GetSectionBool(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(INI_GetSectionBool)
 {
 	if(data && *data)
 	{
@@ -926,7 +927,7 @@ EXPORT_SIG(int) INI_GetSectionBool(HWND mWnd, HWND aWnd, char *data, char *parms
 }
 
 
-EXPORT_SIG(int) INI_SetSectionBool(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(INI_SetSectionBool)
 {
 	if(data && *data)
 	{
@@ -950,18 +951,45 @@ EXPORT_SIG(int) INI_SetSectionBool(HWND mWnd, HWND aWnd, char *data, char *parms
 }
 
 
-/* dummy call to show compililation date */
+/* engine struct for fish_inject.dll */
+
+DECLARE_FISH_INJECT_ENGINE(g_engine_export, _OnIncomingIRCLine, _OnOutgoingIRCLine, _OnSocketClosed, _FreeString, false)
+
+static PFishEngineRegistration reg;
+
+/* mIRC interface to keep DLL loaded */
+
+MIRC_EXPORT_SIG(void) LoadDll(LOADINFO* info)
+{
+	info->mKeep = TRUE;
+
+	reg = PFishEngineRegistration(new CFishEngineRegistration(&g_engine_export));
+	reg->RegisterUsingDll();
+}
+
+MIRC_EXPORT_SIG(int) UnloadDll(int mTimeout)
+{
+	if (mTimeout == 1)
+	{
+		// unload not ok:
+		return 0;
+	}
+	else
+	{
+		// forced unload.
+		reg.reset();
+		return 0;
+	}
+}
+
+
+/* call for mIRC to show compililation date */
 
 extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
 	strcpy_s(data, 900, "/echo -a *** FiSH 10.2 *** by [c&f] *** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***");
 	return 2;
 }
-
-
-/* Engine export for fish_inject.dll */
-
-EXPORT_FISH_INJECT_ENGINE(_OnIncomingIRCLine, _OnOutgoingIRCLine, _OnSocketClosed, _FreeString)
 
 
 /* DllMain for initialization purposes */

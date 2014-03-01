@@ -14,6 +14,8 @@ class CInjectEngines
 {
 public:
 	bool LoadRegister(const std::wstring& a_dllName);
+	bool Register(HMODULE hLib, const fish_inject_engine_t*);
+	bool Unregister(const fish_inject_engine_t*);
 
 	bool OnOutgoingLine(SOCKET socket, std::string& a_line) const;
 	bool OnIncomingLine(SOCKET socket, std::string& a_line) const;

@@ -9,11 +9,7 @@ static HMODULE LoadLibraryFromSameDirectory(const std::wstring& a_dllName)
 	HMODULE hLib = NULL;
 	wchar_t wszBuf[1000] = { 0 };
 
-	if (::GetModuleHandleW(a_dllName.c_str()))
-	{
-		hLib = ::GetModuleHandleW(a_dllName.c_str());
-	}
-	else if (::GetModuleFileNameW(g_hModule, wszBuf, 999) || ::GetModuleFileNameW(NULL, wszBuf, 999))
+	if (::GetModuleFileNameW(g_hModule, wszBuf, 999) || ::GetModuleFileNameW(NULL, wszBuf, 999))
 	{
 		std::wstring dll_path;
 
@@ -32,7 +28,6 @@ static HMODULE LoadLibraryFromSameDirectory(const std::wstring& a_dllName)
 
 bool CInjectEngines::LoadRegister(const std::wstring& a_dllName)
 {
-	// get default fish_10 engine:
 	HMODULE hLib = LoadLibraryFromSameDirectory(a_dllName);
 	bool ok = false;
 
@@ -45,14 +40,7 @@ bool CInjectEngines::LoadRegister(const std::wstring& a_dllName)
 		{
 			const fish_inject_engine_t* pEngine = engine_export_function();
 
-			if (pEngine && pEngine->version == FISH_INJECT_ENGINE_VERSION)
-			{
-				CSimpleScopedLock lock(m_engineListAccess);
-
-				m_engines.push_back(TEngine(hLib, pEngine));
-
-				ok = true;
-			}
+			ok = Register(hLib, pEngine);
 		}
 	}
 
@@ -62,6 +50,41 @@ bool CInjectEngines::LoadRegister(const std::wstring& a_dllName)
 	}
 
 	return ok;
+}
+
+
+bool CInjectEngines::Register(HMODULE hLib, const fish_inject_engine_t* pEngine)
+{
+	Unregister(pEngine); // make sure no engine is loaded twice
+
+	if (pEngine && pEngine->version == FISH_INJECT_ENGINE_VERSION)
+	{
+		CSimpleScopedLock lock(m_engineListAccess);
+
+		m_engines.push_back(TEngine(hLib, pEngine));
+
+		return true;
+	}
+
+	return false;
+}
+
+
+bool CInjectEngines::Unregister(const fish_inject_engine_t* pEngine)
+{
+	CSimpleScopedLock lock(m_engineListAccess);
+
+	for (TEngineList::iterator it = m_engines.begin(); it != m_engines.end(); ++it)
+	{
+		if (it->second == pEngine)
+		{
+			m_engines.erase(it);
+
+			return true;
+		}
+	}
+
+	return false;
 }
 
 

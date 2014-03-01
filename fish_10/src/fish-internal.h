@@ -69,6 +69,5 @@ int blowfish_decrypt_cbc(const std::string& a_in, std::string &ar_out, const std
 void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const std::string &a_key);
 
 /* for fish-main.cpp */
-#define EXPORT_SIG(RET_TYPE) extern "C" RET_TYPE __stdcall
 #define blowfish_encrypt_auto(CBC, A, B, C) if(CBC) blowfish_encrypt_cbc(A, B, C); else blowfish_encrypt(A, B, C)
 #define blowfish_decrypt_auto(CBC, A, B, C) ((CBC) ? blowfish_decrypt_cbc(A, B, C) : blowfish_decrypt(A, B, C))

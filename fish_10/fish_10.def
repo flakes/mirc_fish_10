@@ -1,4 +1,7 @@
 EXPORTS
+	LoadDll
+	UnloadDll
+	_callMe
 	FiSH_SetIniPath
 	DH1080_comp
 	DH1080_gen
@@ -14,4 +17,3 @@ EXPORTS
 	INI_SetBool
 	INI_GetSectionBool
 	INI_SetSectionBool
-	_callMe

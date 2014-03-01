@@ -29,8 +29,6 @@
  of those to the imports from ws2_32.dll on some Windowses. Need to work
  around that mess.
 
- Oh and this code uses some C++0x features so you better get MSVC++ 2010.
-
 ******************************************************************************/
 
 /* global vars */
@@ -428,6 +426,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	return s_lpfn_SSL_read(ssl, buf, num);
 }
 
+
 /* You can keep a DLL loaded by including a LoadDll() routine in your DLL, which mIRC calls the first time you load the DLL. */
 
 extern "C" void __stdcall LoadDll(LOADINFO* info)
@@ -496,8 +495,6 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 		info->mKeep = TRUE;
 
 		s_loaded = true;
-
-		s_engines->LoadRegister(L"fish_10.dll");
 	}
 	else
 	{
@@ -542,6 +539,11 @@ extern "C" int __stdcall UnloadDll(int mTimeout)
 */
 	if(mTimeout == 1)
 	{
+		if (!s_loaded)
+		{
+			s_engines.reset();
+		}
+
 		return (s_loaded ? 0 : 1);
 	}
 	else
@@ -561,6 +563,26 @@ extern "C" int __stdcall UnloadDll(int mTimeout)
 
 		return 0;
 	}
+}
+
+
+/* returns 0 on success */
+extern "C" int RegisterEngine(const fish_inject_engine_t *pEngine)
+{
+	if (!s_engines)
+		return -1;
+
+	return (s_engines->Register(0, pEngine) ? 0 : 1);
+}
+
+
+/* returns 0 on success */
+extern "C" int UnregisterEngine(const fish_inject_engine_t *pEngine)
+{
+	if (!s_engines)
+		return -1;
+
+	return (s_engines->Unregister(pEngine) ? 0 : 1);
 }
 
 

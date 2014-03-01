@@ -2,3 +2,5 @@ EXPORTS
 	LoadDll
 	UnloadDll
 	_callMe
+	RegisterEngine
+	UnregisterEngine
