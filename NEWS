@@ -1,3 +1,10 @@
+== 2014-06-12 ==
+	* New internal startup flow
+	* OpenSSL update to 1.0.1h
+
+== 2014-04-08 ==
+	* OpenSSL update to 1.0.1g
+
 == 2014-01-11 ==
 	* OpenSSL update to 1.0.1f (fixes some security issues)
 	* Restored working order on SSE 1-only CPUs
