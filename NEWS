@@ -1,5 +1,6 @@
 == 2014-06-12 ==
 	* New internal startup flow
+	* fish_10.mrc file MUST be updated!
 	* OpenSSL update to 1.0.1h
 
 == 2014-04-08 ==

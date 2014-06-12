@@ -14,13 +14,11 @@ on *:START: {
 
 ; ***************** don't edit anything below this line. *****************
 
-  set %FiSH_dll $shortfn($nofile($mircexe) $+ fish_10.dll)
+  set %FiSH_dll $+(",$nofile($mircexe) $+ fish_10.dll,")
 
-; this call is very important:
-  .dll $shortfn($nofile($mircexe) $+ fish_inject.dll) _callMe
-; this one is just for info:
+; these calls must be made in exactly this order:
+  .dll $+(",$nofile($mircexe) $+ fish_inject.dll,") _callMe
   .dll %FiSH_dll _callMe
-; and this one is important again:
   .dll %FiSH_dll FiSH_SetIniPath %blow_ini
 }
 
