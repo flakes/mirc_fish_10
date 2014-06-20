@@ -6,6 +6,7 @@
 #include <string>
 
 #include "inject-engines.h"
+#include "simple-thread-lock.h"
 
 /** here comes the main socket logic class **/
 
@@ -35,7 +36,7 @@ protected:
 	size_t m_bytesSent;
 	size_t m_bytesReceived;
 
-	CRITICAL_SECTION m_opLock;
+	CSimpleThreadLock m_opLock;
 
 	/** the following buffer variables only activate when the connection
 	has been determined to be an IRC connection! **/
@@ -61,8 +62,8 @@ public:
 	// using a locking mechanism for some crashes that were happening on connections
 	// that tried to reconnect a lot, although usually all calls to one socket originate
 	// from the same thread.
-	void Lock();
-	void Unlock();
+	void Lock() { m_opLock.Lock(); }
+	void Unlock() { m_opLock.Unlock(); }
 
 	// use this for completely unexpected cases:
 	void Discard();

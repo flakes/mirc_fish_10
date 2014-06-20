@@ -32,7 +32,7 @@
 ******************************************************************************/
 
 /* global vars */
-HMODULE g_hModule = NULL;
+HMODULE g_hModule = nullptr;
 
 /* static vars */
 static bool s_loaded = false;
@@ -82,7 +82,7 @@ static SSL_state_proc  _SSL_state;
 /* patched connect call */
 int WSAAPI my_connect(SOCKET s, const struct sockaddr FAR * name, int namelen)
 {
-	if(s != NULL)
+	if(s)
 	{
 		CSimpleScopedLock lock(s_socketsAccess);
 
@@ -442,7 +442,7 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 
 		return;
 	}
-	else if(hInstSSLeay == NULL)
+	else if(hInstSSLeay == nullptr)
 	{
 		::MessageBoxW(info->mHwnd, L"FiSH 10 needs OpenSSL to be installed. Disabling. "
 			L"Go to www.mirc.com/ssl.html to install SSL.", L"Error", MB_ICONEXCLAMATION);
@@ -471,9 +471,9 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 	send_proc xsend_legacy = (send_proc)::GetProcAddress(hInstWsOld, "send");
 	recv_proc xrecv_legacy = (recv_proc)::GetProcAddress(hInstWsOld, "recv");
 
-	if (xsend_legacy != NULL && xsend_legacy != xsend)
+	if (xsend_legacy != nullptr && xsend_legacy != xsend)
 		s_patchSendLegacy = PPatch(new CPatch(xsend_legacy, my_send_legacy, s_lpfn_send_legacy));
-	if (xrecv_legacy != NULL && xrecv_legacy != xrecv)
+	if (xrecv_legacy != nullptr && xrecv_legacy != xrecv)
 		s_patchRecvLegacy = PPatch(new CPatch(xrecv_legacy, my_recv_legacy, s_lpfn_recv_legacy));
 
 	// patch OpenSSL calls:
@@ -490,7 +490,7 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 	// check if it worked:
 	if(s_patchConnect->patched() && s_patchRecv->patched() && s_patchSend->patched() &&
 		(!hInstSSLeay || (s_patchSSLWrite->patched() && s_patchSSLRead->patched())) &&
-		(_SSL_get_fd != NULL) && (_SSL_state != NULL))
+		(_SSL_get_fd != nullptr) && (_SSL_state != nullptr))
 	{
 		info->mKeep = TRUE;
 

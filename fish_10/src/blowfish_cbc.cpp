@@ -56,14 +56,14 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const st
 
 	// init struct for encryption:
 	EVP_CIPHER_CTX_init(&l_ctx);
-	EVP_CipherInit_ex(&l_ctx, EVP_bf_cbc(), NULL, NULL, NULL, 1);
+	EVP_CipherInit_ex(&l_ctx, EVP_bf_cbc(), nullptr, nullptr, nullptr, 1);
 
 	// set options:
 	EVP_CIPHER_CTX_set_key_length(&l_ctx, l_keyLen);
 	EVP_CIPHER_CTX_set_padding(&l_ctx, 0); // disable auto padding. Required for Mircryption compatibility.
 
 	// actually initialize session context:
-	EVP_CipherInit_ex(&l_ctx, NULL, NULL, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 1);
+	EVP_CipherInit_ex(&l_ctx, nullptr, nullptr, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 1);
 
 	// prepare buffers:
 	size_t l_inBufSize = a_in.size();
@@ -125,14 +125,14 @@ int blowfish_decrypt_cbc(const std::string& a_in, std::string &ar_out, const std
 
 	// init struct for decryption:
 	EVP_CIPHER_CTX_init(&l_ctx);
-	EVP_CipherInit_ex(&l_ctx, EVP_bf_cbc(), NULL, NULL, NULL, 0);
+	EVP_CipherInit_ex(&l_ctx, EVP_bf_cbc(), nullptr, nullptr, nullptr, 0);
 
 	// set options:
 	EVP_CIPHER_CTX_set_key_length(&l_ctx, l_keyLen);
 	EVP_CIPHER_CTX_set_padding(&l_ctx, 0); // MUST be the same setting used during encryption.
 
 	// actually initialize session context:
-	EVP_CipherInit_ex(&l_ctx, NULL, NULL, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 0);
+	EVP_CipherInit_ex(&l_ctx, nullptr, nullptr, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 0);
 
 	// decrypt...
 	bool l_success = _blowfish_cipher_walk(&l_ctx, l_in.c_str(), l_in.size(), ar_out);

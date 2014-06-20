@@ -26,7 +26,7 @@ void CBlowIni::SetIniPath(std::wstring a_iniPath)
 bool CBlowIni::IsWritable() const
 {
 	wchar_t l_buf[20] = {0};
-	swprintf_s(l_buf, 19, L"%d", time(NULL));
+	swprintf_s(l_buf, 19, L"%d", time(nullptr));
 
 	return (::WritePrivateProfileStringW(L"Test", L"StartUp", l_buf, m_iniPath.c_str()) != 0);
 }
@@ -163,18 +163,18 @@ bool CBlowIni::DeleteBlowKey(const std::string& a_name) const
 	{
 		const std::wstring l_iniSectionW = UnicodeFromCp(CP_UTF8, l_iniSection);
 
-		l_success = (::WritePrivateProfileStringW(l_iniSectionW.c_str(), NULL, NULL, m_iniPath.c_str()) != 0);
+		l_success = (::WritePrivateProfileStringW(l_iniSectionW.c_str(), nullptr, nullptr, m_iniPath.c_str()) != 0);
 	}
 	else
 	{
 		const std::string l_ansiFileName = UnicodeToCp(CP_ACP, m_iniPath);
 
-		if(::WritePrivateProfileStringA(l_iniSection.c_str(), NULL, NULL, l_ansiFileName.c_str()) == 0)
+		if(::WritePrivateProfileStringA(l_iniSection.c_str(), nullptr, nullptr, l_ansiFileName.c_str()) == 0)
 		{
 			// compatibility fallback, read above...
 			const std::wstring l_iniSectionW = UnicodeFromCp(CP_ACP, l_iniSection);
 
-			l_success = (::WritePrivateProfileStringW(l_iniSectionW.c_str(), NULL, NULL, m_iniPath.c_str()) != 0);
+			l_success = (::WritePrivateProfileStringW(l_iniSectionW.c_str(), nullptr, nullptr, m_iniPath.c_str()) != 0);
 		}
 	}
 
@@ -229,7 +229,7 @@ bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_valu
 	if(l_success)
 	{
 		wchar_t l_timeBuf[30] = {0};
-		time_t l_time = time(NULL);
+		time_t l_time = time(nullptr);
 		struct tm l_today;
 		_localtime64_s(&l_today, &l_time);
 		if(wcsftime(l_timeBuf, 29, L"%d/%m/%Y", &l_today) > 0)
@@ -245,7 +245,7 @@ bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_valu
 	else
 	{
 		// delete cbc entry
-		::WritePrivateProfileStringW(l_iniSectionW.c_str(), L"cbc", NULL, m_iniPath.c_str());
+		::WritePrivateProfileStringW(l_iniSectionW.c_str(), L"cbc", nullptr, m_iniPath.c_str());
 	}
 
 	return l_success;

@@ -6,10 +6,10 @@
 
 static HMODULE LoadLibraryFromSameDirectory(const std::wstring& a_dllName)
 {
-	HMODULE hLib = NULL;
+	HMODULE hLib = nullptr;
 	wchar_t wszBuf[1000] = { 0 };
 
-	if (::GetModuleFileNameW(g_hModule, wszBuf, 999) || ::GetModuleFileNameW(NULL, wszBuf, 999))
+	if (::GetModuleFileNameW(g_hModule, wszBuf, 999) || ::GetModuleFileNameW(nullptr, wszBuf, 999))
 	{
 		std::wstring dll_path;
 

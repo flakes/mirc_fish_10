@@ -29,7 +29,7 @@ static CRITICAL_SECTION s_socketMapLock;
 char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 {
 	if(!a_socket || !a_line || a_len < 1 || *a_line != ':')
-		return NULL;
+		return nullptr;
 
 	if(strstr(a_line, " ") == strstr(a_line, " 005 "))
 	{
@@ -47,18 +47,18 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 			s_socketMap[a_socket] = l_line.substr(l_pos, l_endPos - l_pos);
 			::LeaveCriticalSection(&s_socketMapLock);
 
-			return NULL;
+			return nullptr;
 		}
 	}
 
 	// quick exit to save some CPU cycles:
 	if(!strstr(a_line, "+OK ") && !strstr(a_line, "mcps "))
-		return NULL;
+		return nullptr;
 
 	auto l_ini = GetBlowIni();
 
 	if(!l_ini->GetBool(L"process_incoming", true))
-		return NULL;
+		return nullptr;
 
 	/** list of stuff we possibly need to decrypt: **
 		:nick!ident@host PRIVMSG #chan :+OK 2T5zD0mPgMn
@@ -102,11 +102,11 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	}
 
 	if(l_cmd.empty() || l_message.empty())
-		return NULL;
+		return nullptr;
 
 	// check if +OK is in the message part of the line:
 	if(l_message.find("+OK ") == std::string::npos && l_message.find("mcps ") == std::string::npos)
-		return NULL;
+		return nullptr;
 
 	enum {
 		CMD_PRIVMSG = 1,
@@ -128,7 +128,7 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	else if(!strcmp(l_cmd.c_str(), "322"))
 		l_cmd_type = CMD_N322;
 	else
-		return NULL;
+		return nullptr;
 
 	std::string l_leading, l_trailing;
 
@@ -179,12 +179,12 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 			l_tmpPos = l_message.find(" :(");
 
 			if(l_tmpPos == std::string::npos || l_tmpPos == 0)
-				return NULL;
+				return nullptr;
 
 			std::string::size_type l_endPos = l_message.find(") ", l_tmpPos + 3);
 
 			if(l_endPos == std::string::npos)
-				return NULL;
+				return nullptr;
 
 			l_contact = l_message.substr(l_tmpPos + 3, l_endPos - l_tmpPos - 3);
 			std::string l_timestamp = l_message.substr(0, l_tmpPos);
@@ -243,7 +243,7 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	}
 
 	if(l_contact.empty())
-		return NULL;
+		return nullptr;
 
 	if(l_cmd_type == CMD_PRIVMSG && l_message.find("\x01""ACTION ") == 0)
 	{
@@ -257,7 +257,7 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	else if(l_message.find("mcps ") == 0)
 		l_message.erase(0, 5);
 	else
-		return NULL; // something must have gone awry.
+		return nullptr; // something must have gone awry.
 
 	// account for stuff like trailing time stamps from BNCs:
 	if((l_tmpPos = l_message.find(' ')) != std::string::npos)
@@ -277,7 +277,7 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	l_blowKey = l_ini->GetBlowKey(l_networkName, l_contact, l_cbc);
 
 	if(l_blowKey.empty())
-		return NULL;
+		return nullptr;
 
 	// put together new message:
 	std::string l_newMsg;
@@ -387,12 +387,12 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 {
 	if(!a_socket || !a_line || a_len < 1)
-		return NULL;
+		return nullptr;
 
 	auto l_ini = GetBlowIni();
 
 	if(!l_ini->GetBool(L"process_outgoing", true))
-		return NULL;
+		return nullptr;
 
 	/** list of messages we possibly need to encrypt: **
 		PRIVMSG #chan :lulz
@@ -416,11 +416,11 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	else if(!_strnicmp(a_line, "TOPIC ", 6))
 		l_cmd_type = CMD_TOPIC;
 	else
-		return NULL;
+		return nullptr;
 
 	// check notice encryption setting:
 	if(l_cmd_type == CMD_NOTICE && !l_ini->GetBool(L"encrypt_notice", false))
-		return NULL;
+		return nullptr;
 
 	// split line:
 	std::string l_line(a_line, a_len);
@@ -428,7 +428,7 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		l_msgPos = l_line.find(" :", l_targetPos);
 
 	if(l_msgPos == std::string::npos)
-		return NULL; // "should never happen"
+		return nullptr; // "should never happen"
 
 	std::string l_target = l_line.substr(l_targetPos, l_msgPos - l_targetPos),
 		l_message = l_line.substr(l_msgPos + 2), l_networkName;
@@ -441,22 +441,22 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	StrTrimRight(l_message);
 
 	if(l_message.empty())
-		return NULL;
+		return nullptr;
 
 	// check topic encryption setting:
 	if(l_cmd_type == CMD_TOPIC && !l_ini->GetSectionBool(l_networkName, l_target, L"encrypt_topic", false))
-		return NULL;
+		return nullptr;
 
 	// don't encrypt DH1080 key exchange:
 	if(l_cmd_type == CMD_NOTICE && l_message.find("DH1080_") == 0)
-		return NULL;
+		return nullptr;
 
 	// check for CTCPs:
 	if(l_message[0] == 0x01)
 	{
 		if(l_message.compare(0, 8, "\x01""ACTION ") != 0 || !l_ini->GetBool(L"encrypt_action", false))
 		{
-			return NULL;
+			return nullptr;
 		}
 		else
 		{
@@ -470,7 +470,7 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	const std::string l_blowKey = l_ini->GetBlowKey(l_networkName, l_target, l_cbc);
 
 	if(l_blowKey.empty())
-		return NULL;
+		return nullptr;
 
 	// put together new message:
 	std::string l_newMsg;

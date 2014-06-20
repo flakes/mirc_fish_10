@@ -9,19 +9,6 @@ CSocketInfo::CSocketInfo(SOCKET s, const PInjectEngines& engines) :
 	m_ssl(false), m_sslHandshakeComplete(false),
 	m_bytesSent(0), m_bytesReceived(0)
 {
-	::InitializeCriticalSection(&m_opLock);
-}
-
-
-void CSocketInfo::Lock()
-{
-	::EnterCriticalSection(&m_opLock);
-}
-
-
-void CSocketInfo::Unlock()
-{
-	::LeaveCriticalSection(&m_opLock);
 }
 
 
@@ -164,7 +151,8 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 
 			if (m_engines->OnOutgoingLine(m_socket, l_line))
 			{
-				INJECT_DEBUG_MSG("encrypted:"); INJECT_DEBUG_MSG(l_line);
+				INJECT_DEBUG_MSG("encrypted:");
+				INJECT_DEBUG_MSG(l_line);
 			}
 
 			l_chunk += l_line;
@@ -205,7 +193,8 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 
 			if (m_engines->OnIncomingLine(m_socket, l_line))
 			{
-				INJECT_DEBUG_MSG("decrypted:"); INJECT_DEBUG_MSG(l_line);
+				INJECT_DEBUG_MSG("decrypted:");
+				INJECT_DEBUG_MSG(l_line);
 			}
 
 			m_receivedBuffer += l_line;
@@ -216,7 +205,7 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 		if(l_bytesReceivedBefore == 0
 			&& a_len >= 18
 			&& memcmp("HTTP/1.", a_data, 7) == 0
-			&& (strstr(a_data, "\r\n\r\n") != NULL || strstr(a_data, "\n\n") != NULL))
+			&& (strstr(a_data, "\r\n\r\n") != nullptr || strstr(a_data, "\n\n") != nullptr))
 			// this will fail if the response is not received in one chunk...
 		{
 			unsigned int _dummy, l_httpCode = 0;
@@ -225,8 +214,7 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 			{
 				INJECT_DEBUG_MSG("HTTP proxy response is okay!");
 
-				OnProxyHandshakeComplete();
-				return;
+				return OnProxyHandshakeComplete();
 			}
 		}
 
@@ -245,8 +233,7 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 			{
 				INJECT_DEBUG_MSG("SOCKS4 proxy response is okay!");
 
-				OnProxyHandshakeComplete();
-				return;
+				return OnProxyHandshakeComplete();
 			}
 		}
 
@@ -264,6 +251,7 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 			if(l_resp.version == 0x05 && l_resp.auth_method != 0xFF)
 			{
 				m_state = MSCK_SOCKS5_AUTHENTICATION;
+
 				return;
 			}
 		}
@@ -281,8 +269,7 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 			{
 				INJECT_DEBUG_MSG("SOCKS5 proxy response is okay!");
 
-				OnProxyHandshakeComplete();
-				return;
+				return OnProxyHandshakeComplete();
 			}
 		}
 
@@ -308,9 +295,7 @@ void CSocketInfo::OnProxyHandshakeComplete()
 
 std::string CSocketInfo::GetSendBuffer()
 {
-	std::string l_tmp = m_sendBuffer;
-	m_sendBuffer.clear();
-	return l_tmp;
+	return std::move(m_sendBuffer);
 }
 
 
@@ -324,7 +309,7 @@ std::string CSocketInfo::ReadFromRecvBuffer(size_t a_max)
 {
 	std::string l_tmp = m_receivedBuffer.substr(0, a_max);
 	m_receivedBuffer.erase(0, a_max);
-	return l_tmp;
+	return std::move(l_tmp);
 }
 
 
@@ -336,5 +321,4 @@ void CSocketInfo::Discard()
 
 CSocketInfo::~CSocketInfo()
 {
-	::DeleteCriticalSection(&m_opLock);
 }

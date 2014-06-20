@@ -7,7 +7,7 @@
 
 std::string UnicodeToCp(UINT a_codePage, const std::wstring& a_wstr)
 {
-	int l_size = ::WideCharToMultiByte(a_codePage, 0, a_wstr.c_str(), -1, NULL, NULL, NULL, NULL);
+	int l_size = ::WideCharToMultiByte(a_codePage, 0, a_wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
 
 	if(l_size)
 	{
@@ -15,7 +15,7 @@ std::string UnicodeToCp(UINT a_codePage, const std::wstring& a_wstr)
 
 		if(l_buf)
 		{
-			::WideCharToMultiByte(a_codePage, 0, a_wstr.c_str(), -1, l_buf, l_size, NULL, NULL);
+			::WideCharToMultiByte(a_codePage, 0, a_wstr.c_str(), -1, l_buf, l_size, nullptr, nullptr);
 			std::string l_result(l_buf);
 			delete[] l_buf;
 			return l_result;
@@ -28,7 +28,7 @@ std::string UnicodeToCp(UINT a_codePage, const std::wstring& a_wstr)
 
 std::wstring UnicodeFromCp(UINT a_codePage, const std::string& a_str)
 {
-	int l_size = ::MultiByteToWideChar(a_codePage, 0, a_str.c_str(), -1, NULL, NULL);
+	int l_size = ::MultiByteToWideChar(a_codePage, 0, a_str.c_str(), -1, nullptr, 0);
 
 	if(l_size)
 	{
@@ -71,7 +71,7 @@ std::string HttpDownloadTextFile(const std::wstring& a_url)
 	std::string sText;
 	BOOL bSuccess = TRUE;
 
-	hInet = ::InternetOpen(L"HttpDownloadTextFile/1.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+	hInet = ::InternetOpen(L"HttpDownloadTextFile/1.0", INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
 
 	if(hInet)
 	{
@@ -80,11 +80,11 @@ std::string HttpDownloadTextFile(const std::wstring& a_url)
 
 		::InternetSetOption(hInet, INTERNET_OPTION_CONNECT_TIMEOUT, &dwTimeBuffer, sizeof(dwTimeBuffer));
 
-		hRequest = ::InternetOpenUrl(hInet, a_url.c_str(), NULL, 0,
+		hRequest = ::InternetOpenUrl(hInet, a_url.c_str(), nullptr, 0,
 			INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE |
 			INTERNET_FLAG_NO_COOKIES | INTERNET_FLAG_NO_AUTH, 0);
 
-		::InternetSetOption(hRequest, INTERNET_OPTION_IGNORE_OFFLINE, NULL, 0);
+		::InternetSetOption(hRequest, INTERNET_OPTION_IGNORE_OFFLINE, nullptr, 0);
 
 		if(hRequest)
 		{
@@ -95,9 +95,9 @@ std::string HttpDownloadTextFile(const std::wstring& a_url)
 				TCHAR szSizeBuffer[32];
 				DWORD dwLengthSizeBuffer = 32;
 
-				if(::HttpQueryInfo(hRequest, HTTP_QUERY_CONTENT_LENGTH, szSizeBuffer, &dwLengthSizeBuffer, NULL) == TRUE)
+				if(::HttpQueryInfo(hRequest, HTTP_QUERY_CONTENT_LENGTH, szSizeBuffer, &dwLengthSizeBuffer, nullptr) == TRUE)
 				{
-					uFileSize = _wcstoi64(szSizeBuffer, NULL, 10);
+					uFileSize = _wcstoi64(szSizeBuffer, nullptr, 10);
 				}
 			}
 
@@ -291,7 +291,7 @@ std::string SimpleMIRCParser(const std::string& a_str)
 						wchar_t l_char = (wchar_t)l_code;
 						char l_utfBuf[8] = {0};
 
-						::WideCharToMultiByte(CP_UTF8, 0, &l_char, 1, l_utfBuf, 7, NULL, NULL);
+						::WideCharToMultiByte(CP_UTF8, 0, &l_char, 1, l_utfBuf, 7, nullptr, nullptr);
 
 						l_result += l_utfBuf;
 						l_newPos = l_endPos + 1;

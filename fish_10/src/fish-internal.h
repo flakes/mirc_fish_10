@@ -24,8 +24,8 @@ public:
 	void SetIniPath(std::wstring a_iniPath);
 
 	/* general purpose INI tools */
-	std::wstring GetStringW(const wchar_t* a_key, const wchar_t* a_default = NULL) const;
-	std::string GetString(const wchar_t* a_key, const wchar_t* a_default = NULL) const;
+	std::wstring GetStringW(const wchar_t* a_key, const wchar_t* a_default = nullptr) const;
+	std::string GetString(const wchar_t* a_key, const wchar_t* a_default = nullptr) const;
 	bool GetBool(const wchar_t* a_key, bool a_default) const;
 	int GetInt(const wchar_t* a_key, int a_default = 0) const;
 	bool SetInt(const wchar_t* a_key, int a_value) const;
