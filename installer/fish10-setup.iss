@@ -1,0 +1,155 @@
+﻿#define ReleaseDir "..\Release"
+#define OpenSSLVer GetStringFileInfo(ReleaseDir + "\ssleay32.dll", "ProductVersion")
+#define BuildTime GetFileDateTimeString(ReleaseDir + "\fish_10.dll", 'yyyy/mm/dd hh:nn:ss', '-', ':')
+#define SetupBuildDate GetFileDateTimeString(ReleaseDir + "\fish_10.dll", 'yyyy/mm/dd', '-', ':')
+#define SetupBuildDateMachine GetFileDateTimeString(ReleaseDir + "\fish_10.dll", 'yyyy/mm/dd', '.', ':')
+#define SetupBuildDateYear GetFileDateTimeString(ReleaseDir + "\fish_10.dll", 'yyyy', '.', ':')
+
+[Setup]
+AppId={{cb634ee1-f9f8-4236-b2ae-dc9912d30d72}
+AppName=FiSH 10
+AppVerName=FiSH 10 ({#SetupBuildDate}) for mIRC 7
+AppVersion={#SetupBuildDateMachine}
+AppPublisher=flakes
+AppCopyright=© flakes 2010-{#SetupBuildDateYear}
+VersionInfoVersion={#SetupBuildDateMachine}
+MinVersion=0,5.1
+OutputDir={#ReleaseDir}
+OutputBaseFilename=mirc_fish_10-setup-{#SetupBuildDate}
+DisableDirPage=yes
+DisableWelcomePage=yes
+AllowCancelDuringInstall=no
+; the uninstaller is placed here:
+DefaultDirName="{pf}\FiSH 10 Setup"
+Uninstallable=not IsPortableInstall()
+
+[Files]
+Source: "{#ReleaseDir}\libeay32.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
+Source: "{#ReleaseDir}\ssleay32.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
+Source: "{#ReleaseDir}\fish_10.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
+Source: "{#ReleaseDir}\fish_inject.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
+Source: "{#ReleaseDir}\README.BLOWINI.txt"; DestDir: "{code:mIRCIniDir}"; Flags: ignoreversion overwritereadonly
+Source: "{#ReleaseDir}\blow.ini-EXAMPLE"; DestDir: "{code:mIRCIniDir}"; Flags: ignoreversion overwritereadonly
+Source: "{#ReleaseDir}\blow.ini-EXAMPLE"; DestName: "blow.ini"; DestDir: "{code:mIRCIniDir}"; Flags: onlyifdoesntexist uninsneveruninstall
+
+[Code]
+var
+  mIRCDirPage: TInputDirWizardPage;
+
+function IIf(cond: Boolean; a, b: String): String;
+begin
+	if cond then
+		Result := a
+	else
+		Result := b;
+end;
+
+#include "mirc-business.iss"
+
+// event function
+procedure InitializeWizard();
+var
+	installedPath: String;
+begin
+	mIRCDirPage := CreateInputDirPage(wpWelcome,
+	'Select mIRC Install Location',
+	'You need to point out your mIRC installation directory to the setup.',
+	'Enter your path to mirc.exe here:',
+	False,
+	'');
+
+	mIRCDirPage.Add('');
+
+	if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\mIRC', 'InstallLocation', installedPath) then
+	begin
+		if not FileExists(installedPath + '\mirc.exe') then
+		begin
+			installedPath := '';
+		end;
+	end;
+
+	mIRCDirPage.Values[0] := GetPreviousData('mIRCExeDir', installedPath);
+end;
+
+// scripted constant
+function mIRCExeDir(p: String): String;
+begin
+	Result := GetMIRCExeDir();
+end;
+
+// scripted constant
+function mIRCIniDir(p: String): String;
+begin
+	Result := GetMIRCIniDirectory();
+end;
+
+// event function
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+	VersStr: String;
+begin
+	Result := False;
+
+	if CurPageID = mIRCDirPage.ID then
+	begin
+		if (GetMIRCExeDir() = '') or (not FileExists(GetMIRCExeDir() + '\mirc.exe')) then
+		begin
+			MsgBox('mirc.exe could not be found in the given directory!', mbError, MB_OK);
+			exit;
+		end;
+
+		VersStr := GetMIRCVersion();
+		if Length(VersStr) < 2 then
+		begin
+			MsgBox('mIRC version not recognized - please check mirc.exe!', mbError, MB_OK);
+			exit;
+		end;
+
+		if (StrToIntDef(VersStr[1], 0) < 7) then
+		begin
+			MsgBox('mIRC version ' + VersStr + ' is too old - not supported!', mbError, MB_OK);
+			exit;
+		end;
+
+		if (GetMIRCIniDirectory() = '') or (not FileExists(GetMIRCIniPath())) then
+		begin
+			MsgBox('mirc.ini file could not be located!', mbError, MB_OK);
+			exit;
+		end;
+	end;
+
+	Result := True;
+end;
+
+// event function
+procedure RegisterExtraCloseApplicationsResources;
+begin
+	RegisterExtraCloseApplicationsResource(False, GetMIRCExeDir() + '\mirc.exe');
+end;
+
+// event function
+procedure RegisterPreviousData(PreviousDataKey: Integer);
+begin
+	SetPreviousData(PreviousDataKey, 'mIRCExeDir', GetMIRCExeDir());
+end;
+
+// event function
+function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo, MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
+begin
+	Result := 'Build time: {#BuildTime}' + NewLine
+		+ 'Included OpenSSL version: {#OpenSSLVer}' + NewLine + NewLine
+		+ #$2713 + ' mIRC directory: ' + GetMIRCExeDir() + NewLine
+		+ #$2713 + ' mIRC settings directory: ' + GetMIRCIniDirectory() + NewLine
+		+ #$2713 + ' mIRC portable install: ' + IIf(IsPortableInstall(), 'yes', 'no') + NewLine
+		+ #$2713 + ' mIRC version: ' + GetMIRCVersion() + NewLine
+		+ NewLine + 'Creating uninstaller: ' + IIf(IsPortableInstall(), 'no', 'yes') + NewLine;
+end;
+
+// event function
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+	if CurStep = ssPostInstall then
+	begin
+		EnableMIRCScriptFile('fish_10.mrc');
+	end;
+end;
