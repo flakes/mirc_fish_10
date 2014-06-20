@@ -63,9 +63,7 @@ begin
 		tmp := GetIniString('rfiles', 'n' + IntToStr(i), '', ini);
 
 		if LowerCase(tmp) = LowerCase(filename) then
-		begin
 			break;
-		end;
 
 		if tmp = '' then
 		begin

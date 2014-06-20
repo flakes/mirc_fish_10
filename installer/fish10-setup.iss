@@ -67,12 +67,20 @@ begin
 end;
 
 function IsMsRuntime2008Installed(): Boolean;
+var
+	WinVer: TWindowsVersion;
 begin
-	// http://blogs.msdn.com/b/astebner/archive/2009/01/29/9384143.aspx
-	Result := IsMsiInstalled('{FF66E9F6-83E7-3A3E-AF14-8DE9A809A6A4}')
-		or IsMsiInstalled('{9A25302D-30C0-39D9-BD6F-21E6EC160475}')
-		or IsMsiInstalled('{1F1C2DFC-2D24-3E06-BCB8-725134ADF989}')
-		or IsMsiInstalled('{9BE518E6-ECC6-35A9-88E4-87755C07200F}');
+	GetWindowsVersionEx(WinVer);
+
+	if (WinVer.Major >= 6) and (WinVer.Minor >= 2) then
+		// always magically present on Windows 8+
+		Result := True
+	else
+		// http://blogs.msdn.com/b/astebner/archive/2009/01/29/9384143.aspx
+		Result := IsMsiInstalled('{FF66E9F6-83E7-3A3E-AF14-8DE9A809A6A4}')
+			or IsMsiInstalled('{9A25302D-30C0-39D9-BD6F-21E6EC160475}')
+			or IsMsiInstalled('{1F1C2DFC-2D24-3E06-BCB8-725134ADF989}')
+			or IsMsiInstalled('{9BE518E6-ECC6-35A9-88E4-87755C07200F}');
 end;
 
 #include "mirc-business.iss"
@@ -80,7 +88,7 @@ end;
 // event function
 procedure InitializeWizard();
 var
-	installedPath: String;
+	InstalledPath: String;
 begin
 	mIRCDirPage := CreateInputDirPage(wpWelcome,
 	'Select mIRC Install Location',
@@ -91,15 +99,13 @@ begin
 
 	mIRCDirPage.Add('');
 
-	if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\mIRC', 'InstallLocation', installedPath) then
+	if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\mIRC', 'InstallLocation', InstalledPath) then
 	begin
-		if not FileExists(installedPath + '\mirc.exe') then
-		begin
-			installedPath := '';
-		end;
+		if not FileExists(InstalledPath + '\mirc.exe') then
+			InstalledPath := '';
 	end;
 
-	mIRCDirPage.Values[0] := GetPreviousData('mIRCExeDir', installedPath);
+	mIRCDirPage.Values[0] := GetPreviousData('mIRCExeDir', InstalledPath);
 end;
 
 // scripted constant
