@@ -5,19 +5,17 @@
 
 
 on *:START: {
-; ********** you can change the blow.ini path here if you like: **********
+  if ($readini($mircini,about,portable) == yes) {
+    set %blow_ini $shortfn($nofile($mircexe) $+ blow.ini)
+  }
+  else {
+    set %blow_ini $shortfn($mircdir $+ blow.ini)
+  }
 
-  set %blow_ini $shortfn($nofile($mircexe) $+ blow.ini)
-
-; for example to use %appdata%\mIRC:
-;  set %blow_ini $shortfn($mircdir $+ blow.ini)
-
-; ***************** don't edit anything below this line. *****************
-
-  set %FiSH_dll $+(",$nofile($mircexe) $+ fish_10.dll,")
+  set %FiSH_dll $qt($nofile($mircexe) $+ fish_10.dll)
 
 ; these calls must be made in exactly this order:
-  .dll $+(",$nofile($mircexe) $+ fish_inject.dll,") _callMe
+  .dll $qt($nofile($mircexe) $+ fish_inject.dll) _callMe
   .dll %FiSH_dll _callMe
   .dll %FiSH_dll FiSH_SetIniPath %blow_ini
 }

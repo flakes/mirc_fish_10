@@ -16,12 +16,21 @@ VersionInfoVersion={#SetupBuildDateMachine}
 MinVersion=0,5.1
 OutputDir={#ReleaseDir}
 OutputBaseFilename=mirc_fish_10-setup-{#SetupBuildDate}
-DisableDirPage=yes
 DisableWelcomePage=yes
+DisableDirPage=yes
+DisableProgramGroupPage=yes
 AllowCancelDuringInstall=no
 ; the uninstaller is placed here:
 DefaultDirName="{pf}\FiSH 10 Setup"
 Uninstallable=not IsPortableInstall()
+SolidCompression=yes
+LanguageDetectionMethod=none
+; save some bytes by using the small image:
+WizardImageFile=compiler:WizModernSmallImage.bmp
+WizardImageStretch=no
+
+[Languages]
+Name: "en"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "{#ReleaseDir}\libeay32.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
@@ -31,6 +40,12 @@ Source: "{#ReleaseDir}\fish_inject.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ig
 Source: "{#ReleaseDir}\README.BLOWINI.txt"; DestDir: "{code:mIRCIniDir}"; Flags: ignoreversion overwritereadonly
 Source: "{#ReleaseDir}\blow.ini-EXAMPLE"; DestDir: "{code:mIRCIniDir}"; Flags: ignoreversion overwritereadonly
 Source: "{#ReleaseDir}\blow.ini-EXAMPLE"; DestName: "blow.ini"; DestDir: "{code:mIRCIniDir}"; Flags: onlyifdoesntexist uninsneveruninstall
+; back up .mrc just in case someone customized it:
+Source: "{code:mIRCIniDir}\fish_10.mrc"; DestDir: "{code:mIRCIniDir}"; DestName: "fish_10.mrc.bak"; Flags: external skipifsourcedoesntexist
+Source: "{#ReleaseDir}\fish_10.mrc"; DestDir: "{code:mIRCIniDir}"; Flags: ignoreversion overwritereadonly
+
+[Run]
+Filename: "{code:mIRCExeDir}\mirc.exe"; Description: "Launch mIRC now"; Flags: shellexec skipifdoesntexist postinstall skipifsilent
 
 [Code]
 var
@@ -42,6 +57,22 @@ begin
 		Result := a
 	else
 		Result := b;
+end;
+
+function DllMsiQueryProductState(const ProductCode: String): Integer; external 'MsiQueryProductStateW@msi.dll stdcall';
+
+function IsMsiInstalled(const ProductCode: String): Boolean;
+begin
+	Result := (5 = DllMsiQueryProductState(ProductCode));
+end;
+
+function IsMsRuntime2008Installed(): Boolean;
+begin
+	// http://blogs.msdn.com/b/astebner/archive/2009/01/29/9384143.aspx
+	Result := IsMsiInstalled('{FF66E9F6-83E7-3A3E-AF14-8DE9A809A6A4}')
+		or IsMsiInstalled('{9A25302D-30C0-39D9-BD6F-21E6EC160475}')
+		or IsMsiInstalled('{1F1C2DFC-2D24-3E06-BCB8-725134ADF989}')
+		or IsMsiInstalled('{9BE518E6-ECC6-35A9-88E4-87755C07200F}');
 end;
 
 #include "mirc-business.iss"
@@ -142,6 +173,7 @@ begin
 		+ #$2713 + ' mIRC settings directory: ' + GetMIRCIniDirectory() + NewLine
 		+ #$2713 + ' mIRC portable install: ' + IIf(IsPortableInstall(), 'yes', 'no') + NewLine
 		+ #$2713 + ' mIRC version: ' + GetMIRCVersion() + NewLine
+		+ IIf(IsMsRuntime2008Installed(), #$2713 + ' Microsoft Visual C++ 2008 package: yes', #$2717 + ' Microsoft Visual C++ 2008 package: no (required)') + NewLine
 		+ NewLine + 'Creating uninstaller: ' + IIf(IsPortableInstall(), 'no', 'yes') + NewLine;
 end;
 
