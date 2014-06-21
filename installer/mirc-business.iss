@@ -62,11 +62,13 @@ begin
 	begin
 		tmp := GetIniString('rfiles', 'n' + IntToStr(i), '', ini);
 
-		if LowerCase(tmp) = LowerCase(filename) then
+		if (CompareText(tmp, filename) = 0) then
 			break;
 
-		if tmp = '' then
+		if (tmp = '') or (CompareText(ExtractFileName(tmp), filename) = 0) then
 		begin
+			// change absolute paths to relative.
+
 			SetIniString('rfiles', 'n' + IntToStr(i), filename, ini);
 			break;
 		end;
@@ -86,5 +88,25 @@ begin
 		if Length(VersStr) > 4 then
 			SetLength(VersStr, 4);
 		Result := VersStr;
+	end;
+end;
+
+function CheckBlowIni(): Boolean;
+var
+	ini: String;
+begin
+	ini := GetMIRCIniDirectory() + '\blow.ini';
+
+	Result := True;
+
+	if FileExists(ini) then
+	begin
+		// if blow.ini doesn't exist, a valid version will be installed.
+
+		if (GetIniInt('FiSH', 'process_incoming', 0, 0, 1, ini) <> 1)
+			or (GetIniInt('FiSH', 'process_outgoing', 0, 0, 1, ini) <> 1) then
+		begin
+			Result := False;
+		end;
 	end;
 end;

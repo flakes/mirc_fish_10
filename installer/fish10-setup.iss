@@ -179,6 +179,7 @@ begin
 		+ #$2713 + ' mIRC settings directory: ' + GetMIRCIniDirectory() + NewLine
 		+ #$2713 + ' mIRC portable install: ' + IIf(IsPortableInstall(), 'yes', 'no') + NewLine
 		+ #$2713 + ' mIRC version: ' + GetMIRCVersion() + NewLine
+		+ IIf(CheckBlowIni(), #$2713 + ' blow.ini sanity check', #$2717 + ' blow.ini sanity check FAILED') + NewLine
 		+ IIf(IsMsRuntime2008Installed(), #$2713 + ' Microsoft Visual C++ 2008 package: yes', #$2717 + ' Microsoft Visual C++ 2008 package: no (required)') + NewLine
 		+ NewLine + 'Creating uninstaller: ' + IIf(IsPortableInstall(), 'no', 'yes') + NewLine;
 end;
