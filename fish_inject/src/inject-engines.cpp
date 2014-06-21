@@ -160,6 +160,20 @@ void CInjectEngines::OnSocketClosed(SOCKET socket) const
 }
 
 
+std::string CInjectEngines::GetEngineList() const
+{
+	CSimpleScopedLock lock(m_engineListAccess);
+	std::string result;
+
+	for (const auto& engine : m_engines)
+	{
+		result += "[" + std::string(engine.second->engine_name) + "]";
+	}
+
+	return result;
+}
+
+
 CInjectEngines::~CInjectEngines()
 {
 	CSimpleScopedLock lock(m_engineListAccess);

@@ -4,3 +4,4 @@ EXPORTS
 	_callMe
 	RegisterEngine
 	UnregisterEngine
+	InjectDebugInfo

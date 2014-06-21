@@ -22,6 +22,8 @@ public:
 
 	void OnSocketClosed(SOCKET socket) const;
 
+	std::string GetEngineList() const;
+
 	virtual ~CInjectEngines();
 
 private:

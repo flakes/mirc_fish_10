@@ -55,7 +55,7 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	if(!strstr(a_line, "+OK ") && !strstr(a_line, "mcps "))
 		return nullptr;
 
-	auto l_ini = GetBlowIni();
+	const auto l_ini = GetBlowIni();
 
 	if(!l_ini->GetBool(L"process_incoming", true))
 		return nullptr;
@@ -268,13 +268,12 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 
 	// get blowfish key...
 	bool l_cbc;
-	std::string l_blowKey, l_networkName;
 
 	::EnterCriticalSection(&s_socketMapLock);
-	l_networkName = s_socketMap[a_socket];
+	const std::string l_networkName = s_socketMap[a_socket];
 	::LeaveCriticalSection(&s_socketMapLock);
 
-	l_blowKey = l_ini->GetBlowKey(l_networkName, l_contact, l_cbc);
+	const std::string& l_blowKey = l_ini->GetBlowKey(l_networkName, l_contact, l_cbc);
 
 	if(l_blowKey.empty())
 		return nullptr;
@@ -389,7 +388,7 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	if(!a_socket || !a_line || a_len < 1)
 		return nullptr;
 
-	auto l_ini = GetBlowIni();
+	const auto l_ini = GetBlowIni();
 
 	if(!l_ini->GetBool(L"process_outgoing", true))
 		return nullptr;
@@ -423,18 +422,18 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		return nullptr;
 
 	// split line:
-	std::string l_line(a_line, a_len);
+	const std::string l_line(a_line, a_len);
 	std::string::size_type l_targetPos = l_line.find(' ') + 1,
 		l_msgPos = l_line.find(" :", l_targetPos);
 
 	if(l_msgPos == std::string::npos)
 		return nullptr; // "should never happen"
 
-	std::string l_target = l_line.substr(l_targetPos, l_msgPos - l_targetPos),
-		l_message = l_line.substr(l_msgPos + 2), l_networkName;
+	const std::string l_target = l_line.substr(l_targetPos, l_msgPos - l_targetPos);
+	std::string l_message = l_line.substr(l_msgPos + 2);
 
 	::EnterCriticalSection(&s_socketMapLock);
-	l_networkName = s_socketMap[a_socket];
+	const std::string& l_networkName = s_socketMap[a_socket];
 	::LeaveCriticalSection(&s_socketMapLock);
 
 	// kill trailing whitespace, we'll add back the new line later:
@@ -467,7 +466,7 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 
 	// get blowfish key...
 	bool l_cbc;
-	const std::string l_blowKey = l_ini->GetBlowKey(l_networkName, l_target, l_cbc);
+	const std::string& l_blowKey = l_ini->GetBlowKey(l_networkName, l_target, l_cbc);
 
 	if(l_blowKey.empty())
 		return nullptr;
@@ -951,11 +950,27 @@ MIRC_DLL_EXPORT(INI_SetSectionBool)
 }
 
 
+MIRC_DLL_EXPORT(NetworkDebugInfo)
+{
+	std::string l_networks;
+
+	::EnterCriticalSection(&s_socketMapLock);
+	for (const auto& it : s_socketMap)
+	{
+		l_networks += "[" + it.second + "]";
+	}
+	::LeaveCriticalSection(&s_socketMapLock);
+
+	sprintf_s(data, 900, "/echo -a *** Active networks: %s", l_networks.c_str());
+
+	return 2;
+}
+
+
 /* engine struct for fish_inject.dll */
 
-DECLARE_FISH_INJECT_ENGINE(g_engine_export, _OnIncomingIRCLine, _OnOutgoingIRCLine, _OnSocketClosed, _FreeString, false)
+DECLARE_FISH_INJECT_ENGINE(g_engine_export, _OnIncomingIRCLine, _OnOutgoingIRCLine, _OnSocketClosed, _FreeString, false, "FiSH")
 
-// not happy with this yet:
 static PFishEngineRegistration reg;
 
 /* mIRC interface to keep DLL loaded */
@@ -964,9 +979,14 @@ MIRC_EXPORT_SIG(void) LoadDll(LOADINFO* info)
 {
 	info->mKeep = TRUE;
 
-	// not happy with this yet:
 	reg = PFishEngineRegistration(new CFishEngineRegistration(&g_engine_export));
-	reg->RegisterUsingDll();
+	
+	if (!reg->RegisterUsingDll())
+	{
+		::MessageBoxW(info->mHwnd, L"FiSH10_DLL failed to register engine w/ inject component!", L"This is likely a bug", MB_ICONERROR | MB_OK);
+
+		info->mKeep = FALSE;
+	}
 }
 
 MIRC_EXPORT_SIG(int) UnloadDll(int mTimeout)
@@ -980,6 +1000,7 @@ MIRC_EXPORT_SIG(int) UnloadDll(int mTimeout)
 	{
 		// forced unload.
 		reg.reset();
+
 		return 0;
 	}
 }
@@ -987,9 +1008,9 @@ MIRC_EXPORT_SIG(int) UnloadDll(int mTimeout)
 
 /* call for mIRC to show compililation date */
 
-extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(_callMe)
 {
-	strcpy_s(data, 900, "/echo -a *** FiSH 10.2 *** by [c&f] *** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***");
+	strcpy_s(data, 900, "/echo -a *** FiSH 10.2 *** by [c&f]\xA0\xA0*** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***");
 	return 2;
 }
 

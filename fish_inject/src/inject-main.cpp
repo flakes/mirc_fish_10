@@ -598,16 +598,42 @@ extern "C" int UnregisterEngine(const fish_inject_engine_t *pEngine)
 
 
 /* dummy call to facilitate loading of DLL */
-
 extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
 {
-	strcpy_s(data, 900, "/echo -a *** FiSH 10.2 *** by [c&f] *** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***");
+	static bool version_shown = false;
+
+	if (!version_shown)
+	{
+		version_shown = true;
+
+		strcpy_s(data, 900, "/echo -a *** FiSH 10.2 *** by [c&f]\xA0\xA0*** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***");
+
+		return 2;
+	}
+
+	return 1;
+}
+
+/* for debugging */
+extern "C" int __stdcall InjectDebugInfo(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+{
+	size_t l_numSockets = 0;
+
+	{
+		CSimpleScopedLock lock(s_socketsAccess);
+
+		l_numSockets = s_sockets.size();
+	}
+
+	const std::string engine_list = s_engines->GetEngineList();
+
+	sprintf_s(data, 900, "/echo -a *** Active sockets: %d - Engines: %s", l_numSockets, engine_list.c_str());
+
 	return 2;
 }
 
 
 /* DllMain */
-
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {

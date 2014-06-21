@@ -17,3 +17,4 @@ EXPORTS
 	INI_SetBool
 	INI_GetSectionBool
 	INI_SetSectionBool
+	NetworkDebugInfo
