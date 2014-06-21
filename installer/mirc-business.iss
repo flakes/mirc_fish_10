@@ -52,7 +52,9 @@ begin
 
 	if IsIniSectionEmpty('rfiles', ini) then
 	begin
-		SetIniString('rfiles', 'n0', filename, ini);
+		SetIniString('rfiles', 'n0', 'users.ini', ini);
+		SetIniString('rfiles', 'n1', 'vars.ini', ini);
+		SetIniString('rfiles', 'n2', filename, ini);
 		exit;
 	end;
 
