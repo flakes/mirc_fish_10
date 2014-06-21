@@ -1,88 +1,93 @@
 # FiSH 10
-**a blowfish encryption plug-in for mIRC 7, compatible to previous FiSH scripts and other clients!**
+**A blowfish encryption plug-in for mIRC 7, compatible with previous FiSH scripts and other clients!**
 
 This is an encryption addon for mIRC, it is based on FiSH v1.30 and is compatible to the
-original 'blowcrypt/bloW' script as well as Mircryption and other clients.
+original *blowcrypt/bloW* script as well as *Mircryption* and other clients.
 It supports private chat, channel, topic encryption and comes with a secure key exchange
 system (DH1080). In addition to the regular ECB Blowfish mode, it also supports the more
 secure CBC mode.
 
-Supported mIRC versions: mIRC 7.x only! -
-	You can download the latest version from www.mirc.com
+## SETUP
 
-## INSTALLING
+FiSH 10 does no longer modify (patch) your mirc.exe file like the old FiSH addon used
+to. This has the clear advantage that FiSH 10 simply continues working even after
+updates to mIRC - no action required.
 
-Don't shy away, the guide below is just verbose, installing is easy!
+Furthermore, we now have an installer that handles most of the setup routine for you.
+All you have to do is download and point it to the directory where your mIRC installation
+is located.
 
-Setting up FiSH 10 should be pretty straightforward as patching mirc.exe is no longer
-required. If you have been using FiSH.dll before, it is however strongly recommended
-that you restore mirc.exe to its unpatched, original state before you install FiSH 10.
-You can of course apply a "crack" after that, but mIRC is a good product, so if you use
-it every day, I strongly advise you to get a legit lifetime license.
+The installer automatically detects whether mIRC is running in portable mode or not.
+If portable mode is detected, setup won't leave any traces on your system outside
+of the mIRC folder.
 
-Alright, now on to the actual installing procedure. If you have not been using FiSH.dll
-before, or if you are installing mIRC 7 from scratch, you can skip this paragraph.
+If you just upgraded from mIRC 6, you have to manually unload the `FiSH.mrc` file.
 
-1. Unload FiSH.mrc from mIRC like so: `//unload -rs $shortfn($nofile($mircexe) $+ FiSH.mrc)`
-2. (Unload `blow.mrc`, `blowcrypt.mrc`, `mircryption.mrc`, etc.)
-3. Delete `FiSH.dll`
-4. Delete `FiSH.mrc`
-5. (Delete `DH.dll` `blowfish.dll` `bloW.dll`)
-6. Keep! `blow.ini`
+### DOWNLOAD
 
-Now that your mIRC installation is clean, we can move on to the actual installing part.
+Please download the latest version from: http://syndicode.org/fish_10/
 
-* __Download__ the latest zip file from http://syndicode.org/fish_10/
-		(if you haven't already)
-* __Shut down__ mIRC!
-* __Extract__ fish_10.dll, fish_inject.dll and fish_10.mrc to your mirc.exe folder.
-		Do the same with libeay32.dll and ssleay32.dll if your download contains them.
+### MANUAL SETUP
+
+In case you prefer to not use the installer for whatever reason, you can still download
+a zip file. Here are the instructions to get FiSH going in that case. We assume you are
+running mIRC in portable mode.
+
+* Shut down mIRC, extract all \*.dll files and fish_10.mrc to your mirc.exe folder.
 * If necessary, extract blow.ini-EXAMPLE and rename the file to "blow.ini".
-* You can __edit fish_10.mrc__ if your blow.ini is at a different location than that folder.
-	*This is useful for people who installed mIRC into Program Files but keep their settings
-	in the Users/AppData folder.*
-* __Start mIRC__ back up. If your mIRC is automatically connecting on startup, you might
-	have to turn that off, or add a timer. It is extremely important that fish_10.mrc
-	always loads before ANY IRC connection is made.
-* __Install__ the script: `//load -rs $+(",$nofile($mircexe) $+ fish_10.mrc,")`
-* __Shut down__ mIRC, and start it again
-* Two lines like this should show up (and no error popup):
+* Start mIRC back up.
+* Load the script: `//load -rs $qt($nofile($mircexe) $+ fish_10.mrc)`
+* Restart mIRC.
+
+In case you are __not__ running mIRC in portable mode, please extract the \*.dll files to
+your *Program Files\mIRC* folder and the fish_10.mrc and blow.ini files to *%appdata%\mIRC*.
+Use `//load -rs fish_10.mrc` to load the script.
+
+## TROUBLESHOOTING
+
+Here are some common problems to watch out for:
+
+* Do you have the latest release? Check the downloads page for updates.
+
+* Is the script loaded correctly? If yes, these two lines will show up on mIRC startup:
 
         *** FiSH 10 *** by [c&f] *** fish_inject.dll compiled XXX XX 2011 12:00:00 ***
         *** FiSH 10 *** by [c&f] *** fish_10.dll     compiled XXX XX 2011 12:00:00 ***
 
-* If that is the case, FiSH 10 is now __ready for action__!
-* __Connect__ to your networks and do your thing.
+* Do you use any kind of connect-on-startup script? You may have to turn that off or add a timer.
+  The fish_10.mrc script MUST be loaded before any connection is made or it will not work.
 
-If you get an error like "/dll: unable to open file" on startup, install this:
+* Ensure that fish_10.mrc is not loaded/started twice.
+
+* You can check the active path to blow.ini using `//echo %blow_ini`
+
+* Ensure that blow.ini is writable by mIRC - if it's not, you will be notified on startup.
+
+* If you run into an error like "*/dll: unable to open file*" on startup, install this:
 http://www.microsoft.com/en-us/download/details.aspx?id=5582
 Don't install the x64 version, even if you have a 64-bit OS. mIRC and FiSH are 32-bit,
 so you need the x86 version!
 
-If an error like "patching ... failed" shows up, something seems wrong with your setup.
+* If an error like "*patching ... failed*" shows up, something specific to your system went wrong.
 It could be something simple like an incompatible OpenSSL DLL, something weird like
-your anti-virus program, or a bug in FiSH 10. If you made sure you installed the latest
-version, you can check here for existing problem reports, or create a new one:
+your anti-virus program, or a bug in FiSH 10. You can check here for existing problem reports, or create a new one:
 http://github.com/flakes/mirc_fish_10/issues
-(Hint for Vista and above: Hit Ctrl + C to copy the message box contents into the clipboard,
+(Hint for Windows Vista and above: Hit Ctrl + C to copy the message box contents into the clipboard,
 then paste into your bug report using Ctrl + V)
 
-When mIRC updates, FiSH 10 should just continue to work in 99% of the cases, unlike
-the previous solution. And it's open source, pretty cool, he?
+* Known issues are listed at the end of this README.
 
-You can report bugs at http://github.com/flakes/mirc_fish_10/issues
-or ask for help in #fish10 on EFNet.
+* If you are unable to resolve your problem, you may ask for help in #fish10 on EFNet.
 
-If you are an IRC enthusiast like I am, you should also check out ZNC, the best
-bouncer software available: http://en.znc.in/
+## FEATURES
 
-## Multi-network support
+### MULTI-NETWORK SUPPORT
 
-The old FiSH never supported using different keys for #chan on NetworkOne, and #chan
+The old FiSH never supported using different keys for #chan on NetworkOne and #chan
 on NetworkTwo. The new FiSH does fully support this while still maintaining blow.ini
 backwards compatibility in all directions.
 
-## CBC MODE
+### CBC MODE
 
 FiSH 10 implements Mircryption's CBC mode, as defined here:
 www.donationcoder.com/Software/Mouser/mircryption/extra_cbcinfo.php
@@ -152,7 +157,7 @@ meeting in person.
 
 ## KNOWN ISSUES
 
-FiSH 10 is incompatible to the following applications. Please whitelist mirc.exe in these:
+FiSH 10 is incompatible with the following applications. Please whitelist mirc.exe in these:
 
 * "AdMuncher"
 
