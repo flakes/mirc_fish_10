@@ -433,6 +433,8 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 {
 	info->mKeep = FALSE;
 
+	INJECT_DEBUG_MSG("");
+
 	HINSTANCE hInstSSLeay = ::GetModuleHandleW(L"ssleay32.dll");
 
 	if(LOWORD(info->mVersion) < 7)
@@ -494,6 +496,8 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 	{
 		info->mKeep = TRUE;
 
+		INJECT_DEBUG_MSG("Loaded!");
+
 		s_loaded = true;
 	}
 	else
@@ -522,6 +526,8 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 		l_errorInfo += L"\r\nDebug info: ";
 		l_errorInfo += wszPatchedInfo;
 
+		INJECT_DEBUG_MSG("Patching problem!");
+
 		::MessageBoxW(info->mHwnd, l_errorInfo.c_str(), L"Error", MB_ICONEXCLAMATION);
 	}
 }
@@ -537,12 +543,15 @@ extern "C" int __stdcall UnloadDll(int mTimeout)
 			The UnloadDll() routine can return 0 to keep the DLL loaded, or 1 to allow it to be unloaded.
    2   UnloadDll() is being called due to a DLL being unloaded when mIRC exits.
 */
+
 	if(mTimeout == 1)
 	{
 		if (!s_loaded)
 		{
 			s_engines.reset();
 		}
+
+		INJECT_DEBUG_MSG("mTimeout = 1");
 
 		return (s_loaded ? 0 : 1);
 	}
@@ -560,6 +569,8 @@ extern "C" int __stdcall UnloadDll(int mTimeout)
 		s_patchSSLRead.reset();
 
 		s_engines.reset();
+
+		INJECT_DEBUG_MSG("done.");
 
 		return 0;
 	}
@@ -610,17 +621,51 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 
 
-#ifdef _DEBUG
-/* blergh */
+#if defined(_DEBUG) || defined(LOG_TO_FILE)
+
+static CSimpleThreadLock s_debugAccess;
+static std::wstring s_logFilePath;
 
 void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function, const std::string& a_message)
 {
-	wchar_t _tid[20];
-	swprintf_s(_tid, 20, L"[%08x] ", GetCurrentThreadId());
+	char tid[20];
+	sprintf_s(tid, 20, "[%08x] ", GetCurrentThreadId());
 
-	CSimpleScopedLock lock(s_socketsAccess); // mis-use, but safe currently
+	CSimpleScopedLock lock(s_debugAccess);
 
-	OutputDebugStringW(_tid);
+#ifdef LOG_TO_FILE
+	if (s_logFilePath.empty())
+	{
+		wchar_t buf[MAX_PATH + 1] = { 0 };
+
+		::GetTempPath(MAX_PATH, buf);
+
+		s_logFilePath = buf;
+		s_logFilePath += L"\\FiSH10.log";
+	}
+
+	FILE *fp = nullptr;
+	if (0 == _wfopen_s(&fp, s_logFilePath.c_str(), L"a+"))
+	{
+		fputs(tid, fp);
+		fputs(" ", fp);
+		fputs(a_function, fp);
+		if (!a_message.empty())
+		{
+			fputs(" >> ", fp);
+			fputs(a_message.c_str(), fp);
+			if (a_message.rfind('\n') != a_message.size() - 1) fputs("\n", fp);
+		}
+		else
+		{
+			fputs("\n", fp);
+		}
+
+		fclose(fp);
+	}
+	
+#else
+	OutputDebugStringA(tid);
 	OutputDebugStringA(a_function);
 	if(!a_message.empty())
 	{
@@ -632,6 +677,7 @@ void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function,
 	{
 		OutputDebugStringA("\n");
 	}
+#endif
 }
 #endif
 

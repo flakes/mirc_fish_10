@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <algorithm>
 
 
 /* function signature typedefs */
@@ -35,7 +36,7 @@ extern HMODULE g_hModule;
 /* some debug helper business */
 void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function, const std::string& a_message);
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(LOG_TO_FILE)
 #define INJECT_DEBUG_MSG(A_MSG) _fishInjectDebugMsg(__FILE__, __LINE__, __FUNCTION__, A_MSG)
 #else
 #define INJECT_DEBUG_MSG(x)

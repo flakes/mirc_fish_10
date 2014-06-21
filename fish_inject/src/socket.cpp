@@ -9,11 +9,14 @@ CSocketInfo::CSocketInfo(SOCKET s, const PInjectEngines& engines) :
 	m_ssl(false), m_sslHandshakeComplete(false),
 	m_bytesSent(0), m_bytesReceived(0)
 {
+	INJECT_DEBUG_MSG("NEW CONNECTION");
 }
 
 
 void CSocketInfo::OnSSLHandshakeComplete()
 {
+	INJECT_DEBUG_MSG("");
+
 	m_sslHandshakeComplete = true;
 	m_state = MSCK_INITIALIZING;
 	// reset counters so we can more easily detect stuff in OnSending:
@@ -42,6 +45,9 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 	{
 		if(l_bytesSentBefore == 0 && !a_ssl)
 		{
+			INJECT_DEBUG_MSG("initial (no SSL)");
+			INJECT_DEBUG_MSG(std::string(a_data, std::min(size_t(30), a_len)));
+
 			if(a_len >= 7 && (memcmp(a_data, "CAP LS\n", 7) == 0 || memcmp(a_data, "CAP LS\r\n", 8) == 0))
 			{
 				// well, this was easy.
@@ -67,6 +73,8 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 				}
 				else
 				{
+					INJECT_DEBUG_MSG("bail socks4_conn_request");
+
 					m_state = MSCK_NOT_IRC;
 				}
 			}
@@ -81,6 +89,8 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 				}
 				else
 				{
+					INJECT_DEBUG_MSG("bail socks5_greeting");
+
 					m_state = MSCK_NOT_IRC;
 				}
 			}
@@ -95,6 +105,8 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 				}
 				else
 				{
+					INJECT_DEBUG_MSG("bail http_connect");
+
 					m_state = MSCK_NOT_IRC;
 				}
 			}
@@ -110,6 +122,9 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 		else if(l_bytesSentBefore == 0 && a_ssl && m_sslHandshakeComplete)
 			// after the TLS handshake, it's a normal IRC stream, maybe, at least:
 		{
+			INJECT_DEBUG_MSG("initial (SSL)");
+			INJECT_DEBUG_MSG(std::string(a_data, std::min(size_t(30), a_len)));
+
 			if(a_len >= 7 && (memcmp(a_data, "CAP LS\n", 7) == 0 || memcmp(a_data, "CAP LS\r\n", 8) == 0))
 			{
 				m_state = MSCK_IRC_IDENTIFIED;
@@ -256,6 +271,8 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 			}
 		}
 
+		INJECT_DEBUG_MSG("bail socks5_greeting");
+
 		m_state = MSCK_NOT_IRC;
 	}
 	else if(m_state == MSCK_SOCKS5_CONNECTION)
@@ -273,6 +290,8 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 			}
 		}
 
+		INJECT_DEBUG_MSG("bail socks5_response");
+
 		m_state = MSCK_NOT_IRC;
 	}
 	else if(m_bytesReceived > 2048) // 2 KB ought to be enough for any IRC pre-register message
@@ -286,6 +305,8 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 
 void CSocketInfo::OnProxyHandshakeComplete()
 {
+	INJECT_DEBUG_MSG("");
+
 	// similar to OnSSLHandshakeComplete.
 	m_state = MSCK_INITIALIZING;
 	m_bytesSent = 0;
@@ -315,6 +336,8 @@ std::string CSocketInfo::ReadFromRecvBuffer(size_t a_max)
 
 void CSocketInfo::Discard()
 {
+	INJECT_DEBUG_MSG("");
+
 	m_state = MSCK_NOT_IRC;
 }
 
