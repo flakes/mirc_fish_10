@@ -42,21 +42,21 @@ begin
 	Result := (LowerCase(GetIniString('about', 'portable', 'yes', GetMIRCIniPath())) = 'yes');
 end;
 
+function HasMIRCNeverBeenStarted(): Boolean;
+begin
+	Result := IsIniSectionEmpty('rfiles', GetMIRCIniPath());
+end;
+
 procedure EnableMIRCScriptFile(filename: String);
 var
 	ini: String;
 	tmp: String;
 	i: Integer;
 begin
-	ini := GetMIRCIniPath();
-
-	if IsIniSectionEmpty('rfiles', ini) then
-	begin
-		SetIniString('rfiles', 'n0', 'users.ini', ini);
-		SetIniString('rfiles', 'n1', 'vars.ini', ini);
-		SetIniString('rfiles', 'n2', filename, ini);
+	if HasMIRCNeverBeenStarted() then
 		exit;
-	end;
+
+	ini := GetMIRCIniPath();
 
 	i := 0;
 

@@ -153,6 +153,12 @@ begin
 			MsgBox('mirc.ini file could not be located!', mbError, MB_OK);
 			exit;
 		end;
+
+		if HasMIRCNeverBeenStarted() then
+		begin
+			MsgBox('It looks like mIRC has never been started. Please launch it once, close it again and proceed with this setup.', mbError, MB_OK);
+			exit;
+		end;
 	end;
 
 	Result := True;
