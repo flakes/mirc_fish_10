@@ -28,8 +28,20 @@ static CRITICAL_SECTION s_socketMapLock;
 /* called from fish_inject.dll */
 char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 {
-	if(!a_socket || !a_line || a_len < 1 || *a_line != ':')
+	if (!a_socket || !a_line || a_len < 1 || (*a_line != ':' && *a_line != '@'))
 		return nullptr;
+
+	// remove message tags:
+	// ( http://ircv3.atheme.org/specification/message-tags-3.2 )
+	if (*a_line == '@')
+	{
+		const char *p = strstr(a_line, " :");
+
+		if (!p)
+			return nullptr;
+
+		a_line = p + 1;
+	}
 
 	if(strstr(a_line, " ") == strstr(a_line, " 005 "))
 	{
@@ -72,6 +84,7 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		(topic) :irc.tld 332 nick #chan :+OK hqnSD1kaIaE00uei/.3LjAO1Den3t/iMNsc1
 		:nick!ident@host TOPIC #chan :+OK JRFEAKWS
 		(topic /list) :irc.tld 322 nick #chan 2 :[+snt] +OK BLAH
+		@aaa=bbb;ccc;example.com/ddd=eee :nick!ident@host.com PRIVMSG me :Hello
 	*/
 
 	std::string l_line(a_line, a_len);
