@@ -31,21 +31,24 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	if (!a_socket || !a_line || a_len < 1 || (*a_line != ':' && *a_line != '@'))
 		return nullptr;
 
-	// remove message tags:
+	// handle message tags:
 	// ( http://ircv3.atheme.org/specification/message-tags-3.2 )
-	if (*a_line == '@')
+	bool l_hasTag = (*a_line == '@');
+	const char *l_afterTag = a_line;
+
+	if (l_hasTag)
 	{
 		const char *p = strstr(a_line, " :");
 
 		if (!p)
 			return nullptr;
 
-		a_line = p + 1;
+		l_afterTag = p + 1;
 	}
 
-	if(strstr(a_line, " ") == strstr(a_line, " 005 "))
+	if (strstr(l_afterTag, " ") == strstr(l_afterTag, " 005 "))
 	{
-		std::string l_line(a_line, a_len);
+		const std::string l_line(a_line, a_len);
 		std::string::size_type l_pos = l_line.find(" NETWORK=");
 
 		if(l_pos != std::string::npos)
@@ -87,7 +90,20 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		@aaa=bbb;ccc;example.com/ddd=eee :nick!ident@host.com PRIVMSG me :Hello
 	*/
 
-	std::string l_line(a_line, a_len);
+	// back up message tag, then process without it:
+	std::string l_tag;
+	std::string l_line;
+
+	if (l_hasTag)
+	{
+		l_tag = std::string(a_line, static_cast<size_t>(l_afterTag - a_line));
+		l_line = std::string(l_afterTag, a_len - l_tag.size());
+	}
+	else
+	{
+		l_line = std::string(a_line, a_len);
+	}
+
 	std::string l_cmd, l_contact, l_message;
 	std::string::size_type l_cmdPos, l_tmpPos, l_targetPos, l_msgPos;
 
@@ -382,7 +398,7 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	}
 
 	// form new line:
-	l_newMsg = l_line.substr(0, l_msgPos) +
+	l_newMsg = l_tag + l_line.substr(0, l_msgPos) +
 		(l_cmd_type == CMD_ACTION ? "\x01""ACTION " : "") +
 		l_leading + l_newMsg +
 		(l_cmd_type == CMD_ACTION ? "\x01\n" : "\n");
