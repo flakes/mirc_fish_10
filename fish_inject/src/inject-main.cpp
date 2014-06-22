@@ -226,7 +226,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 
 			// yay, there is a complete line in the buffer.
 
-			const std::string l_tmp = l_sock->ReadFromRecvBuffer(len);
+			const std::string l_tmp(l_sock->ReadFromRecvBuffer(len));
 
 			l_sock->Unlock();
 
@@ -437,7 +437,6 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 
 
 /* You can keep a DLL loaded by including a LoadDll() routine in your DLL, which mIRC calls the first time you load the DLL. */
-
 extern "C" void __stdcall LoadDll(LOADINFO* info)
 {
 	info->mKeep = FALSE;
@@ -543,7 +542,6 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 
 
 /* You can also define an UnloadDll() routine in your DLL which mIRC will call when unloading a DLL to allow it to clean up. */
-
 extern "C" int __stdcall UnloadDll(int mTimeout)
 {
 /* The mTimeout value can be:
@@ -623,6 +621,7 @@ MIRC_DLL_EXPORT(_callMe)
 	return 1;
 }
 
+
 /* for debugging */
 MIRC_DLL_EXPORT(InjectDebugInfo)
 {
@@ -652,7 +651,6 @@ MIRC_DLL_EXPORT(InjectDebugInfo)
 
 
 /* DllMain */
-
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	if (fdwReason == DLL_PROCESS_ATTACH)
@@ -662,7 +660,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 	return TRUE;
 }
-
 
 
 #if defined(_DEBUG) || defined(LOG_TO_FILE)
