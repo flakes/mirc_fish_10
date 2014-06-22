@@ -61,6 +61,7 @@ typedef std::map<SOCKET, std::shared_ptr<CSocketInfo>> MActiveSocks;
 static MActiveSocks s_sockets;
 static CSimpleThreadLock s_socketsAccess;
 static PInjectEngines s_engines;
+static size_t s_discardedSockets; // number of sockets that were deemed "not IRC"
 
 /* pointers to utility methods from shared libs */
 static SSL_get_fd_proc _SSL_get_fd;
@@ -136,6 +137,8 @@ static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 		{
 			// "garbage collection" of sorts
 			s_sockets.erase(it);
+
+			++s_discardedSockets;
 		}
 
 		s_socketsAccess.Unlock();
@@ -238,6 +241,8 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 		{
 			// "garbage collection" of sorts
 			s_sockets.erase(it);
+
+			++s_discardedSockets;
 		}
 
 		s_socketsAccess.Unlock();
@@ -598,7 +603,7 @@ extern "C" int UnregisterEngine(const fish_inject_engine_t *pEngine)
 
 
 /* dummy call to facilitate loading of DLL */
-extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(_callMe)
 {
 	static bool version_shown = false;
 
@@ -615,19 +620,26 @@ extern "C" int __stdcall _callMe(HWND mWnd, HWND aWnd, char *data, char *parms, 
 }
 
 /* for debugging */
-extern "C" int __stdcall InjectDebugInfo(HWND mWnd, HWND aWnd, char *data, char *parms, BOOL show, BOOL nopause)
+MIRC_DLL_EXPORT(InjectDebugInfo)
 {
 	size_t l_numSockets = 0;
+	std::string l_stats;
 
 	{
 		CSimpleScopedLock lock(s_socketsAccess);
 
 		l_numSockets = s_sockets.size();
+
+		for (const auto& l_sock : s_sockets)
+		{
+			l_stats += l_sock.second->GetStats();
+		}
 	}
 
-	const std::string engine_list = s_engines->GetEngineList();
+	const std::string l_engineList = s_engines->GetEngineList();
 
-	sprintf_s(data, 900, "/echo -a *** Active sockets: %d - Engines: %s", l_numSockets, engine_list.c_str());
+	sprintf_s(data, 900, "/echo -a *** Sockets: Active %d - Discarded %d - %s - Engines: %s",
+		l_numSockets, s_discardedSockets, (l_stats.size() < 700 ? l_stats.c_str() : "a lot of data"), l_engineList.c_str());
 
 	return 2;
 }

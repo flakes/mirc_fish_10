@@ -7,7 +7,9 @@ CSocketInfo::CSocketInfo(SOCKET s, const PInjectEngines& engines) :
 	m_engines(engines),
 	m_state(MSCK_INITIALIZING),
 	m_ssl(false), m_sslHandshakeComplete(false),
-	m_bytesSent(0), m_bytesReceived(0)
+	m_bytesSent(0), m_bytesReceived(0),
+	m_linesSent(0), m_linesReceived(0),
+	m_linesEncrypted(0), m_linesDecrypted(0)
 {
 	INJECT_DEBUG_MSG("NEW CONNECTION");
 }
@@ -164,10 +166,14 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 
 			INJECT_DEBUG_MSG(l_line);
 
+			++m_linesSent;
+
 			if (m_engines->OnOutgoingLine(m_socket, l_line))
 			{
 				INJECT_DEBUG_MSG("encrypted:");
 				INJECT_DEBUG_MSG(l_line);
+
+				++m_linesEncrypted;
 			}
 
 			l_chunk += l_line;
@@ -206,10 +212,14 @@ void CSocketInfo::OnReceiving(bool a_ssl, const char* a_data, size_t a_len)
 
 			INJECT_DEBUG_MSG(l_line);
 
+			++m_linesReceived;
+
 			if (m_engines->OnIncomingLine(m_socket, l_line))
 			{
 				INJECT_DEBUG_MSG("decrypted:");
 				INJECT_DEBUG_MSG(l_line);
+
+				++m_linesDecrypted;
 			}
 
 			m_receivedBuffer += l_line;
@@ -339,6 +349,16 @@ void CSocketInfo::Discard()
 	INJECT_DEBUG_MSG("");
 
 	m_state = MSCK_NOT_IRC;
+}
+
+
+std::string CSocketInfo::GetStats() const
+{
+	std::stringstream s;
+
+	s << "[" << GetState() << " s:" << m_linesSent << " r:" << m_linesReceived << " e:" << m_linesEncrypted << " d:" << m_linesDecrypted << "]";
+
+	return s.str();
 }
 
 

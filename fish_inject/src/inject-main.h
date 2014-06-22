@@ -3,9 +3,12 @@
 #include <Windows.h>
 #include <ws2tcpip.h>
 #include <string>
+#include <sstream>
 #include <map>
 #include <vector>
 #include <algorithm>
+
+#include "mircdll.h"
 
 
 /* function signature typedefs */
@@ -18,15 +21,6 @@ typedef int(__cdecl* SSL_read_proc)(void *ssl, void *buf, int num);
 
 typedef int(__cdecl* SSL_state_proc)(const void *ssl);
 typedef int(__cdecl* SSL_get_fd_proc)(const void *ssl);
-
-
-/* from mIRC help file */
-typedef struct {
-	DWORD  mVersion;
-	HWND   mHwnd;
-	BOOL   mKeep;
-	BOOL   mUnicode;
-} LOADINFO;
 
 
 /* own module handle */

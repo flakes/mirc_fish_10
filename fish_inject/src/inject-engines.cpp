@@ -180,6 +180,9 @@ CInjectEngines::~CInjectEngines()
 
 	for (const auto& engine : m_engines)
 	{
-		::FreeLibrary(engine.first);
+		if (engine.first)
+		{
+			::FreeLibrary(engine.first);
+		}
 	}
 }

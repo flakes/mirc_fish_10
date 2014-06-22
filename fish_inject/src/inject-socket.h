@@ -33,8 +33,15 @@ protected:
 	bool m_ssl;
 	bool m_sslHandshakeComplete;
 
+	// also used for packet detection:
 	size_t m_bytesSent;
 	size_t m_bytesReceived;
+
+	// for stats only:
+	size_t m_linesSent;
+	size_t m_linesReceived;
+	size_t m_linesEncrypted;
+	size_t m_linesDecrypted;
 
 	CSimpleThreadLock m_opLock;
 
@@ -81,6 +88,8 @@ public:
 	std::string GetSendBuffer();
 	bool HasReceivedLine() const;
 	std::string ReadFromRecvBuffer(size_t a_max);
+
+	std::string GetStats() const;
 };
 
 
