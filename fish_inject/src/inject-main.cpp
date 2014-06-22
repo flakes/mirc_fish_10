@@ -59,7 +59,7 @@ static SSL_read_proc    s_lpfn_SSL_read;
 /* active sockets */
 typedef std::map<SOCKET, std::shared_ptr<CSocketInfo>> MActiveSocks;
 static MActiveSocks s_sockets;
-static CSimpleThreadLock s_socketsAccess;
+static CMultiReaderSingleWriterLock s_socketsAccess;
 static PInjectEngines s_engines;
 static size_t s_discardedSockets; // number of sockets that were deemed "not IRC"
 
@@ -85,9 +85,11 @@ int WSAAPI my_connect(SOCKET s, const struct sockaddr FAR * name, int namelen)
 {
 	if(s)
 	{
-		CSimpleScopedLock lock(s_socketsAccess);
+		s_socketsAccess.EnterWriter();
 
 		s_sockets[s] = std::shared_ptr<CSocketInfo>(new CSocketInfo(s, s_engines));
+
+		s_socketsAccess.LeaveWriter();
 	}
 
 	return s_lpfn_connect(s, name, namelen);
@@ -100,7 +102,7 @@ static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 	if(!s || len < 1 || !buf)
 		return a_lpfn_send(s, buf, len, flags);
 
-	s_socketsAccess.Lock();
+	s_socketsAccess.EnterReader();
 	auto it = s_sockets.find(s);
 
 	if(it != s_sockets.end()
@@ -109,7 +111,7 @@ static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 	{
 		auto l_sock = it->second;
 
-		s_socketsAccess.Unlock();
+		s_socketsAccess.LeaveReader();
 
 		l_sock->Lock();
 
@@ -141,7 +143,7 @@ static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 			++s_discardedSockets;
 		}
 
-		s_socketsAccess.Unlock();
+		s_socketsAccess.LeaveReader();
 	}
 
 	return a_lpfn_send(s, buf, len, flags);
@@ -164,7 +166,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 	if(!s || !buf || len < 1)
 		return a_lpfn_recv(s, buf, len, flags);
 
-	s_socketsAccess.Lock();
+	s_socketsAccess.EnterReader();
 	auto it = s_sockets.find(s);
 
 	if(it != s_sockets.end()
@@ -173,7 +175,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 	{
 		auto l_sock = it->second;
 
-		s_socketsAccess.Unlock();
+		s_socketsAccess.LeaveReader();
 
 		l_sock->Lock();
 
@@ -245,7 +247,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 			++s_discardedSockets;
 		}
 
-		s_socketsAccess.Unlock();
+		s_socketsAccess.LeaveReader();
 	}
 
 	return a_lpfn_recv(s, buf, len, flags);
@@ -266,9 +268,11 @@ int WSAAPI my_recv(SOCKET s, char FAR * buf, int len, int flags)
 int WSAAPI my_closesocket(SOCKET s)
 {
 	{
-		CSimpleScopedLock lock(s_socketsAccess);
+		s_socketsAccess.EnterWriter();
 
 		s_sockets.erase(s);
+
+		s_socketsAccess.LeaveWriter();
 	}
 
 	s_engines->OnSocketClosed(s);
@@ -288,7 +292,7 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 	if(!s)
 		return s_lpfn_SSL_write(ssl, buf, num);
 
-	s_socketsAccess.Lock();
+	s_socketsAccess.EnterReader();
 	auto it = s_sockets.find(s);
 
 	if(it != s_sockets.end()
@@ -297,7 +301,7 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 	{
 		auto l_sock = it->second;
 
-		s_socketsAccess.Unlock();
+		s_socketsAccess.LeaveReader();
 
 		l_sock->Lock();
 
@@ -326,7 +330,7 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 	}
 	else
 	{
-		s_socketsAccess.Unlock();
+		s_socketsAccess.LeaveReader();
 	}
 
 	return s_lpfn_SSL_write(ssl, buf, num);
@@ -344,7 +348,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	if(!s)
 		return s_lpfn_SSL_read(ssl, buf, num);
 
-	s_socketsAccess.Lock();
+	s_socketsAccess.EnterReader();
 	auto it = s_sockets.find(s);
 
 	if(it != s_sockets.end()
@@ -353,7 +357,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	{
 		auto l_sock = it->second;
 
-		s_socketsAccess.Unlock();
+		s_socketsAccess.LeaveReader();
 
 		l_sock->Lock();
 
@@ -425,7 +429,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	}
 	else
 	{
-		s_socketsAccess.Unlock();
+		s_socketsAccess.LeaveReader();
 	}
 	
 	return s_lpfn_SSL_read(ssl, buf, num);
@@ -626,7 +630,7 @@ MIRC_DLL_EXPORT(InjectDebugInfo)
 	std::string l_stats;
 
 	{
-		CSimpleScopedLock lock(s_socketsAccess);
+		s_socketsAccess.EnterReader();
 
 		l_numSockets = s_sockets.size();
 
@@ -634,6 +638,8 @@ MIRC_DLL_EXPORT(InjectDebugInfo)
 		{
 			l_stats += l_sock.second->GetStats();
 		}
+
+		s_socketsAccess.LeaveReader();
 	}
 
 	const std::string l_engineList = s_engines->GetEngineList();

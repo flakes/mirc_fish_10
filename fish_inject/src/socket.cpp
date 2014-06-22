@@ -356,7 +356,7 @@ std::string CSocketInfo::GetStats() const
 {
 	std::stringstream s;
 
-	s << "[" << GetState() << " s:" << m_linesSent << " r:" << m_linesReceived << " e:" << m_linesEncrypted << " d:" << m_linesDecrypted << "]";
+	s << "[" << GetState() << (m_ssl ? "S" : "") << " s:" << m_linesSent << " r:" << m_linesReceived << " e:" << m_linesEncrypted << " d:" << m_linesDecrypted << "]";
 
 	return s.str();
 }
