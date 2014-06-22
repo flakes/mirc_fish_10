@@ -59,9 +59,11 @@ bool CInjectEngines::Register(HMODULE hLib, const fish_inject_engine_t* pEngine)
 
 	if (pEngine && pEngine->version == FISH_INJECT_ENGINE_VERSION)
 	{
-		CSimpleScopedLock lock(m_engineListAccess);
+		m_engineListAccess.EnterWriter();
 
 		m_engines.push_back(TEngine(hLib, pEngine));
+
+		m_engineListAccess.LeaveWriter();
 
 		return true;
 	}
@@ -72,7 +74,7 @@ bool CInjectEngines::Register(HMODULE hLib, const fish_inject_engine_t* pEngine)
 
 bool CInjectEngines::Unregister(const fish_inject_engine_t* pEngine)
 {
-	CSimpleScopedLock lock(m_engineListAccess);
+	m_engineListAccess.EnterWriter();
 
 	for (TEngineList::iterator it = m_engines.begin(); it != m_engines.end(); ++it)
 	{
@@ -80,9 +82,13 @@ bool CInjectEngines::Unregister(const fish_inject_engine_t* pEngine)
 		{
 			m_engines.erase(it);
 
+			m_engineListAccess.LeaveWriter();
+
 			return true;
 		}
 	}
+
+	m_engineListAccess.LeaveWriter();
 
 	return false;
 }
@@ -90,8 +96,7 @@ bool CInjectEngines::Unregister(const fish_inject_engine_t* pEngine)
 
 bool CInjectEngines::OnOutgoingLine(SOCKET socket, std::string& a_line) const
 {
-	// attention, not currently thread safe
-	// ( m_engineListAccess would unnecessarily block all sockets )
+	m_engineListAccess.EnterReader();
 
 	bool modified = false;
 
@@ -114,14 +119,15 @@ bool CInjectEngines::OnOutgoingLine(SOCKET socket, std::string& a_line) const
 		}
 	}
 
+	m_engineListAccess.LeaveReader();
+
 	return modified;
 }
 
 
 bool CInjectEngines::OnIncomingLine(SOCKET socket, std::string& a_line) const
 {
-	// attention, not currently thread safe
-	// ( m_engineListAccess would unnecessarily block all sockets )
+	m_engineListAccess.EnterReader();
 
 	bool modified = false;
 
@@ -144,31 +150,37 @@ bool CInjectEngines::OnIncomingLine(SOCKET socket, std::string& a_line) const
 		}
 	}
 
+	m_engineListAccess.LeaveReader();
+
 	return modified;
 }
 
 
 void CInjectEngines::OnSocketClosed(SOCKET socket) const
 {
-	// attention, not currently thread safe
-	// ( m_engineListAccess would unnecessarily block all sockets )
+	m_engineListAccess.EnterReader();
 
 	for (const auto& engine : m_engines)
 	{
 		engine.second->OnSocketClosed((HANDLE)socket);
 	}
+
+	m_engineListAccess.LeaveReader();
 }
 
 
 std::string CInjectEngines::GetEngineList() const
 {
-	CSimpleScopedLock lock(m_engineListAccess);
 	std::string result;
+
+	m_engineListAccess.EnterReader();
 
 	for (const auto& engine : m_engines)
 	{
 		result += "[" + std::string(engine.second->engine_name) + "]";
 	}
+
+	m_engineListAccess.LeaveReader();
 
 	return result;
 }
@@ -176,7 +188,7 @@ std::string CInjectEngines::GetEngineList() const
 
 CInjectEngines::~CInjectEngines()
 {
-	CSimpleScopedLock lock(m_engineListAccess);
+	m_engineListAccess.EnterWriter();
 
 	for (const auto& engine : m_engines)
 	{
@@ -185,4 +197,8 @@ CInjectEngines::~CInjectEngines()
 			::FreeLibrary(engine.first);
 		}
 	}
+
+	m_engines.clear();
+
+	m_engineListAccess.LeaveWriter();
 }

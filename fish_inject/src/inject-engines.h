@@ -30,7 +30,7 @@ private:
 	typedef std::pair<HMODULE, const fish_inject_engine_t*> TEngine;
 	typedef std::vector<TEngine> TEngineList;
 
-	mutable CSimpleThreadLock m_engineListAccess;
+	mutable CMultiReaderSingleWriterLock m_engineListAccess;
 	TEngineList m_engines;
 };
 
