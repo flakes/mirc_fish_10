@@ -75,6 +75,11 @@ http://github.com/flakes/mirc_fish_10/issues
 (Hint for Windows Vista and above: Hit Ctrl + C to copy the message box contents into the clipboard,
 then paste into your bug report using Ctrl + V)
 
+* Useful commands to check the internal engine status:
+
+        //dll $qt($nofile($mircexe) $+ fish_inject.dll) InjectDebugInfo
+        //dll %FiSH_DLL NetworkDebugInfo
+
 * Known issues are listed at the end of this README.
 
 * If you are unable to resolve your problem, you may ask for help in #fish10 on EFNet.

@@ -1,3 +1,10 @@
+== 2014-06-22 ==
+	* Fix for mIRC 7.34 + ZNC 1.x [ CAP server-time / IRC Message Tags support ]
+	* New setup routine (installer)
+	* New debugging commands
+	* New README
+	* Misc. internal changes
+
 == 2014-06-12 ==
 	* New internal startup flow
 	* fish_10.mrc file MUST be updated!
