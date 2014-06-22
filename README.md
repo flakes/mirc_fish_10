@@ -34,7 +34,7 @@ a zip file. Here are the instructions to get FiSH going in that case. We assume 
 running mIRC in portable mode.
 
 * Shut down mIRC, extract all \*.dll files and fish_10.mrc to your mirc.exe folder.
-* If necessary, extract blow.ini-EXAMPLE and rename the file to "blow.ini".
+* If you do not have an existing configuration file, extract blow.ini-EXAMPLE and rename it to "blow.ini".
 * Start mIRC back up.
 * Load the script: `//load -rs $qt($nofile($mircexe) $+ fish_10.mrc)`
 * Restart mIRC.
@@ -44,8 +44,6 @@ your *Program Files\mIRC* folder and the fish_10.mrc and blow.ini files to *%app
 Use `//load -rs fish_10.mrc` to load the script.
 
 ## TROUBLESHOOTING
-
-Here are some common problems to watch out for:
 
 * Do you have the latest release? Check the downloads page for updates.
 
