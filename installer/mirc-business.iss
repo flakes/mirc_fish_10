@@ -110,5 +110,12 @@ begin
 		begin
 			Result := False;
 		end;
+
+		if Result and (not IsPortableInstall()) and FileExists(GetMIRCExeDir() + '\blow.ini')
+			and FileExists(ExpandConstant('{userappdata}\mIRC\blow.ini')) then
+		begin
+			// two blow.inis can be confusing!
+			Result := False;
+		end;
 	end;
 end;
