@@ -203,3 +203,10 @@ begin
 		EnableMIRCScriptFile('fish_10.mrc');
 	end;
 end;
+
+// event function
+procedure CancelButtonClick(CurPageID: Integer; var Cancel, Confirm: Boolean);
+begin
+	Cancel := True;
+	Confirm := False;
+end;
