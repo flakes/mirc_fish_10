@@ -178,15 +178,20 @@ end;
 
 // event function
 function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo, MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
+var
+	ok, nok: String;
 begin
+	ok := IIf(GetWindowsVersion() shr 24 >= 6, #$2713, '[+]');
+	nok := IIf(GetWindowsVersion() shr 24 >= 6, #$2717, '[!]');
+
 	Result := 'Build time: {#BuildTime}' + NewLine
 		+ 'Included OpenSSL version: {#OpenSSLVer}' + NewLine + NewLine
-		+ #$2713 + ' mIRC directory: ' + GetMIRCExeDir() + NewLine
-		+ #$2713 + ' mIRC settings directory: ' + GetMIRCIniDirectory() + NewLine
-		+ #$2713 + ' mIRC portable install: ' + IIf(IsPortableInstall(), 'yes', 'no') + NewLine
-		+ #$2713 + ' mIRC version: ' + GetMIRCVersion() + NewLine
-		+ IIf(CheckBlowIni(), #$2713 + ' blow.ini sanity check', #$2717 + ' blow.ini sanity check FAILED') + NewLine
-		+ IIf(IsMsRuntime2008Installed(), #$2713 + ' Microsoft Visual C++ 2008 package: yes', #$2717 + ' Microsoft Visual C++ 2008 package: no (required)') + NewLine
+		+ ok + ' mIRC directory: ' + GetMIRCExeDir() + NewLine
+		+ ok + ' mIRC settings directory: ' + GetMIRCIniDirectory() + NewLine
+		+ ok + ' mIRC portable install: ' + IIf(IsPortableInstall(), 'yes', 'no') + NewLine
+		+ ok + ' mIRC version: ' + GetMIRCVersion() + NewLine
+		+ IIf(CheckBlowIni(), ok + ' blow.ini sanity check', nok + ' blow.ini sanity check FAILED') + NewLine
+		+ IIf(IsMsRuntime2008Installed(), ok + ' Microsoft Visual C++ 2008 package: yes', nok + ' Microsoft Visual C++ 2008 package: no (required)') + NewLine
 		+ NewLine + 'Creating uninstaller: ' + IIf(IsPortableInstall(), 'no', 'yes') + NewLine;
 end;
 
