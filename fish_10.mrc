@@ -343,3 +343,78 @@ menu query {
   ...Enable :dll %FiSH_dll INI_SetSectionBool $network $1 dh1080_cbc 1
   ...Disable :dll %FiSH_dll INI_SetSectionBool $network $1 dh1080_cbc 0
 }
+
+alias fishdebug {
+  var %w = @fishdebug
+  var %a = aline -ph %w
+
+  var %f1 = fishdebug
+  var %f2 = $rand(0,9999))
+  var %x = $dll(%FiSH_dll,FiSH_WriteKey10,NULL %f1 %f2 HelloWorld)
+
+  var %f10dll = $+(",$nofile($mircexe) $+ fish_10.dll,")
+  var %f10inj = $+(",$nofile($mircexe) $+ fish_inject.dll,")
+  var %f10ini = $shortfn($mircdir $+ blow.ini)
+
+  if (!$window(%w)) {
+    window -a %w -1 -1 550 300 Courier New 12
+  } 
+  else {
+    clear %w
+    window -a %w
+  }
+
+  %a ---------FISH DEBUG---------
+  %a $cr
+  %a ::VERSION
+  %a mIRC verison: $version
+  %a SSL Version: $sslversion
+  %a SSL Ready: $sslready
+  %a $cr
+  %a ::mIRC
+  %a mIRC dir: $mircdir
+  %a mIRC.exe: $mircexe
+  %a mIRC.ini: $mircini
+  %a Portable: $iif($readini($mircini,about,portable),$v1,NotFound)
+  %a $cr
+  %a ::Files
+  %a fish_10.dll: %f10dll - $isfile(%f10dll)
+  %a fish_inject.dll: %f10inj - $isfile(%f10inj)
+  %a blow.ini: %f10ini - $isfile(%f10ini)
+  %a $cr
+  %a ::md5
+  %a fish_10.dll: $iif($md5(%f10dll,2),$v1,NotFound)
+  %a fish_inject.dll: $iif($md5(%f10inj,2),$v1,NotFound)
+  %a fish_10.mrc: $iif($md5($script,2),$v1,NotFound)
+  %a $cr
+  %a ::Variables
+  %a blow_ini: %blow_ini
+  %a FiSH_dll: %FiSH_dll
+  %a $cr
+  %a ::FiSH Debug
+  $dll(%f10inj,InjectDebugInfo,0)
+  $dll(%f10dll,NetworkDebugInfo,0)
+  %a $cr
+  %a ::Testing
+  %a >> Writing key to blow.ini
+  %a << Reading back key, you should see a 'HelloWorld' on the next line.
+  %a !! GetKey10: $iif($dll(%FiSH_dll,FiSH_GetKey10, %f1 %f2),$v1,NotFound)
+  %a << Deleting key from blow.ini
+
+  var %delkey = $dll(%FiSH_dll,FiSH_DelKey10,%f1 %f2)
+}
+alias -l fishdebug.clip {
+  clipboard
+  var %i = 1
+  while ($line(@fishdebug,%i)) { 
+    clipboard -an $v1
+    inc %i 
+  }
+}
+menu @fishdebug {
+  &Copy to Clipboard: fishdebug.clip
+  -
+  &Refresh:{ clear @fishdebug | fishdebug }
+  C&lose:{ window -c @fishdebug }
+
+}

@@ -1,3 +1,7 @@
+== 2014-07-05 ==
+	* Small improvements to the installer
+	* New /fishdebug command, kindly provided by devn0ll!
+
 == 2014-06-22 ==
 	* Fix for mIRC 7.34 + ZNC 1.x [ CAP server-time / IRC Message Tags support ]
 	* New setup routine (installer)

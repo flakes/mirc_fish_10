@@ -73,10 +73,9 @@ http://github.com/flakes/mirc_fish_10/issues
 (Hint for Windows Vista and above: Hit Ctrl + C to copy the message box contents into the clipboard,
 then paste into your bug report using Ctrl + V)
 
-* Useful commands to check the internal engine status:
+* To dump a lot of useful debug information, use:
 
-        //dll $qt($nofile($mircexe) $+ fish_inject.dll) InjectDebugInfo
-        //dll %FiSH_DLL NetworkDebugInfo
+        /fishdebug
 
 * Known issues are listed at the end of this README.
 
