@@ -71,3 +71,33 @@ way as if the entire message had been encrypted. This is especially dangerous in
 IRC and FiSH do not provide any way to verify the remote party actually is who they claim to be.
 
 **Could this be fixed?** - No.
+
+### Zero Protection Against MITM Attacks
+
+As outlined in the previous paragraphs, FiSH does absolutely nothing to protect users against man-in-the-middle (MITM)
+attacks. This also includes the DH1080 key exchange procedure.
+
+**Could this be fixed?** - No.
+
+## Using FiSH Securely
+
+Here's an (incomplete) list of steps that you can take to maximize the level of security provided by FiSH 10.
+
+* Connect to IRC servers using SSL/TLS-encrypted connections exclusively.
+* Try to verify the identity of your IRC server. Storing the certificate's hash on first use is an acceptable compromise.
+* Immediately assume compromise if the certificate hash changes. Verify the hash with other parties.
+* If it's a private network, it's very likely for the IRC server itself to be compromised sooner or later, given the right opponent.
+If the server itself is compromised, you are done. It's not possible to detect this while connecting.
+* For public networks, this is less likely to happen. Try to blend in.
+* Stop using ECB mode immediately, switch channels to `cbc:` keys.
+* Perform a new DH1080 key exchange for each chat session to invalidate old keys and make it impossible to decrypt old
+intercepted messages with the current key. If you do this, you MUST also follow the next paragraph. Otherwise, you
+will in fact lower the security level by performing new key exchanges!
+* After each new DH1080 key exchange, use a telephone call or an in-person meeting to compare (verify) that your
+chat partner has the same key as you have. It's not enough to compare the first or last few characters, you must compare
+the entire key string.
+* Put your mIRC installation and blow.ini on an encrypted file system. Use a strong password.
+* Do not keep log files.
+* Use LiveCDs or other non-permanent storage to make it harder to compromise your system.
+* Ensure physical system security.
+* Do not use FiSH if your live depends on it.
