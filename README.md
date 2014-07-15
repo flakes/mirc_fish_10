@@ -43,6 +43,10 @@ In case you are __not__ running mIRC in portable mode, please extract the \*.dll
 your *Program Files\mIRC* folder and the fish_10.mrc and blow.ini files to *%appdata%\mIRC*.
 Use `//load -rs fish_10.mrc` to load the script.
 
+### SECURITY INFORMATION
+
+Please refer to the [SECURITY](SECURITY.md) document.
+
 ## TROUBLESHOOTING
 
 * Do you have the latest release? Check the downloads page for updates.
