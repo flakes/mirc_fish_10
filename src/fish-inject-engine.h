@@ -35,18 +35,11 @@ typedef int (*Register_FiSH_Inject_Engine_Function)(const fish_inject_engine_t*)
 typedef int (*Unregister_FiSH_Inject_Engine_Function)(const fish_inject_engine_t*);
 
 #define FISH_INJECT_ENGINE_VERSION 2
-#define FISH_INJECT_ENGINE_EXPORT_NAME "_FiSH_Inject_Engine"
 
 #define DECLARE_FISH_INJECT_ENGINE(var_name, on_incoming, on_outgoing, on_socket_closed, free_string, is_postprocessor, engine_name) \
 	static const fish_inject_engine_t var_name = { \
 		FISH_INJECT_ENGINE_VERSION, on_incoming, on_outgoing, on_socket_closed, free_string, is_postprocessor, engine_name \
 	};
-
-#define EXPORT_FISH_INJECT_ENGINE(on_incoming, on_outgoing, on_socket_closed, free_string, is_postprocessor, engine_name) \
-	FISH_INJECT_EXTERN_C __declspec(dllexport) const fish_inject_engine_t* _FiSH_Inject_Engine() { \
-		DECLARE_FISH_INJECT_ENGINE(exp, on_incoming, on_outgoing, on_socket_closed, free_string, is_postprocessor, engine_name) \
-		return &exp; \
-	}
 
 } /* FISH_INJECT_EXTERN_C */
 

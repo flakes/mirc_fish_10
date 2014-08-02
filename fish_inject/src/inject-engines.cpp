@@ -26,33 +26,6 @@ static HMODULE LoadLibraryFromSameDirectory(const std::wstring& a_dllName)
 }
 
 
-bool CInjectEngines::LoadRegister(const std::wstring& a_dllName)
-{
-	HMODULE hLib = LoadLibraryFromSameDirectory(a_dllName);
-	bool ok = false;
-
-	if (hLib)
-	{
-		Get_FiSH_Inject_Engine_Function engine_export_function = (Get_FiSH_Inject_Engine_Function)
-			::GetProcAddress(hLib, FISH_INJECT_ENGINE_EXPORT_NAME);
-
-		if (engine_export_function)
-		{
-			const fish_inject_engine_t* pEngine = engine_export_function();
-
-			ok = Register(hLib, pEngine);
-		}
-	}
-
-	if (!ok)
-	{
-		::FreeLibrary(hLib);
-	}
-
-	return ok;
-}
-
-
 bool CInjectEngines::Register(HMODULE hLib, const fish_inject_engine_t* pEngine)
 {
 	Unregister(pEngine); // make sure no engine is loaded twice
