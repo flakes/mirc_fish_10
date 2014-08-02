@@ -100,4 +100,4 @@ the entire key string.
 * Do not keep log files.
 * Use LiveCDs or other non-permanent storage to make it harder to compromise your system.
 * Ensure physical system security.
-* Do not use FiSH if your live depends on it.
+* Do not use FiSH if your life depends on it.
