@@ -1014,7 +1014,8 @@ MIRC_EXPORT_SIG(void) LoadDll(LOADINFO* info)
 	{
 		::MessageBoxW(info->mHwnd, L"FiSH10_DLL failed to register engine w/ inject component!", L"This is likely a bug", MB_ICONERROR | MB_OK);
 
-		info->mKeep = FALSE;
+		// info->mKeep = FALSE;
+		// still keep to avoid error messages showing up again and again.
 	}
 }
 

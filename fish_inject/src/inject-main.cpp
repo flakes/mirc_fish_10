@@ -439,7 +439,8 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 /* You can keep a DLL loaded by including a LoadDll() routine in your DLL, which mIRC calls the first time you load the DLL. */
 extern "C" void __stdcall LoadDll(LOADINFO* info)
 {
-	info->mKeep = FALSE;
+	// always keep DLL around to avoid errors showing up multiple times.
+	info->mKeep = TRUE;
 
 	INJECT_DEBUG_MSG("");
 
@@ -447,15 +448,13 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 
 	if(LOWORD(info->mVersion) < 7)
 	{
-		::MessageBoxW(info->mHwnd, L"FiSH 10 does not support any mIRC version older "
-			L"than v7. Disabling.", L"Error", MB_ICONEXCLAMATION);
+		::MessageBoxW(info->mHwnd, L"FiSH does not support any mIRC version older than v7. Disabling.", L"Error", MB_ICONEXCLAMATION);
 
 		return;
 	}
 	else if(hInstSSLeay == nullptr)
 	{
-		::MessageBoxW(info->mHwnd, L"FiSH 10 needs OpenSSL to be installed. Disabling. "
-			L"Go to www.mirc.com/ssl.html to install SSL.", L"Error", MB_ICONEXCLAMATION);
+		::MessageBoxW(info->mHwnd, L"FiSH needs the OpenSSL DLLs to be installed and loaded. Disabling.", L"Error", MB_ICONEXCLAMATION);
 
 		return;
 	}
@@ -502,8 +501,6 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 		(!hInstSSLeay || (s_patchSSLWrite->patched() && s_patchSSLRead->patched())) &&
 		(_SSL_get_fd != nullptr) && (_SSL_state != nullptr))
 	{
-		info->mKeep = TRUE;
-
 		INJECT_DEBUG_MSG("Loaded!");
 
 		s_loaded = true;
@@ -641,7 +638,7 @@ MIRC_DLL_EXPORT(InjectDebugInfo)
 		s_socketsAccess.LeaveReader();
 	}
 
-	const std::string l_engineList = s_engines->GetEngineList();
+	const std::string l_engineList = (s_engines ? s_engines->GetEngineList() : "");
 
 	sprintf_s(data, 900, "/echo -a *** Sockets: Active %d - Discarded %d - %s - Engines: %s",
 		l_numSockets, s_discardedSockets, (l_stats.size() < 700 ? l_stats.c_str() : "a lot of data"), l_engineList.c_str());
