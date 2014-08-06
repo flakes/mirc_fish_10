@@ -79,6 +79,15 @@ begin
 	end;
 end;
 
+procedure SwitchOpenSSLModeToDLLs();
+var
+	ini: String;
+begin
+	ini := GetMIRCIniPath();
+
+	SetIniString('ssl', 'load', '1', ini);
+end;
+
 function GetMIRCVersion(): String;
 var
 	VersStr: String;

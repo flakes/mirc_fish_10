@@ -367,9 +367,10 @@ alias fishdebug {
   %a ---------FISH DEBUG---------
   %a $cr
   %a ::VERSION
-  %a mIRC verison: $version
-  %a SSL Version: $sslversion
-  %a SSL Ready: $sslready
+  %a mIRC version: $version
+  %a SSL version: $sslversion
+  %a SSL ready: $sslready
+  %a SSL mode: $iif($readini($mircini,ssl,load),$v1,default)
   %a $cr
   %a ::mIRC
   %a mIRC dir: $mircdir

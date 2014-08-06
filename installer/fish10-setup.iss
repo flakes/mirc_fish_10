@@ -201,6 +201,7 @@ begin
 	if CurStep = ssPostInstall then
 	begin
 		EnableMIRCScriptFile('fish_10.mrc');
+		SwitchOpenSSLModeToDLLs();
 	end;
 end;
 
