@@ -51,6 +51,8 @@ Please refer to the [SECURITY](SECURITY.md) document.
 
 * Do you have the latest release? Check the downloads page for updates.
 
+* For mIRC 7.35 and later, you have to set `load=1` under `[ssl]` in mirc.ini - the installer will do this for you.
+
 * Is the script loaded correctly? If yes, these two lines will show up on mIRC startup:
 
         *** FiSH 10 *** by [c&f] *** fish_inject.dll compiled XXX XX 2011 12:00:00 ***
@@ -141,25 +143,6 @@ the system calls and managing buffers. For complete lines, it calls into fish_10
 does the actual IRC parsing and encryption things.
 Key-exchange, getting the public IP etc. is still handled by fish_10.mrc, like it
 has always been.
-
-## SECURITY NOTE
-
-You are advised to use TrueCrypt or a similar solution to protect your blow.ini file. While all
-the keys are stored encrypted, the encryption is not particularly strong and could be broken
-without a lot of effort!
-
-Furthermore, DON'T exchange keys via plaintext (IRC/email/Facebook/whatever). This defeats the
-entire purpose of encryption. Instead, use DH1080 key exchange to establish a secure connection
-for (channel) key exchange.
-
-And, obviously, DO NOT store any log files on unencrypted disks.
-
-When using DH1080, please be aware that DH1080 does NOT protect you against sophisticated man-
-in-the-middle attacks where the attacker is able to read and modify your IRC data stream in
-real time.
-You can spot an attacker like that by using the "Show key" right-click menu entry, and comparing
-the key contents via an absolutely man-in-the-middle-proof channel, such as via telephone or a
-meeting in person.
 
 ## KNOWN ISSUES
 

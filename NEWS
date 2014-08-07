@@ -1,3 +1,8 @@
+== 2014-08-07 ==
+	* Improved error handling
+	* Installer sets load=1 in [ssl] (mirc.ini) - required for mIRC 7.35
+	* OpenSSL updated to 1.0.1i
+
 == 2014-07-05 ==
 	* Small improvements to the installer
 	* New /fishdebug command, kindly provided by devn0ll!

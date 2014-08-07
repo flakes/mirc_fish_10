@@ -90,6 +90,7 @@ Here's an (incomplete) list of steps that you can take to maximize the level of 
 If the server itself is compromised, you are done. It's not possible to detect this while connecting.
 * For public networks, this is less likely to happen. Try to blend in.
 * Stop using ECB mode immediately, switch channels to `cbc:` keys.
+* Never exchange keys plaintext (IRC/email/Facebook/whatever).
 * Perform a new DH1080 key exchange for each chat session to invalidate old keys and make it impossible to decrypt old
 intercepted messages with the current key. If you do this, you MUST also follow the next paragraph. Otherwise, you
 will in fact lower the security level by performing new key exchanges!
