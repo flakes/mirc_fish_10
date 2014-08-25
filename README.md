@@ -125,7 +125,7 @@ I would like to thank RXD for the work he has put into the FiSH addon over the l
 few years. However, he has been slow with updates and unwilling to open source a
 simple mIRC addon like this, so someone had to take over!
 
-FiSH 10 utilizes "CPatch" by armagedescu, thanks. It contains some code from
+FiSH 10 utilizes "MinHook" by TsudaKageyu, thanks. It contains some code from
 http://dirtirc.sourceforge.net/ (blowfish core) and some utility methods from
 http://code.google.com/p/infekt/ (which is an excellent NFO viewer by the way).
 The rest of the code is what I contributed myself and is licensed under the
@@ -138,11 +138,10 @@ FiSH 10 makes heavy use of OpenSSL. It is recommended that you use the SSL libs
 libraries should work too. If they don't, FiSH 10 will let you know on startup.
 
 You can read some lines about the in-memory patching in fish-inject.cpp. fish_inject.dll
-(compiled from fish-inject.cpp, patcher.cpp and socket.cpp) does the magic of intercepting
-the system calls and managing buffers. For complete lines, it calls into fish_10.dll which
-does the actual IRC parsing and encryption things.
+does the magic of intercepting the system calls and managing buffers. For complete lines,
+it calls into fish_10.dll which does the actual IRC parsing and encryption things.
 Key-exchange, getting the public IP etc. is still handled by fish_10.mrc, like it
-has always been.
+has always been (with the help of fish_10.dll).
 
 ## KNOWN ISSUES
 
