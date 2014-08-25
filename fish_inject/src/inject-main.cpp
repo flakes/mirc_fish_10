@@ -1,8 +1,8 @@
 #include "inject-main.h"
-#include "patcher.h"
 #include "inject-socket.h"
 #include "inject-engines.h"
 #include "simple-thread-lock.h"
+#include "patch.h"
 
 /******************************************************************************
 
@@ -38,7 +38,6 @@ HMODULE g_hModule = nullptr;
 static bool s_loaded = false;
 
 /* CPatch instances */
-typedef std::shared_ptr<CPatch> PPatch;
 static PPatch s_patchConnect;
 static PPatch s_patchSend;
 static PPatch s_patchRecv;
@@ -459,6 +458,8 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 		return;
 	}
 
+	CPatch::Initialize();
+
 	s_engines = PInjectEngines(new CInjectEngines());
 
 	HINSTANCE hInstWs2 = ::GetModuleHandleW(L"ws2_32.dll");
@@ -576,6 +577,8 @@ extern "C" int __stdcall UnloadDll(int mTimeout)
 
 		INJECT_DEBUG_MSG("done.");
 
+		CPatch::Unitialize();
+
 		return 0;
 	}
 }
@@ -657,6 +660,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 	return TRUE;
 }
+
+bool CPatch::ms_initialized = false;
 
 
 #if defined(_DEBUG) || defined(LOG_TO_FILE)
