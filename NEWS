@@ -1,3 +1,7 @@
+== 2014-08-25 ==
+	* Switch to MinHook library. This enables Wine compatibility.
+	* There's no need to upgrade to this version unless you run mIRC in Wine.
+
 == 2014-08-07 ==
 	* Improved error handling
 	* Installer sets load=1 in [ssl] (mirc.ini) - required for mIRC 7.35
