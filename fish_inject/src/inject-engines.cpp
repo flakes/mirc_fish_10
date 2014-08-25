@@ -2,29 +2,6 @@
 #include "inject-engines.h"
 #include "Shlwapi.h"
 
-#pragma comment(lib, "Shlwapi")
-
-static HMODULE LoadLibraryFromSameDirectory(const std::wstring& a_dllName)
-{
-	HMODULE hLib = nullptr;
-	wchar_t wszBuf[1000] = { 0 };
-
-	if (::GetModuleFileNameW(g_hModule, wszBuf, 999) || ::GetModuleFileNameW(nullptr, wszBuf, 999))
-	{
-		std::wstring dll_path;
-
-		::PathRemoveFileSpecW(wszBuf);
-		::PathAddBackslashW(wszBuf);
-
-		dll_path.append(wszBuf);
-		dll_path.append(a_dllName);
-
-		hLib = ::LoadLibraryW(dll_path.c_str());
-	}
-
-	return hLib;
-}
-
 
 bool CInjectEngines::Register(HMODULE hLib, const fish_inject_engine_t* pEngine)
 {
