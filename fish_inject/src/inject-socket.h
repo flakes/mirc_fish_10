@@ -19,6 +19,7 @@ typedef enum {
 	MSCK_SOCKS5_CONNECTION,
 	MSCK_HTTP_PROXY_HANDSHAKE,
 	MSCK_IRC_IDENTIFIED,
+	MSCK_STARTTLS_SENT,
 	MSCK_NOT_IRC
 } MIRC_SOCKET_STATE;
 
@@ -32,6 +33,7 @@ protected:
 
 	bool m_ssl;
 	bool m_sslHandshakeComplete;
+	bool m_usedSTARTTLS;
 
 	// also used for packet detection:
 	size_t m_bytesSent;

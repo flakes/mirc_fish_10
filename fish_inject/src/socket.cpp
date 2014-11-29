@@ -6,7 +6,7 @@ CSocketInfo::CSocketInfo(SOCKET s, const PInjectEngines& engines) :
 	m_socket(s),
 	m_engines(engines),
 	m_state(MSCK_INITIALIZING),
-	m_ssl(false), m_sslHandshakeComplete(false),
+	m_ssl(false), m_sslHandshakeComplete(false), m_usedSTARTTLS(false),
 	m_bytesSent(0), m_bytesReceived(0),
 	m_linesSent(0), m_linesReceived(0),
 	m_linesEncrypted(0), m_linesDecrypted(0)
@@ -20,10 +20,27 @@ void CSocketInfo::OnSSLHandshakeComplete()
 	INJECT_DEBUG_MSG("");
 
 	m_sslHandshakeComplete = true;
-	m_state = MSCK_INITIALIZING;
-	// reset counters so we can more easily detect stuff in OnSending:
-	m_bytesSent = 0;
-	m_bytesReceived = 0;
+
+	if (!m_usedSTARTTLS)
+	{
+		m_state = MSCK_INITIALIZING;
+		// reset counters so we can more easily detect stuff in OnSending:
+		m_bytesSent = 0;
+		m_bytesReceived = 0;
+	}
+	else
+	{
+		m_state = MSCK_IRC_IDENTIFIED;
+	}
+}
+
+
+static bool IsTLSHandshakePacket(const char* a_data, size_t a_len)
+{
+	(void)a_len;
+
+	// http://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
+	return (*a_data == 22);
 }
 
 
@@ -55,8 +72,7 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 				// well, this was easy.
 				m_state = MSCK_IRC_IDENTIFIED;
 			}
-			else if(*a_data == 22) // SSL/TLS handshake packet!
-			// http://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
+			else if (IsTLSHandshakePacket(a_data, a_len))
 			{
 				m_ssl = true;
 
@@ -150,6 +166,31 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 			{
 				m_state = MSCK_SOCKS5_CONNECTION;
 			}
+		}
+	}
+	else if (m_state == MSCK_IRC_IDENTIFIED && !m_ssl && a_len >= 8 && memcmp(a_data, "STARTTLS", 8) == 0)
+	{
+		INJECT_DEBUG_MSG("identified STARTTLS");
+
+		m_usedSTARTTLS = true;
+		m_state = MSCK_STARTTLS_SENT;
+	}
+	else if (m_state == MSCK_STARTTLS_SENT)
+	{
+		if (IsTLSHandshakePacket(a_data, a_len))
+		{
+			INJECT_DEBUG_MSG("STARTTLS is continuing");
+
+			m_ssl = true;
+			m_state = MSCK_TLS_HANDSHAKE;
+		}
+		else
+		{
+			INJECT_DEBUG_MSG("STARTTLS aborted");
+
+			// looks like the server rejected STARTTLS offer, fall back to previous state:
+			// (mIRC will probably terminate the connection, so we most likely will not even get here)
+			m_state = MSCK_IRC_IDENTIFIED;
 		}
 	}
 	
