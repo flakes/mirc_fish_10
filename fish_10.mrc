@@ -3,6 +3,67 @@
 ;**************
 ; "FiSH 10" by the way means "FiSH 2" in binary, and the year is 2010, therefore "FiSH 10".
 
+;**************
+;* notice: this is a UTF-8 file
+;* added: Salty FiSH (for testing)
+
+alias scramble {
+  return $rand(Ā,￮)
+}
+
+alias masteron {
+  writeini -n %blow_ini FiSH process_incoming 1
+  writeini -n %blow_ini FiSH process_outgoing 1
+  writeini -n %blow_ini FiSH mark_position 1
+  set %SaltyFish [On]
+}
+
+alias masteroff {
+  writeini -n %blow_ini FiSH process_incoming 0
+  writeini -n %blow_ini FiSH process_outgoing 0
+  set %SaltyFish [Off]
+}
+
+alias pseudo {
+  var %line = 1
+  while (%line <= 10) {
+    var %qm = $rand(a,z)
+    var %pr = %pr $+ %qm
+    inc %line
+  }
+  return $left($sha1(%pr), 8)
+}
+
+on ^*:TEXT:*:#:{ 
+  if (%SaltyFish = [On]) {
+    var %temp = $1-
+    var %mtmp = $readini(%blow_ini, FiSH, mark_encrypted)
+    var %temp = $regsubex(%temp,/[Ā-￮]/g,$chr(0))
+    var %prelen = $len(%temp)
+    var %temp = $regsubex(%temp,%mtmp,$chr(0))
+    var %postlen = $len(%temp)
+    if (%prelen == %postlen) {
+      echo -t $chan $+(<,$nick,>) $+($chr(3),$color(normal)) $+ %temp | halt
+    }
+    else  {
+      var %mfp = $regsubex(%temp,/(\w+)$/g,$chr(0))
+      ;echo -at %temp
+      ;echo -at %mfp
+      var %ntest = %mfp $+ $chr(32) $+ $nick
+      ;echo -at %ntest
+      if ( %ntest = %temp ) {
+        var %color3 = $rand(3,13)
+        var %color4 = $rand(3,13)
+        while (%color3 = %color4) {
+          var %color4 = $rand(3,13)
+        }
+        echo -at $+($chr(3) $+ %color3 $+ < $+ $chr(3),$nick, $+ $chr(3) $+ %color4 $+ > $+ $chr(3)) $+($chr(3),$color(normal)) $+ %mfp | halt
+        } else { 
+        echo -at $+($chr(3),14) $+ < $+ $nick $+ > $+ $chr(32) $+ --- | halt 
+      }
+    }
+  }
+}
 
 on *:START: {
   if ($readini($mircini,about,portable) == yes) {
@@ -14,7 +75,7 @@ on *:START: {
 
   set %FiSH_dll $qt($nofile($mircexe) $+ fish_10.dll)
 
-; these calls must be made in exactly this order:
+  ; these calls must be made in exactly this order:
   .dll $qt($nofile($mircexe) $+ fish_inject.dll) _callMe
   .dll %FiSH_dll _callMe
   .dll %FiSH_dll FiSH_SetIniPath %blow_ini
@@ -33,11 +94,28 @@ on *:OPEN:?:{
 }
 
 
+
 ; ######################################
 ; ### mark outgoing (own text) START ###
 ; *** For maximum compatibility I recommend you to disable this feature
 ; *** (or even delete the whole section from here)
 on *:INPUT:*:{
+  if (%SaltyFish = [On])  {
+    if ($dll(%FiSH_dll,INI_GetBool,process_outgoing 1) == 0) return
+    if ($len($dll(%FiSH_dll,FiSH_GetKey10,$network $target)) > 1) {
+      writeini -n %blow_ini FiSH mark_encrypted $pseudo
+      var %body = $1- $nick
+      var %replace = $regsubex(%body,/(?<=[A-Za-z0-9_.])/g,$scramble)
+      %replace = $regsubex(%replace,/^/g,$scramble)
+      .msg $active $replace($1-, $1-, %replace)
+      var %color1 = $rand(3,13)
+      var %color2 = $rand(3,13)
+      while (%color1 = %color2) {
+        var %color2 = $rand(3,13)
+      }
+      echo -at $+($chr(3) $+ %color1 $+ < $+ $chr(3),$nick, $+ $chr(3) $+ %color2 $+ > $+ $chr(3)) $1- | halt
+    }
+  }
   if (($left($1,1) == /) || (!$1) || (%mark_outgoing != [On])) return
   if ($dll(%FiSH_dll,INI_GetBool,process_outgoing 1) == 0) return
   if ($len($dll(%FiSH_dll,FiSH_GetKey10,$network $target)) > 1) {
@@ -45,8 +123,8 @@ on *:INPUT:*:{
     if (%tmp1 == $null) { %tmp1 = +p }
     var %pfxlen = $len(%tmp1)
     if (%tmp1 != $left($1,%pfxlen)) {
-      var %tmp1 = $readini %blow_ini FiSH mark_encrypted
 
+      var %tmp1 = $readini %blow_ini FiSH mark_encrypted
       if (%mark_style == $null) { %mark_style = 2 }
       if (%tmp1 == $null) { %tmp1 = $chr(2) $+ $chr(3) $+ 12· $+ $chr(3) $+ $chr(2) }
 
@@ -262,6 +340,9 @@ menu nicklist {
 }
 
 menu status,channel,nicklist,query {
+  SALT %SaltyFish / ENC $iif($dll(%FiSH_dll,INI_GetBool,process_outgoing 1) == 0, [Off], [On]) / DEC $iif($dll(%FiSH_dll,INI_GetBool,process_incoming 1) == 0, [Off], [On])
+  .ALL ON: $masteron | echo > Notice: Salty FiSH is now enabled. Please limit the length of your messages.
+  .ALL OFF: $masteroff | echo > Notice: Salty FiSH is now disabled.
   FiSH
   .-
   .Set plain-prefix $chr(91) $readini(%blow_ini,FiSH,plain_prefix) $chr(93) :FiSH.prefix $?="Enter new plain-prefix:"
@@ -288,21 +369,24 @@ menu status,channel,nicklist,query {
   ...Suffix :writeini -n %blow_ini FiSH mark_position 1
   ...Disable :writeini -n %blow_ini FiSH mark_position 0
   ..Crypt-Mark (Outgoing) $+ $chr(32) $+ %mark_outgoing
-  ...Enable :set %mark_outgoing [On]
+  ...Enable :var -g %mark_outgoing [On], %SaltyFish [Off] | echo > Notice: Salty FiSH is now disabled.
   ...Disable :set %mark_outgoing [Off]
   ...-
   ...Style 1 :{
     set %mark_style 1
-    set %mark_outgoing [On]
+    var -g %mark_outgoing [On], %SaltyFish [Off] | echo > Notice: Salty FiSH is now disabled.
   }
   ...Style 2 :{
     set %mark_style 2
-    set %mark_outgoing [On]
+    var -g %mark_outgoing [On], %SaltyFish [Off] | echo > Notice: Salty FiSH is now disabled.
   }
   ...Style 3 :{
     set %mark_style 3
-    set %mark_outgoing [On]
+    var -g %mark_outgoing [On], %SaltyFish [Off] | echo > Notice: Salty FiSH is now disabled.
   }
+  ..Salty FiSH $+ $chr(32) $+ %SaltyFish
+  ...Enable :var -g %SaltyFish [On], %mark_outgoing [Off] | $masteron | echo > Notice: Salty FiSH is now enabled. Please limit the length of your messages.
+  ...Disable :set %SaltyFish [Off] | echo > Notice: Salty FiSH is now disabled.
   ..NickTracker $+ $chr(32) $+ %NickTrack
   ...Enable :set %NickTrack [On]
   ...Disable :set %NickTrack [Off]
