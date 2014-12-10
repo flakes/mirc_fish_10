@@ -1,7 +1,7 @@
 == 2014-11-29 ==
-  * Added support for STARTTLS (new in mIRC 7.38)
-  * OpenSSL updated to 1.0.1j
-  * This is a recommended update!
+	* Added support for STARTTLS (new in mIRC 7.38)
+	* OpenSSL updated to 1.0.1j
+	* This is a recommended update!
 
 == 2014-08-25 ==
 	* Switch to MinHook library. This enables Wine compatibility.
