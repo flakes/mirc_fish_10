@@ -1,6 +1,7 @@
 == 2014-11-29 ==
 	* Added support for STARTTLS (new in mIRC 7.38)
 	* OpenSSL updated to 1.0.1j
+	* Restored working order on SSE 1-only CPUs (again)
 	* This is a recommended update!
 
 == 2014-08-25 ==
