@@ -453,7 +453,11 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 	}
 	else if(hInstSSLeay == nullptr)
 	{
-		::MessageBoxW(info->mHwnd, L"FiSH needs the OpenSSL DLLs to be installed and loaded. Disabling.", L"Error", MB_ICONEXCLAMATION);
+		::MessageBoxW(info->mHwnd,
+			L"FiSH needs the OpenSSL DLLs to be installed and loaded. Disabling.\r\n\r\n"
+			L"Hint: for mIRC 7.36 and later, setting load=1 under [ssl] in mirc.ini is necessary. "
+			L"Please check the README or use the provided FiSH installer.",
+			L"Error", MB_ICONEXCLAMATION);
 
 		return;
 	}
