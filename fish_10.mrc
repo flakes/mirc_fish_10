@@ -349,7 +349,7 @@ alias fishdebug {
   var %a = aline -ph %w
 
   var %f1 = fishdebug
-  var %f2 = $rand(0,9999))
+  var %f2 = $rand(0,9999)
   var %x = $dll(%FiSH_dll,FiSH_WriteKey10,NULL %f1 %f2 HelloWorld)
 
   var %f10dll = $+(",$nofile($mircexe) $+ fish_10.dll,")
