@@ -25,7 +25,7 @@ If you just upgraded from mIRC 6, you have to manually unload the `FiSH.mrc` fil
 
 ### DOWNLOAD
 
-Please download the latest version from: http://syndicode.org/fish_10/
+Please download the latest version from: https://syndicode.org/fish_10/
 
 ### MANUAL SETUP
 
@@ -75,7 +75,7 @@ so you need the x86 version!
 * If an error like "*patching ... failed*" shows up, something specific to your system went wrong.
 It could be something simple like an incompatible OpenSSL DLL, something weird like
 your anti-virus program, or a bug in FiSH 10. You can check here for existing problem reports, or create a new one:
-http://github.com/flakes/mirc_fish_10/issues
+https://github.com/flakes/mirc_fish_10/issues
 (Hint for Windows Vista and above: Hit Ctrl + C to copy the message box contents into the clipboard,
 then paste into your bug report using Ctrl + V)
 
