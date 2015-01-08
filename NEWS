@@ -1,3 +1,8 @@
+== 2015-01-08 ==
+	* OpenSSL updated to 1.0.1k
+	* Added hint to OpenSSL DLL error message
+	* Fixed minor syntax mistake in fish_10.mrc
+
 == 2014-11-29 ==
 	* Added support for STARTTLS (new in mIRC 7.38)
 	* OpenSSL updated to 1.0.1j
