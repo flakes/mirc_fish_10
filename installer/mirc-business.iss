@@ -11,9 +11,11 @@ begin
 
 	if FileExists(GetMIRCExeDir() + '\mirc.ini') then
 	begin
+		// see https://github.com/flakes/mirc_fish_10/issues/39 ...
+		Result := GetMIRCExeDir();
+
 		if LowerCase(GetIniString('about', 'portable', 'yes', GetMIRCExeDir() + '\mirc.ini')) = 'yes' then
 		begin
-			Result := GetMIRCExeDir();
 			exit;
 		end;
 	end;
@@ -23,6 +25,7 @@ begin
 		if LowerCase(GetIniString('about', 'portable', 'yes', ExpandConstant('{userappdata}\mIRC\mirc.ini'))) = 'yes' then
 		begin
 			// doesn't make any sense!
+			Result := '';
 			exit;
 		end
 		else
