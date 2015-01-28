@@ -1,3 +1,8 @@
+== 2015-01-27 ==
+	* OpenSSL updated to 1.0.2
+	* Installer: added support for mIRC with mirc.exe + mirc.ini in the same
+	  directory but portable flag set to no. (issue 39)
+
 == 2015-01-08 ==
 	* OpenSSL updated to 1.0.1k
 	* Added hint to OpenSSL DLL error message
