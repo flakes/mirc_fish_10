@@ -13,7 +13,7 @@ static std::shared_ptr<CBlowIni> GetBlowIni()
 	{
 		::EnterCriticalSection(&s_iniLock);
 		// the lock makes sure we only ever get one CBlowIni instance.
-		if(!ls_instance) ls_instance = std::shared_ptr<CBlowIni>(new CBlowIni());
+		if(!ls_instance) ls_instance = std::make_shared<CBlowIni>();
 		::LeaveCriticalSection(&s_iniLock);
 	}
 
@@ -1012,7 +1012,7 @@ MIRC_EXPORT_SIG(void) LoadDll(LOADINFO* info)
 {
 	info->mKeep = TRUE;
 
-	reg = PFishEngineRegistration(new CFishEngineRegistration(&g_engine_export));
+	reg = std::make_shared<CFishEngineRegistration>(&g_engine_export);
 	
 	if (!reg->RegisterUsingDll())
 	{
