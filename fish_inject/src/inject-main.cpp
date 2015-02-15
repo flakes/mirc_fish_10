@@ -122,9 +122,17 @@ static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 
 			l_sock->Unlock();
 
-			int l_result = a_lpfn_send(s, l_buf.c_str(), l_buf.size(), flags);
+			if (!l_buf.empty())
+			{
+				int l_result = a_lpfn_send(s, l_buf.c_str(), l_buf.size(), flags);
 
-			return (l_result > 0 ? len : l_result);
+				return (l_result > 0 ? len : l_result);
+			}
+			else
+			{
+				// probably a fake message for one of the engines, pretend it has been sent.
+				return len;
+			}
 		}
 		else
 		{
