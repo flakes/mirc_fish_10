@@ -994,7 +994,7 @@ MIRC_DLL_EXPORT(NetworkDebugInfo)
 	::LeaveCriticalSection(&s_socketMapLock);
 
 	sprintf_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a *** Active networks: %s",
-		l_networks.substr(0, MIRC_PARAM_DATA_LENGTH - 1).c_str());
+		l_networks.substr(0, MIRC_PARAM_DATA_LENGTH - 32).c_str());
 
 	return MIRC_RET_DATA_COMMAND;
 }
