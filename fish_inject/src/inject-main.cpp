@@ -617,12 +617,12 @@ MIRC_DLL_EXPORT(_callMe)
 	{
 		version_shown = true;
 
-		strcpy_s(data, 900, "/echo -a *** FiSH 10.2 *** by [c&f]\xA0\xA0*** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***");
+		strcpy_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a *** FiSH 10.2 *** by [c&f]\xA0\xA0*** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***");
 
-		return 2;
+		return MIRC_RET_DATA_COMMAND;
 	}
 
-	return 1;
+	return MIRC_RET_CONTINUE;
 }
 
 
@@ -647,10 +647,10 @@ MIRC_DLL_EXPORT(InjectDebugInfo)
 
 	const std::string l_engineList = (s_engines ? s_engines->GetEngineList() : "");
 
-	sprintf_s(data, 900, "/echo -a *** Sockets: Active %d - Discarded %d - %s - Engines: %s",
+	sprintf_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a *** Sockets: Active %d - Discarded %d - %s - Engines: %s",
 		l_numSockets, s_discardedSockets, (l_stats.size() < 700 ? l_stats.c_str() : "a lot of data"), l_engineList.c_str());
 
-	return 2;
+	return MIRC_RET_DATA_COMMAND;
 }
 
 

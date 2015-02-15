@@ -554,12 +554,13 @@ MIRC_DLL_EXPORT(FiSH_SetIniPath)
 
 		if(!l_ini->IsWritable())
 		{
-			strcpy_s(data, 900, "/echo -a *** FiSH 10 *** WARNING: blow.ini is not writable! FiSH will not function correctly. ***");
-			return 2;
+			strcpy_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a *** FiSH 10 *** WARNING: blow.ini is not writable! FiSH will not function correctly. ***");
+
+			return MIRC_RET_DATA_COMMAND;
 		}
 	}
 
-	return 1;
+	return MIRC_RET_CONTINUE;
 }
 
 // in: nothing
@@ -572,14 +573,12 @@ MIRC_DLL_EXPORT(DH1080_gen)
 	{
 		const std::string l_tmp = l_privKey + " " + l_pubKey;
 
-		strcpy_s(data, 900, l_tmp.c_str());
+		strcpy_s(data, MIRC_PARAM_DATA_LENGTH, l_tmp.c_str());
 
-		return 3;
+		return MIRC_RET_DATA_RETURN;
 	}
-	else
-	{
-		return 0;
-	}
+
+	return MIRC_RET_HALT;
 }
 
 
@@ -595,13 +594,13 @@ MIRC_DLL_EXPORT(DH1080_comp)
 		{
 			const std::string l_shared = DH1080_Compute(l_data[0], l_data[1]);
 
-			strcpy_s(data, 900, l_shared.c_str());
+			strcpy_s(data, MIRC_PARAM_DATA_LENGTH, l_shared.c_str());
 
-			return 3;
+			return MIRC_RET_DATA_RETURN;
 		}
 	}
 
-	return 0;
+	return MIRC_RET_HALT;
 }
 
 
@@ -622,11 +621,11 @@ MIRC_DLL_EXPORT(FiSH_WriteKey10)
 
 			GetBlowIni()->WriteBlowKey(l_data[1], l_data[2], l_data[3]);
 
-			return 1;
+			return MIRC_RET_CONTINUE;
 		}
 	}
 
-	return 0;
+	return MIRC_RET_HALT;
 }
 
 
@@ -648,13 +647,13 @@ MIRC_DLL_EXPORT(FiSH_GetKey10)
 				l_key.insert(0, "cbc:");
 			}
 
-			strcpy_s(data, 900, l_key.c_str());
+			strcpy_s(data, MIRC_PARAM_DATA_LENGTH, l_key.c_str());
 
-			return 3;
+			return MIRC_RET_DATA_RETURN;
 		}
 	}
 
-	return 1;
+	return MIRC_RET_CONTINUE;
 }
 
 
@@ -671,7 +670,7 @@ MIRC_DLL_EXPORT(FiSH_DelKey10)
 		}
 	}
 
-	return 1;
+	return MIRC_RET_CONTINUE;
 }
 
 
@@ -716,10 +715,10 @@ static int _FiSH_DecryptMsg_Internal(std::string& a_data)
 
 		a_data = l_decrypted;
 
-		return 3;
+		return MIRC_RET_DATA_RETURN;
 	}
 
-	return 0;
+	return MIRC_RET_CONTINUE;
 }
 
 
@@ -732,12 +731,13 @@ MIRC_DLL_EXPORT(FiSH_DecryptMsg10)
 
 		if(l_res > 0)
 		{
-			strncpy_s(data, 900, l_tmp.c_str(), 899);
+			strncpy_s(data, MIRC_PARAM_DATA_LENGTH, l_tmp.c_str(), MIRC_PARAM_DATA_LENGTH - 1);
+
 			return l_res;
 		}
 	}
 
-	return 0;
+	return MIRC_RET_HALT;
 }
 
 
@@ -752,7 +752,8 @@ MIRC_DLL_EXPORT(FiSH_decrypt_msg)
 
 		if(l_res > 0)
 		{
-			strncpy_s(data, 900, l_tmp.c_str(), 899);
+			strncpy_s(data, MIRC_PARAM_DATA_LENGTH, l_tmp.c_str(), MIRC_PARAM_DATA_LENGTH - 1);
+
 			return l_res;
 		}
 	}
@@ -787,10 +788,10 @@ static int _FiSH_EncryptMsg_Internal(std::string& a_data)
 
 		a_data = l_encrypted;
 
-		return 3;
+		return MIRC_RET_DATA_RETURN;
 	}
 
-	return 0;
+	return MIRC_RET_HALT;
 }
 
 
@@ -803,12 +804,13 @@ MIRC_DLL_EXPORT(FiSH_EncryptMsg10)
 
 		if(l_res > 0)
 		{
-			strncpy_s(data, 900, l_tmp.c_str(), 899);
+			strncpy_s(data, MIRC_PARAM_DATA_LENGTH, l_tmp.c_str(), MIRC_PARAM_DATA_LENGTH - 1);
+
 			return l_res;
 		}
 	}
 
-	return 0;
+	return MIRC_RET_HALT;
 }
 
 
@@ -823,12 +825,13 @@ MIRC_DLL_EXPORT(FiSH_encrypt_msg)
 
 		if(l_res > 0)
 		{
-			strncpy_s(data, 900, l_tmp.c_str(), 899);
+			strncpy_s(data, MIRC_PARAM_DATA_LENGTH, l_tmp.c_str(), MIRC_PARAM_DATA_LENGTH - 1);
+
 			return l_res;
 		}
 	}
 
-	return 0;
+	return MIRC_RET_HALT;
 }
 
 
@@ -865,7 +868,7 @@ MIRC_DLL_EXPORT(FiSH_GetMyIP)
 			{
 				if((ip[0] > 0) && (ip[0] < 255) && (ip[1] < 255) && (ip[2] < 255) && (ip[3] < 255))
 				{
-					strcpy_s(data, 900, l_buf.c_str());
+					strcpy_s(data, MIRC_PARAM_DATA_LENGTH, l_buf.c_str());
 					return 3;
 				}
 			}
@@ -874,7 +877,7 @@ MIRC_DLL_EXPORT(FiSH_GetMyIP)
 		}
 	}
 
-	return 1;
+	return MIRC_RET_CONTINUE;
 }
 
 
@@ -890,9 +893,9 @@ MIRC_DLL_EXPORT(INI_GetBool)
 	auto l_ini = GetBlowIni();
 	bool b = l_ini->GetBool(l_key.c_str(), l_default);
 
-	sprintf_s(data, 900, "%d", (b ? 1 : 0));
+	sprintf_s(data, MIRC_PARAM_DATA_LENGTH, "%d", (b ? 1 : 0));
 
-	return 3;
+	return MIRC_RET_DATA_RETURN;
 }
 
 
@@ -921,11 +924,11 @@ MIRC_DLL_EXPORT(INI_SetBool)
 
 			l_ini->SetInt(l_key.c_str(), STR_TO_BOOL(l_data[1]));
 
-			return 1;
+			return MIRC_RET_CONTINUE;
 		}
 	}
 
-	return 0;
+	return MIRC_RET_HALT;
 }
 
 
@@ -945,13 +948,13 @@ MIRC_DLL_EXPORT(INI_GetSectionBool)
 
 			bool b = l_ini->GetSectionBool(l_data[0], l_data[1], l_key.c_str(), l_default);
 
-			sprintf_s(data, 900, "%d", (b ? 1 : 0));
+			sprintf_s(data, MIRC_PARAM_DATA_LENGTH, "%d", (b ? 1 : 0));
 
-			return 3;
+			return MIRC_RET_DATA_RETURN;
 		}
 	}
 
-	return 0;
+	return MIRC_RET_HALT;
 }
 
 
@@ -971,11 +974,11 @@ MIRC_DLL_EXPORT(INI_SetSectionBool)
 
 			l_ini->SetSectionBool(l_data[0], l_data[1], l_key.c_str(), l_value);
 
-			return 1;
+			return MIRC_RET_CONTINUE;
 		}
 	}
 
-	return 0;
+	return MIRC_RET_HALT;
 }
 
 
@@ -990,9 +993,10 @@ MIRC_DLL_EXPORT(NetworkDebugInfo)
 	}
 	::LeaveCriticalSection(&s_socketMapLock);
 
-	sprintf_s(data, 900, "/echo -a *** Active networks: %s", l_networks.c_str());
+	sprintf_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a *** Active networks: %s",
+		l_networks.substr(0, MIRC_PARAM_DATA_LENGTH - 1).c_str());
 
-	return 2;
+	return MIRC_RET_DATA_COMMAND;
 }
 
 
@@ -1040,8 +1044,9 @@ MIRC_EXPORT_SIG(int) UnloadDll(int mTimeout)
 
 MIRC_DLL_EXPORT(_callMe)
 {
-	strcpy_s(data, 900, "/echo -a *** FiSH 10.2 *** by [c&f]\xA0\xA0*** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***");
-	return 2;
+	strcpy_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a *** FiSH 10.2 *** by [c&f]\xA0\xA0*** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***");
+
+	return MIRC_RET_DATA_COMMAND;
 }
 
 
