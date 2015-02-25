@@ -1,8 +1,13 @@
+//
+// Class to communicate with mIRC and evaluate commands and even mIRC script code.
+// Check "SendMessage" in the mIRC help file for more details.
+//
+// @author flakes 2015
+// @license Hereby released into Public Domain.
+//
 #pragma once
 
-#include "mircdll.h"
 #include <Windows.h>
-#include <stdio.h>
 #include <Strsafe.h>
 #include <string>
 
@@ -18,7 +23,7 @@ public:
 
 	bool Connect()
 	{
-		wchar_t m_mappingName[10] = { 0 };
+		wchar_t mappingName[10] = { 0 };
 		int index = 0; 
 
 		while (m_mappingHandle == INVALID_HANDLE_VALUE)
@@ -28,11 +33,11 @@ public:
 			if (index > 32)
 				break;
 
-			swprintf_s(m_mappingName, 10, L"mIRC%d", index);
+			::StringCchPrintfW(mappingName, 10, L"mIRC%d", index);
 
 			::SetLastError(ERROR_SUCCESS);
 
-			m_mappingHandle = ::CreateFileMappingW(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, MAPPING_SIZE, m_mappingName);
+			m_mappingHandle = ::CreateFileMappingW(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, MAPPING_SIZE, mappingName);
 
 			if (m_mappingHandle && ::GetLastError() == ERROR_ALREADY_EXISTS)
 			{
@@ -56,26 +61,35 @@ public:
 
 	bool SendCommand(const std::string& cmd, unsigned short eventId = 0) const
 	{
-		strcpy_s(reinterpret_cast<char*>(m_dataPtr), MAPPING_SIZE, cmd.c_str());
+		if (!m_dataPtr)
+			return false;
 
-		return MIRCSendMessage(MIRC_WM_MCOMMAND, 1, eventId);
+		::StringCbCopyA(reinterpret_cast<char*>(m_dataPtr), MAPPING_SIZE, cmd.c_str());
+
+		return MIRCSendMessage(WM_MCOMMAND, 1, eventId);
 	}
 
 	bool SendCommand(const std::wstring& cmd, unsigned short eventId = 0) const
 	{
-		wcscpy_s(reinterpret_cast<wchar_t*>(m_dataPtr), MAPPING_SIZE / sizeof(wchar_t), cmd.c_str());
+		if (!m_dataPtr)
+			return false;
+
+		::StringCbCopyW(reinterpret_cast<wchar_t*>(m_dataPtr), MAPPING_SIZE, cmd.c_str());
 		
-		return MIRCSendMessage(MIRC_WM_MCOMMAND, 1 | METHODE_UNICODE, eventId);
+		return MIRCSendMessage(WM_MCOMMAND, 1 | METHOD_UNICODE, eventId);
 	}
 
 	bool EvaluateCommand(const std::string& cmd, std::string& result, unsigned short eventId = 0) const
 	{
+		if (!m_dataPtr)
+			return false;
+
 		char* dataPtr = reinterpret_cast<char*>(m_dataPtr);
 
-		strcpy_s(dataPtr, MAPPING_SIZE, cmd.c_str());
+		::StringCbCopyA(dataPtr, MAPPING_SIZE, cmd.c_str());
 
-		if (MIRCSendMessage(MIRC_WM_MEVALUATE, 0, eventId)
-			&& SUCCEEDED(::StringCchLengthA(dataPtr, MAPPING_SIZE - 1, NULL))
+		if (MIRCSendMessage(WM_MEVALUATE, 0, eventId)
+			&& SUCCEEDED(::StringCbLengthA(dataPtr, MAPPING_SIZE - 1, NULL))
 		)
 		{
 			result = std::string(dataPtr);
@@ -88,12 +102,15 @@ public:
 
 	bool EvaluateCommand(const std::wstring& cmd, std::wstring& result, unsigned short eventId = 0) const
 	{
+		if (!m_dataPtr)
+			return false;
+
 		wchar_t* wDataPtr = reinterpret_cast<wchar_t*>(m_dataPtr);
 
-		wcscpy_s(wDataPtr, MAPPING_SIZE / sizeof(wchar_t), cmd.c_str());
+		::StringCbCopyW(wDataPtr, MAPPING_SIZE, cmd.c_str());
 
-		if (MIRCSendMessage(MIRC_WM_MEVALUATE, METHODE_UNICODE, eventId)
-			&& SUCCEEDED(::StringCchLengthW(wDataPtr, MAPPING_SIZE - 1, NULL))
+		if (MIRCSendMessage(WM_MEVALUATE, METHOD_UNICODE, eventId)
+			&& SUCCEEDED(::StringCbLengthW(wDataPtr, MAPPING_SIZE - 1, NULL))
 		)
 		{
 			result = std::wstring(wDataPtr);
@@ -112,7 +129,9 @@ public:
 
 private:
 	const DWORD MAPPING_SIZE = 8192;
-	const WORD METHODE_UNICODE = 8;
+	const WORD METHOD_UNICODE = 8;
+	const UINT WM_MCOMMAND = WM_USER + 200;
+	const UINT WM_MEVALUATE = WM_USER + 201;
 
 	HWND m_hwnd;
 	int m_mappingNameIndex;
