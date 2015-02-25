@@ -18,6 +18,8 @@ enum {
 };
 
 #define MIRC_PARAM_DATA_LENGTH 900
+#define MIRC_WM_MCOMMAND WM_USER + 200
+#define MIRC_WM_MEVALUATE WM_USER + 201
 
 #define MIRC_EXPORT_SIG(RET_TYPE) extern "C" RET_TYPE __stdcall
 
