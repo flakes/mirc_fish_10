@@ -8,14 +8,14 @@
 #pragma once
 
 #include <Windows.h>
-#include <Strsafe.h>
 #include <string>
+#include <Strsafe.h>
 
 class CMIRCSendMessageAPI
 {
 public:
 	CMIRCSendMessageAPI(HWND hwnd)
-		: m_hwnd(hwnd), m_mappingHandle(INVALID_HANDLE_VALUE), m_dataPtr(nullptr), m_mappingNameIndex(0)
+		: m_hwnd(hwnd), m_mappingNameIndex(0), m_mappingHandle(INVALID_HANDLE_VALUE), m_dataPtr(nullptr)
 	{
 	}
 
@@ -23,17 +23,18 @@ public:
 
 	bool Connect()
 	{
+		// start at higher number because simple/stupid scripts use "mIRC" (= 0) and we do not want to break them:
+		const int INDEX_OFFSET = 80;
+
 		wchar_t mappingName[10] = { 0 };
 		int index = 0; 
 
 		while (m_mappingHandle == INVALID_HANDLE_VALUE)
 		{
-			++index; // start at 1 because simple/stupid scripts use "mIRC" (= 0) and we do not want to break them
-
-			if (index > 32)
+			if (index++ > 32)
 				break;
 
-			::StringCchPrintfW(mappingName, 10, L"mIRC%d", index);
+			::StringCchPrintfW(mappingName, 10, L"mIRC%d", index + INDEX_OFFSET);
 
 			::SetLastError(ERROR_SUCCESS);
 
@@ -50,10 +51,10 @@ public:
 		{
 			if (!m_dataPtr)
 			{
-				m_dataPtr = ::MapViewOfFile(m_mappingHandle, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+				m_dataPtr = ::MapViewOfFile(m_mappingHandle, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0);
 			}
 
-			m_mappingNameIndex = index;
+			m_mappingNameIndex = index + INDEX_OFFSET;
 		}
 
 		return (m_mappingHandle && m_dataPtr);
@@ -66,7 +67,7 @@ public:
 
 		::StringCbCopyA(reinterpret_cast<char*>(m_dataPtr), MAPPING_SIZE, cmd.c_str());
 
-		return MIRCSendMessage(WM_MCOMMAND, 1, eventId);
+		return SendMIRCMessage(WM_MCOMMAND, 1, eventId);
 	}
 
 	bool SendCommand(const std::wstring& cmd, unsigned short eventId = 0) const
@@ -76,7 +77,7 @@ public:
 
 		::StringCbCopyW(reinterpret_cast<wchar_t*>(m_dataPtr), MAPPING_SIZE, cmd.c_str());
 		
-		return MIRCSendMessage(WM_MCOMMAND, 1 | METHOD_UNICODE, eventId);
+		return SendMIRCMessage(WM_MCOMMAND, 1 | METHOD_UNICODE, eventId);
 	}
 
 	bool EvaluateCommand(const std::string& cmd, std::string& result, unsigned short eventId = 0) const
@@ -88,11 +89,12 @@ public:
 
 		::StringCbCopyA(dataPtr, MAPPING_SIZE, cmd.c_str());
 
-		if (MIRCSendMessage(WM_MEVALUATE, 0, eventId)
-			&& SUCCEEDED(::StringCbLengthA(dataPtr, MAPPING_SIZE - 1, NULL))
+		size_t resultLength = 0;
+		if (SendMIRCMessage(WM_MEVALUATE, 0, eventId)
+			&& SUCCEEDED(::StringCbLengthA(dataPtr, MAPPING_SIZE - 1, &resultLength))
 		)
 		{
-			result = std::string(dataPtr);
+			result = std::string(dataPtr, resultLength);
 
 			return true;
 		}
@@ -109,11 +111,12 @@ public:
 
 		::StringCbCopyW(wDataPtr, MAPPING_SIZE, cmd.c_str());
 
-		if (MIRCSendMessage(WM_MEVALUATE, METHOD_UNICODE, eventId)
-			&& SUCCEEDED(::StringCbLengthW(wDataPtr, MAPPING_SIZE - 1, NULL))
+		size_t resultLength = 0;
+		if (SendMIRCMessage(WM_MEVALUATE, METHOD_UNICODE, eventId)
+			&& SUCCEEDED(::StringCchLengthW(wDataPtr, (MAPPING_SIZE - 1) / sizeof(wchar_t), &resultLength))
 		)
 		{
-			result = std::wstring(wDataPtr);
+			result = std::wstring(wDataPtr, resultLength);
 
 			return true;
 		}
@@ -138,7 +141,7 @@ private:
 	HANDLE m_mappingHandle;
 	void *m_dataPtr;
 
-	bool MIRCSendMessage(UINT msg, WORD method, WORD eventId) const
+	bool SendMIRCMessage(UINT msg, WORD method, WORD eventId) const
 	{
 		const WORD USEFUL_RETURN_CODES = 16;
 
@@ -147,3 +150,5 @@ private:
 		return (::SendMessageW(m_hwnd, msg, MAKEWPARAM(method | USEFUL_RETURN_CODES, eventId), m_mappingNameIndex) == 0);
 	}
 };
+
+static_assert(sizeof(char) == 1, "sizeof char ?= 1");
