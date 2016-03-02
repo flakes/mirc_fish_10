@@ -54,7 +54,10 @@ public:
 				m_dataPtr = ::MapViewOfFile(m_mappingHandle, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0);
 			}
 
-			m_mappingNameIndex = index + INDEX_OFFSET;
+			if (index > 0)
+			{
+				m_mappingNameIndex = index + INDEX_OFFSET;
+			}
 		}
 
 		return (m_mappingHandle && m_dataPtr);
