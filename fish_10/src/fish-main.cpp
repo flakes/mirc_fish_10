@@ -619,9 +619,19 @@ MIRC_DLL_EXPORT(FiSH_WriteKey10)
 				l_data[3] = UnicodeToCp(CP_ACP, UnicodeFromCp(CP_UTF8, l_data[3]));
 			}
 
-			GetBlowIni()->WriteBlowKey(l_data[1], l_data[2], l_data[3]);
+			if (!HasCBCPrefix(l_data[3]) && l_data[3].length() > MAX_BLOWFISH_ECB_KEY_LENGTH_BYTES)
+			{
+				sprintf_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -ac highlight ERROR: key length exceeds limit of %d bytes.", MAX_BLOWFISH_ECB_KEY_LENGTH_BYTES);
 
-			return MIRC_RET_CONTINUE;
+				return MIRC_RET_DATA_COMMAND;
+			}
+
+			if (GetBlowIni()->WriteBlowKey(l_data[1], l_data[2], l_data[3]))
+			{
+				strcpy_s(data, MIRC_PARAM_DATA_LENGTH, "ok");
+
+				return MIRC_RET_DATA_RETURN;
+			}
 		}
 	}
 

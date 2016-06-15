@@ -149,12 +149,12 @@ alias -l FiSH.WriteKey {
   else var %cur_contact = $2
   if ($3- == $null) return
 
-  $dll(%FiSH_dll,FiSH_WriteKey10,$1 $network %cur_contact $3-)
+  if ($dll(%FiSH_dll,FiSH_WriteKey10,$1 $network %cur_contact $3-) == ok) {
+    var %info = *** FiSH: Key for %cur_contact set to *censored* $iif($gettok($3-,1,58) == cbc, (CBC Mode), )
 
-  var %info = *** FiSH: Key for %cur_contact set to *censored* $iif($gettok($3-,1,58) == cbc, (CBC Mode), )
-
-  if ($window(%cur_contact) == $null) echo $color(Mode text) -at %info
-  else echo $color(Mode text) -tm %cur_contact %info
+    if ($window(%cur_contact) == $null) echo $color(Mode text) -at %info
+    else echo $color(Mode text) -tm %cur_contact %info
+  }
 }
 
 alias FiSH.setkey { FiSH.WriteKey decode_utf8 $1 $2- }

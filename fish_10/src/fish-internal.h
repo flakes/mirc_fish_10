@@ -5,6 +5,8 @@
 #include <map>
 #include <vector>
 
+#define MAX_BLOWFISH_ECB_KEY_LENGTH_BYTES (448/8)
+
 class CBlowIni
 {
 protected:

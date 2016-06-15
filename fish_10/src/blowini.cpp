@@ -202,6 +202,11 @@ bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_valu
 	std::string l_keyActual(a_value), l_keyValue;
 	bool l_cbc = HasCBCPrefix(l_keyActual, true);
 
+	if (!l_cbc && a_value.size() > MAX_BLOWFISH_ECB_KEY_LENGTH_BYTES)
+	{
+		return false;
+	}
+
 	blowfish_encrypt(l_keyActual, l_keyValue, m_iniBlowKey);
 	l_keyValue.insert(0, "+OK ");
 
