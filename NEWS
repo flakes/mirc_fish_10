@@ -1,3 +1,8 @@
+== 2016-06-15 ==
+	* OpenSSL updated to 1.0.2h
+	* Added version to /fishdebug output
+	* Do not allow setting ECB keys that exceed 56 bytes
+
 == 2016-03-02 ==
 	* OpenSSL updated to 1.0.2g
 
