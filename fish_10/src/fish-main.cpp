@@ -1042,13 +1042,21 @@ MIRC_EXPORT_SIG(int) UnloadDll(int mTimeout)
 
 /* call for mIRC to show compililation date */
 
+#define FISH_MAIN_VERSION "*** FiSH 10.2 *** by [c&f]\xA0\xA0*** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***"
+
 MIRC_DLL_EXPORT(_callMe)
 {
-	strcpy_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a *** FiSH 10.2 *** by [c&f]\xA0\xA0*** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***");
+	strcpy_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a " FISH_MAIN_VERSION);
 
 	return MIRC_RET_DATA_COMMAND;
 }
 
+MIRC_DLL_EXPORT(FiSH_GetVersion)
+{
+	strcpy_s(data, MIRC_PARAM_DATA_LENGTH, FISH_MAIN_VERSION);
+
+	return MIRC_RET_DATA_RETURN;
+}
 
 /* DllMain for initialization purposes */
 

@@ -18,3 +18,4 @@ EXPORTS
 	INI_GetSectionBool
 	INI_SetSectionBool
 	NetworkDebugInfo
+	FiSH_GetVersion

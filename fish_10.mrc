@@ -350,7 +350,7 @@ alias fishdebug {
 
   var %f1 = fishdebug
   var %f2 = $rand(0,9999)
-  var %x = $dll(%FiSH_dll,FiSH_WriteKey10,NULL %f1 %f2 HelloWorld)
+  var %x = $iif($isfile(%FiSH_dll),$dll(%FiSH_dll,FiSH_WriteKey10,NULL %f1 %f2 HelloWorld),MISSING_DLL)
 
   var %f10dll = $+(",$nofile($mircexe) $+ fish_10.dll,")
   var %f10inj = $+(",$nofile($mircexe) $+ fish_inject.dll,")
@@ -380,7 +380,9 @@ alias fishdebug {
   %a $cr
   %a ::Files
   %a fish_10.dll: %f10dll - $isfile(%f10dll)
+  %a version string: $iif($isfile(%f10dll),$dll(%f10dll,FiSH_GetVersion, ),NotFound)
   %a fish_inject.dll: %f10inj - $isfile(%f10inj)
+  %a version string: $iif($isfile(%f10inj),$dll(%f10inj,FiSH_GetInjectVersion, ),NotFound)
   %a blow.ini: %f10ini - $isfile(%f10ini)
   %a $cr
   %a ::md5

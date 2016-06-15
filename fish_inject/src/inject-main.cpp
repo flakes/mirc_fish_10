@@ -615,6 +615,7 @@ extern "C" int UnregisterEngine(const fish_inject_engine_t *pEngine)
 	return (s_engines->Unregister(pEngine) ? 0 : 1);
 }
 
+#define FISH_INJECT_VERSION "*** FiSH 10.2 *** by [c&f]\xA0\xA0*** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***"
 
 /* dummy call to facilitate loading of DLL */
 MIRC_DLL_EXPORT(_callMe)
@@ -625,7 +626,7 @@ MIRC_DLL_EXPORT(_callMe)
 	{
 		version_shown = true;
 
-		strcpy_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a *** FiSH 10.2 *** by [c&f]\xA0\xA0*** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***");
+		strcpy_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a " FISH_INJECT_VERSION);
 
 		return MIRC_RET_DATA_COMMAND;
 	}
@@ -633,6 +634,12 @@ MIRC_DLL_EXPORT(_callMe)
 	return MIRC_RET_CONTINUE;
 }
 
+MIRC_DLL_EXPORT(FiSH_GetInjectVersion)
+{
+	strcpy_s(data, MIRC_PARAM_DATA_LENGTH, FISH_INJECT_VERSION);
+
+	return MIRC_RET_DATA_RETURN;
+}
 
 /* for debugging */
 MIRC_DLL_EXPORT(InjectDebugInfo)
