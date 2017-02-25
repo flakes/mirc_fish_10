@@ -8,7 +8,7 @@
 #include <memory>
 
 #include "fish-inject-engine.h"
-#include "simple-thread-lock.h"
+#include "CMultiReaderSingleWriterLock.h"
 
 class CInjectEngines
 {

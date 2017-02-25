@@ -1,7 +1,6 @@
 #include "inject-main.h"
 #include "inject-socket.h"
 #include "inject-engines.h"
-#include "simple-thread-lock.h"
 #include "patch.h"
 
 /******************************************************************************
@@ -685,7 +684,7 @@ bool CPatch::ms_initialized = false;
 
 #if defined(_DEBUG) || defined(LOG_TO_FILE)
 
-static CSimpleThreadLock s_debugAccess;
+static std::mutex s_debugAccess;
 static std::wstring s_logFilePath;
 
 void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function, const std::string& a_message)
@@ -693,7 +692,7 @@ void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function,
 	char tid[20];
 	sprintf_s(tid, 20, "[%08x] ", GetCurrentThreadId());
 
-	CSimpleScopedLock lock(s_debugAccess);
+	std::lock_guard<decltype(s_debugAccess)> lock(s_debugAccess);
 
 #ifdef LOG_TO_FILE
 	if (s_logFilePath.empty())

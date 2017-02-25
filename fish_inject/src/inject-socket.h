@@ -3,10 +3,10 @@
 #include <WS2tcpip.h>
 #include <Windows.h>
 #include <stdint.h>
+#include <mutex>
 #include <string>
 
 #include "inject-engines.h"
-#include "simple-thread-lock.h"
 
 /** here comes the main socket logic class **/
 
@@ -45,7 +45,7 @@ protected:
 	size_t m_linesEncrypted;
 	size_t m_linesDecrypted;
 
-	CSimpleThreadLock m_opLock;
+	std::mutex m_opLock;
 
 	/** the following buffer variables only activate when the connection
 	has been determined to be an IRC connection! **/
@@ -71,8 +71,8 @@ public:
 	// using a locking mechanism for some crashes that were happening on connections
 	// that tried to reconnect a lot, although usually all calls to one socket originate
 	// from the same thread.
-	void Lock() { m_opLock.Lock(); }
-	void Unlock() { m_opLock.Unlock(); }
+	void Lock() { m_opLock.lock(); }
+	void Unlock() { m_opLock.unlock(); }
 
 	// use this for completely unexpected cases:
 	void Discard();
