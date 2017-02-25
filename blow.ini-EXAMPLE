@@ -18,11 +18,17 @@ mark_encrypted=" 12$chr(183)"
 ;mark_encrypted="12> "
 
 MyIP_service=checkip.dyndns.org
-;iplookup.flashfxp.com / ip4.me / www.ipchicken.com / ifconfig.me
+;iplookup.flashfxp.com / ip4.me / www.ipchicken.com
 
 ; this setting speeds up FiSH a little at the expense of making blow.ini files created by the
 ; old FiSH script unusable. You should however always use it when making a new blow.ini file.
 ; If you change/remove this, you have to re-code this ini file in ANSI (at least if your mark_encrypted has any UTF-8 chars)!
 no_legacy=1
+
+; the maximum defined key length for blowfish is 448 bits or 56 bytes: https://en.wikipedia.org/wiki/Blowfish_%28cipher%29#The_algorithm
+; However, some other clients and also FiSH10 in older versions did not enforce this limit. To allow longer keys,
+; set this option to zero. If you have the chance to, it's better to instead change your key(s) (which is always a
+; good idea) and use a new one with 56 bytes max.
+enforce_max_key_length=1
 
 ; entries for your channels and chat partners will appear here.

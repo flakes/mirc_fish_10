@@ -202,7 +202,8 @@ bool CBlowIni::WriteBlowKey(const std::string& a_name, const std::string& a_valu
 	std::string l_keyActual(a_value), l_keyValue;
 	bool l_cbc = HasCBCPrefix(l_keyActual, true);
 
-	if (!l_cbc && a_value.size() > MAX_BLOWFISH_ECB_KEY_LENGTH_BYTES)
+	if (!l_cbc && a_value.size() > MAX_BLOWFISH_ECB_KEY_LENGTH_BYTES
+		&& GetBool(L"enforce_max_key_length", true))
 	{
 		return false;
 	}
