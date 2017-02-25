@@ -66,6 +66,15 @@ This file explains all settings and their implications in blow.ini.
 				[$network:$contact] will be prefered if no_legacy isn't 1, and [$contact] will be used as fallback.
 		You can not change this setting on the fly (while mIRC is running), you need to restart mIRC to have it take effect.
 
+	* Name: enforce_max_key_length
+		Value: 0 or 1
+		Default: 1
+		The maximum defined key length for blowfish is 448 bits or 56 bytes:
+		https://en.wikipedia.org/wiki/Blowfish_%28cipher%29#The_algorithm
+		However, some other clients and also FiSH10 in older versions did not enforce this limit. To allow longer keys,
+		set this option to zero. If you have the chance to, it's better to instead change your key(s) (which is always a
+		good idea) and use a new one with 56 bytes max.
+
 == Contact sections, e.g. [#chan], [EFNet:#fish10] or [duude] ==
 
 	* Name: key

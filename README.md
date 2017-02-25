@@ -55,8 +55,8 @@ Please refer to the [SECURITY](SECURITY.md) document.
 
 * Is the script loaded correctly? If yes, these two lines will show up on mIRC startup:
 
-        *** FiSH 10 *** by [c&f] *** fish_inject.dll compiled XXX XX 2011 12:00:00 ***
-        *** FiSH 10 *** by [c&f] *** fish_10.dll     compiled XXX XX 2011 12:00:00 ***
+        *** FiSH 10 *** by [c&f] *** fish_inject.dll compiled XXX XX 2017 12:00:00 ***
+        *** FiSH 10 *** by [c&f] *** fish_10.dll     compiled XXX XX 2017 12:00:00 ***
 
 * Do you use any kind of connect-on-startup script? You may have to turn that off or add a timer.
   The fish_10.mrc script MUST be loaded before any connection is made or it will not work.
@@ -66,6 +66,10 @@ Please refer to the [SECURITY](SECURITY.md) document.
 * You can check the active path to blow.ini using `//echo %blow_ini`
 
 * Ensure that blow.ini is writable by mIRC - if it's not, you will be notified on startup.
+
+* To work around keys exceeding a length of 56 bytes, the blow.ini option
+  enforce_max_key_length=0
+  can be used. This option is present from releases starting with 2017-02-25.
 
 * If you run into an error like "*/dll: unable to open file*" on startup, install this:
 http://www.microsoft.com/en-us/download/details.aspx?id=5582
