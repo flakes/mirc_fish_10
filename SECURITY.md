@@ -9,18 +9,18 @@
 The following sections describe a number of known attack vectors that FiSH 10 and/or FiSH
 in general are susceptible to.
 
-### Unprotected, Unsigned Distribution
+### Unsigned Distribution
 
-The binaries provided are not signed and not available for download via HTTPS. This means that
-a third party in a network that the download is passing through may be able to modify them.
+The binaries provided are not signed. This means that a third party could provide
+similar, malicious files for download and there is no integrity guarantee.
 
-As a partial countermeasure, SHA1 hashes for current and future releases will be provided
+As a partial countermeasure, SHA1 hashes for current and future releases are provided
 on GitHub. Please access GitHub over a secure HTTPS connection and navigate to the following
 document: https://github.com/flakes/mirc_fish_10/blob/master/HASHES
 
 If your local files match these hashes, you probably have the official binaries.
 
-**Could this be fixed?** - Yes, using HTTPS for downloads and a code signing certificate.
+**Could this be fixed?** - Yes, using a code signing certificate.
 
 **Will this be fixed?** - No, sorry.
 

@@ -68,7 +68,7 @@ Please refer to the [SECURITY](SECURITY.md) document.
 * Ensure that blow.ini is writable by mIRC - if it's not, you will be notified on startup.
 
 * To work around keys exceeding a length of 56 bytes, the blow.ini option
-  enforce_max_key_length=0
+  `enforce_max_key_length=0`
   can be used. This option is present from releases starting with 2017-02-25.
 
 * If you run into an error like "*/dll: unable to open file*" on startup, install this:
