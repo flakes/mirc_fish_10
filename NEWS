@@ -1,3 +1,6 @@
+== 2017-02-25 ==
+	* Added new enforce_max_key_length option to blow.ini
+
 == 2017-02-24 ==
 	* Happy New Year
 	* OpenSSL updated to 1.0.2k
