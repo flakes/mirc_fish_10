@@ -67,7 +67,7 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 			INJECT_DEBUG_MSG("initial (no SSL)");
 			INJECT_DEBUG_MSG(std::string(a_data, std::min(size_t(30), a_len)));
 
-			if(a_len >= 7 && (memcmp(a_data, "CAP LS\n", 7) == 0 || memcmp(a_data, "CAP LS\r\n", 8) == 0))
+			if (IsInitialIRCCommand(a_data, a_len))
 			{
 				// well, this was easy.
 				m_state = MSCK_IRC_IDENTIFIED;
@@ -143,7 +143,7 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 			INJECT_DEBUG_MSG("initial (SSL)");
 			INJECT_DEBUG_MSG(std::string(a_data, std::min(size_t(30), a_len)));
 
-			if(a_len >= 7 && (memcmp(a_data, "CAP LS\n", 7) == 0 || memcmp(a_data, "CAP LS\r\n", 8) == 0))
+			if (IsInitialIRCCommand(a_data, a_len))
 			{
 				m_state = MSCK_IRC_IDENTIFIED;
 			}
@@ -362,6 +362,16 @@ void CSocketInfo::OnProxyHandshakeComplete()
 	m_state = MSCK_INITIALIZING;
 	m_bytesSent = 0;
 	m_bytesReceived = 0;
+}
+
+
+bool CSocketInfo::IsInitialIRCCommand(const char* a_data, size_t a_len)
+{
+	return (a_len >= 7 && (
+			memcmp(a_data, "CAP LS ", 7) == 0 ||
+			memcmp(a_data, "CAP LS\n", 7) == 0 ||
+			memcmp(a_data, "CAP LS\r\n", 8) == 0)
+		);
 }
 
 

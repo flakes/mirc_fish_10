@@ -61,6 +61,8 @@ protected:
 	// used internally:
 	void OnProxyHandshakeComplete();
 
+	static bool IsInitialIRCCommand(const char* a_data, size_t a_len);
+
 public:
 	CSocketInfo(SOCKET s, const PInjectEngines& engines);
 	virtual ~CSocketInfo();
