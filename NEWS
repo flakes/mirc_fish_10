@@ -1,3 +1,7 @@
+== 2017-07-02 ==
+	* Fixed compat with CAP LS changes in mIRC 7.49 (issue 50)
+	* OpenSSL updated to 1.0.2l
+
 == 2017-02-25 ==
 	* Added new enforce_max_key_length option to blow.ini
 
