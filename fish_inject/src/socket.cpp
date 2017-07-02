@@ -369,9 +369,10 @@ bool CSocketInfo::IsInitialIRCCommand(const char* a_data, size_t a_len)
 {
 	return (a_len >= 7 && (
 			memcmp(a_data, "CAP LS ", 7) == 0 ||
-			memcmp(a_data, "CAP LS\n", 7) == 0 ||
-			memcmp(a_data, "CAP LS\r\n", 8) == 0)
-		);
+			memcmp(a_data, "CAP LS\n", 7) == 0)
+		) || (
+			a_len >= 8 && memcmp(a_data, "CAP LS\r\n", 8) == 0)
+		;
 }
 
 
