@@ -1,3 +1,6 @@
+== 2018-04-13 ==
+	* OpenSSL updated to 1.0.2o
+
 == 2017-07-02 ==
 	* Fixed compat with CAP LS changes in mIRC 7.49 (issue 50)
 	* OpenSSL updated to 1.0.2l
