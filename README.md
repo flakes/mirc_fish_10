@@ -133,7 +133,7 @@ The rest of the code is what I contributed myself and is licensed under the
 ## TECHNICAL
 
 FiSH 10 makes heavy use of OpenSSL. It is recommended that you use the SSL libs
-(ssleay32.dll and libeay32.dll) that come with the download, but other recent
+(libssl-1_1.dll and libcrypto-1_1.dll) that come with the download, but other recent
 libraries should work too. If they don't, FiSH 10 will let you know on startup.
 
 You can read some lines about the in-memory patching in fish-inject.cpp. fish_inject.dll
