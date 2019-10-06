@@ -63,19 +63,7 @@ static size_t s_discardedSockets; // number of sockets that were deemed "not IRC
 
 /* pointers to utility methods from shared libs */
 static SSL_get_fd_proc _SSL_get_fd;
-static SSL_state_proc  _SSL_state;
-
-/* from ssl.h */
-#define SSL_ST_CONNECT      0x1000
-#define SSL_ST_ACCEPT       0x2000
-#define SSL_ST_MASK         0x0FFF
-#define SSL_ST_INIT         (SSL_ST_CONNECT|SSL_ST_ACCEPT)
-#define SSL_ST_BEFORE       0x4000
-#define SSL_ST_OK           0x03
-#define SSL_ST_RENEGOTIATE  (0x04|SSL_ST_INIT)
-
-#define SSL_is_init_finished(a) (_SSL_state(a) == SSL_ST_OK)
-#define SSL_in_init(a)          (_SSL_state(a)&SSL_ST_INIT)
+static SSL_is_init_finished_proc _SSL_is_init_finished;
 
 
 /* patched connect call */
@@ -311,7 +299,7 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 
 		l_sock->Lock();
 
-		if(l_sock->GetState() == MSCK_TLS_HANDSHAKE && SSL_is_init_finished(ssl))
+		if(l_sock->GetState() == MSCK_TLS_HANDSHAKE && _SSL_is_init_finished(ssl))
 		{
 			l_sock->OnSSLHandshakeComplete();
 		}
@@ -368,7 +356,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 		l_sock->Lock();
 
 		// terminate our internal handshake flag if the handshake is complete:
-		if(l_sock->GetState() == MSCK_TLS_HANDSHAKE && SSL_is_init_finished(ssl))
+		if(l_sock->GetState() == MSCK_TLS_HANDSHAKE && _SSL_is_init_finished(ssl))
 		{
 			l_sock->OnSSLHandshakeComplete();
 		}
@@ -450,19 +438,19 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 
 	INJECT_DEBUG_MSG("");
 
-	HINSTANCE hInstSSLeay = ::GetModuleHandleW(L"ssleay32.dll");
+	HINSTANCE hInstSSLLib = ::GetModuleHandleW(L"libssl-1_1.dll");
 
-	if(LOWORD(info->mVersion) < 7)
+	if(LOWORD(info->mVersion) < 7 || HIWORD(info->mVersion) < 56)
 	{
-		::MessageBoxW(info->mHwnd, L"FiSH does not support any mIRC version older than v7. Disabling.", L"Error", MB_ICONEXCLAMATION);
+		::MessageBoxW(info->mHwnd, L"This version of FiSH does not support any mIRC version older than 7.56. Disabling.", L"Error", MB_ICONEXCLAMATION);
 
 		return;
 	}
-	else if(hInstSSLeay == nullptr)
+	else if(hInstSSLLib == nullptr)
 	{
 		::MessageBoxW(info->mHwnd,
 			L"FiSH needs the OpenSSL DLLs to be installed and loaded. Disabling.\r\n\r\n"
-			L"Hint: for mIRC 7.36 and later, setting load=1 under [ssl] in mirc.ini is necessary. "
+			L"Hint: Setting load=1 under [ssl] in mirc.ini is necessary. "
 			L"Please check the README or use the provided FiSH installer.",
 			L"Error", MB_ICONEXCLAMATION);
 
@@ -498,20 +486,21 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 		s_patchRecvLegacy = std::make_shared<CPatch>(xrecv_legacy, my_recv_legacy, s_lpfn_recv_legacy);
 
 	// patch OpenSSL calls:
-	SSL_write_proc xsslwrite = (SSL_write_proc)::GetProcAddress(hInstSSLeay, "SSL_write");
-	SSL_read_proc xsslread = (SSL_read_proc)::GetProcAddress(hInstSSLeay, "SSL_read");
+	SSL_write_proc xsslwrite = (SSL_write_proc)::GetProcAddress(hInstSSLLib, "SSL_write");
+	SSL_read_proc xsslread = (SSL_read_proc)::GetProcAddress(hInstSSLLib, "SSL_read");
 
 	s_patchSSLWrite = std::make_shared<CPatch>(xsslwrite, my_SSL_write, s_lpfn_SSL_write);
 	s_patchSSLRead = std::make_shared<CPatch>(xsslread, my_SSL_read, s_lpfn_SSL_read);
 
 	// OpenSSL utility methods:
-	_SSL_get_fd = (SSL_get_fd_proc)::GetProcAddress(hInstSSLeay, "SSL_get_fd");
-	_SSL_state = (SSL_state_proc)::GetProcAddress(hInstSSLeay, "SSL_state");
+	_SSL_get_fd = (SSL_get_fd_proc)::GetProcAddress(hInstSSLLib, "SSL_get_fd");
+	_SSL_is_init_finished = (SSL_is_init_finished_proc)::GetProcAddress(hInstSSLLib, "SSL_is_init_finished");
 
 	// check if it worked:
 	if(s_patchConnect->patched() && s_patchRecv->patched() && s_patchSend->patched() &&
-		(!hInstSSLeay || (s_patchSSLWrite->patched() && s_patchSSLRead->patched())) &&
-		(_SSL_get_fd != nullptr) && (_SSL_state != nullptr))
+		(!hInstSSLLib || (s_patchSSLWrite->patched() && s_patchSSLRead->patched()))
+		&& _SSL_get_fd != nullptr
+		&& _SSL_is_init_finished != nullptr)
 	{
 		INJECT_DEBUG_MSG("Loaded!");
 
@@ -520,7 +509,7 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 	else
 	{
 		wchar_t wszPatchedInfo[50] = {0};
-		swprintf_s(wszPatchedInfo, 50, L"[%i%i%i%i%i%i%i%i]",
+		swprintf_s(wszPatchedInfo, 50, L"[%i%i%i%i%i%i%i%i][%i%i]",
 			(s_patchConnect->patched() ? 1 : 0),
 			(s_patchSend->patched() ? 1 : 0),
 			(s_patchRecv->patched() ? 1 : 0),
@@ -528,7 +517,9 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 			(!s_patchSendLegacy || s_patchSendLegacy->patched() ? 1 : 0),
 			(s_patchCloseSocket->patched() ? 1 : 0),
 			(s_patchSSLWrite->patched() ? 1 : 0),
-			(s_patchSSLRead->patched() ? 1 : 0));
+			(s_patchSSLRead->patched() ? 1 : 0),
+			(_SSL_get_fd ? 1 : 0),
+			(_SSL_is_init_finished ? 1 : 0));
 
 		s_patchConnect.reset();
 		s_patchSend.reset();

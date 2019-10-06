@@ -84,7 +84,7 @@ attacks. This also includes the DH1080 key exchange procedure.
 Here's an (incomplete) list of steps that you can take to maximize the level of security provided by FiSH 10.
 
 * Connect to IRC servers using SSL/TLS-encrypted connections exclusively.
-* Try to verify the identity of your IRC server. Storing the certificate's hash on first use is an acceptable compromise.
+* Try to verify the identity of your IRC server. Storing the certificate's hash on first use is a reasonable middle ground.
 * Immediately assume compromise if the certificate hash changes. Verify the hash with other parties.
 * If it's a private network, it's very likely for the IRC server itself to be compromised sooner or later, given the right opponent.
 If the server itself is compromised, you are done. It's not possible to detect this while connecting.

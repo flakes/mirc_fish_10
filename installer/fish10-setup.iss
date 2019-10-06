@@ -1,5 +1,5 @@
 ﻿#define ReleaseDir "..\Release"
-#define OpenSSLVer GetStringFileInfo(ReleaseDir + "\ssleay32.dll", "ProductVersion")
+#define OpenSSLVer GetStringFileInfo(ReleaseDir + "\libssl-1_1.dll", "ProductVersion")
 #define BuildTime GetFileDateTimeString(ReleaseDir + "\fish_10.dll", 'yyyy/mm/dd hh:nn:ss', '-', ':')
 #define SetupBuildDate GetFileDateTimeString(ReleaseDir + "\fish_10.dll", 'yyyy/mm/dd', '-', ':')
 #define SetupBuildDateMachine GetFileDateTimeString(ReleaseDir + "\fish_10.dll", 'yyyy/mm/dd', '.', ':')
@@ -33,8 +33,8 @@ WizardImageStretch=no
 Name: "en"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "{#ReleaseDir}\libeay32.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
-Source: "{#ReleaseDir}\ssleay32.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
+Source: "{#ReleaseDir}\libcrypto-1_1.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
+Source: "{#ReleaseDir}\libssl-1_1.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
 Source: "{#ReleaseDir}\fish_10.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
 Source: "{#ReleaseDir}\fish_inject.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
 Source: "{#ReleaseDir}\README.BLOWINI.txt"; DestDir: "{code:mIRCIniDir}"; Flags: ignoreversion overwritereadonly
@@ -66,24 +66,8 @@ begin
 	Result := (5 = DllMsiQueryProductState(ProductCode));
 end;
 
-function IsMsRuntime2008Installed(): Boolean;
-var
-	WinVer: TWindowsVersion;
-begin
-	GetWindowsVersionEx(WinVer);
-
-	if (WinVer.Major >= 6) and (WinVer.Minor >= 2) then
-		// always magically present on Windows 8+
-		Result := True
-	else
-		// http://blogs.msdn.com/b/astebner/archive/2009/01/29/9384143.aspx
-		Result := IsMsiInstalled('{FF66E9F6-83E7-3A3E-AF14-8DE9A809A6A4}')
-			or IsMsiInstalled('{9A25302D-30C0-39D9-BD6F-21E6EC160475}')
-			or IsMsiInstalled('{1F1C2DFC-2D24-3E06-BCB8-725134ADF989}')
-			or IsMsiInstalled('{9BE518E6-ECC6-35A9-88E4-87755C07200F}');
-end;
-
 #include "mirc-business.iss"
+#include "compare-version.iss"
 
 // event function
 procedure InitializeWizard();
@@ -142,9 +126,15 @@ begin
 			exit;
 		end;
 
-		if (StrToIntDef(VersStr[1], 0) < 7) then
+		if (CompareVersion(VersStr, '7.0') < 0) then
 		begin
 			MsgBox('mIRC version ' + VersStr + ' is too old - not supported!', mbError, MB_OK);
+			exit;
+		end;
+
+		if (CompareVersion(VersStr, '7.56') < 0) then
+		begin
+			MsgBox('mIRC version ' + VersStr + ' is not supported, please upgrade to at least version 7.56.', mbError, MB_OK);
 			exit;
 		end;
 
@@ -191,7 +181,6 @@ begin
 		+ ok + ' mIRC portable install: ' + IIf(IsPortableInstall(), 'yes', 'no') + NewLine
 		+ ok + ' mIRC version: ' + GetMIRCVersion() + NewLine
 		+ IIf(CheckBlowIni(), ok + ' blow.ini sanity check', nok + ' blow.ini sanity check FAILED') + NewLine
-		+ IIf(IsMsRuntime2008Installed(), ok + ' Microsoft Visual C++ 2008 package: yes', nok + ' Microsoft Visual C++ 2008 package: no (required)') + NewLine
 		+ NewLine + 'Creating uninstaller: ' + IIf(IsPortableInstall(), 'no', 'yes') + NewLine;
 end;
 

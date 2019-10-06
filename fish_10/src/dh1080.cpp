@@ -60,22 +60,23 @@ static std::string DH1080_SHA256(const char* a_data, size_t a_len)
 static std::string DhKeyToStr(DH* a_dh, bool a_privKey)
 {
 	std::string l_result;
+	const BIGNUM *p = nullptr, *q = nullptr, *g = nullptr;
 
-	if(a_dh && a_dh->g && a_dh->p)
+	if (a_dh && DH_size(a_dh) < 10240)
 	{
-		int l_bufSize = DH_size(a_dh);
-		char *l_key = new char[l_bufSize];
+		DH_get0_pqg(a_dh, &p, &q, &g);
 
-		if(l_bufSize && l_key)
+		const size_t l_bufSize = DH_size(a_dh);
+		std::vector<char> l_keyBuf;
+		l_keyBuf.resize(l_bufSize, 0);
+
+		const BIGNUM* key = (a_privKey ? DH_get0_priv_key(a_dh) : DH_get0_pub_key(a_dh));
+
+		if (key && BN_bn2binpad(key, (unsigned char*)l_keyBuf.data(), l_bufSize))
 		{
-			if(BN_bn2bin((a_privKey ? a_dh->priv_key : a_dh->pub_key), (unsigned char*)l_key))
-			{
-				l_result.append(l_key, l_bufSize);
-				DH1080_Base64_Encode(l_result);
-			}
+			l_result.append(l_keyBuf.data(), l_bufSize);
+			DH1080_Base64_Encode(l_result);
 		}
-
-		delete[] l_key;
 	}
 
 	return l_result;
@@ -84,22 +85,26 @@ static std::string DhKeyToStr(DH* a_dh, bool a_privKey)
 
 static bool _DH1080_Init(DH** a_dh)
 {
-	DH *l_dh = *a_dh = DH_new();
+	DH* l_dh = DH_new();
 
 	if(l_dh)
 	{
-		l_dh->g = BN_new();
-		l_dh->p = BN_new();
+		BIGNUM* g = BN_new();
+		BIGNUM* p = BN_new();
 
-		if(l_dh->g && l_dh->p)
+		if(g && p)
 		{
-			BN_dec2bn(&l_dh->g, "2");
+			BN_dec2bn(&g, "2");
 
 			std::string l_primeStr = DH1080_PRIME;
 			DH1080_Base64_Decode(l_primeStr);
 
-			if(!l_primeStr.empty() && BN_bin2bn((unsigned char*)l_primeStr.data(), l_primeStr.size(), l_dh->p))
+			if(!l_primeStr.empty() && BN_bin2bn((unsigned char*)l_primeStr.data(), l_primeStr.size(), p))
 			{
+				DH_set0_pqg(l_dh, p, nullptr, g);
+
+				*a_dh = l_dh;
+
 				return true;
 			}
 		}
@@ -148,14 +153,16 @@ std::string DH1080_Compute(const std::string& a_priv, const std::string& a_pub)
 
 	if(_DH1080_Init(&l_dh))
 	{
-		l_dh->priv_key = BN_new();
+		BIGNUM* priv_key = BN_new();
 
 		std::string l_priv(a_priv);
 		DH1080_Base64_Decode(l_priv);
 
-		if(l_dh->priv_key && l_priv.size() == 135 &&
-			BN_bin2bn((unsigned char*)l_priv.data(), l_priv.size(), l_dh->priv_key))
+		if(priv_key && l_priv.size() == 135 &&
+			BN_bin2bn((unsigned char*)l_priv.data(), l_priv.size(), priv_key))
 		{
+			DH_set0_key(l_dh, nullptr, priv_key);
+
 			BIGNUM* l_remotePubKey = BN_new();
 
 			std::string l_pub(a_pub);

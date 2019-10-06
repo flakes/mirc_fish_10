@@ -71,7 +71,8 @@ on *:INPUT:*:{
       echo $color(Own text) -tlbfm < $+ $iif(($gettok($readini(mirc.ini, options, n2), 30, 44)) && (($me isvoice $chan) || ($me isop $chan)), $left($nick(#, $nick).pnick, 1)) $+ $nick $+ > $right($1-, $calc(0 - %pfxlen))
     }
 
-    privmsg $target $1-
+    if ($target ischan) { .msg $target $1- }
+    else { .privmsg $target $1- }
     halt
   }
   unset %tmp1

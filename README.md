@@ -71,11 +71,6 @@ Please refer to the [SECURITY](SECURITY.md) document.
   `enforce_max_key_length=0`
   can be used. This option is present from releases starting with 2017-02-25.
 
-* If you run into an error like "*/dll: unable to open file*" on startup, install this:
-http://www.microsoft.com/en-us/download/details.aspx?id=5582
-Don't install the x64 version, even if you have a 64-bit OS. mIRC and FiSH are 32-bit,
-so you need the x86 version!
-
 * If an error like "*patching ... failed*" shows up, something specific to your system went wrong.
 It could be something simple like an incompatible OpenSSL DLL, something weird like
 your anti-virus program, or a bug in FiSH 10. You can check here for existing problem reports, or create a new one:
