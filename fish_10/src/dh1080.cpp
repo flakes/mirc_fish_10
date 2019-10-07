@@ -171,20 +171,27 @@ std::string DH1080_Compute(const std::string& a_priv, const std::string& a_pub)
 			if(l_remotePubKey && l_pub.size() == 135 &&
 				BN_bin2bn((unsigned char*)l_pub.data(), l_pub.size(), l_remotePubKey))
 			{
-				int l_bufSize = DH_size(l_dh);
-				char *l_key = new char[l_bufSize];
+				std::vector<char> l_keyBuf;
+				l_keyBuf.resize(DH_size(l_dh), 0);
 
-				if(l_bufSize && l_key)
+				const int l_keySize = DH_compute_key(reinterpret_cast<unsigned char*>(l_keyBuf.data()), l_remotePubKey, l_dh);
+
+				if (l_keySize > 0)
 				{
-					int l_keySize = DH_compute_key((unsigned char*)l_key, l_remotePubKey, l_dh);
-
-					if(l_keySize == l_bufSize)
+					if (l_keySize < DH_size(l_dh))
 					{
-						l_result = DH1080_SHA256(l_key, l_keySize);
+						std::vector<char> l_paddedBuf;
+						l_paddedBuf.resize(DH_size(l_dh), 0);
+
+						std::memcpy(l_paddedBuf.data() + DH_size(l_dh) - l_keySize, l_keyBuf.data(), l_keySize);
+
+						l_result = DH1080_SHA256(l_paddedBuf.data(), DH_size(l_dh));
+					}
+					else
+					{
+						l_result = DH1080_SHA256(l_keyBuf.data(), l_keySize);
 					}
 				}
-
-				delete[] l_key;
 			}
 
 			if(l_remotePubKey) BN_free(l_remotePubKey);
