@@ -189,7 +189,7 @@ std::string DH1080_Compute(const std::string& a_priv, const std::string& a_pub)
 					}
 					else
 					{
-						l_result = DH1080_SHA256(l_keyBuf.data(), l_keySize);
+						l_result = DH1080_SHA256(l_keyBuf.data(), DH_size(l_dh));
 					}
 				}
 			}
