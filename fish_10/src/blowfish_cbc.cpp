@@ -71,8 +71,8 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const st
 	}
 	l_inBufSize += 8; // for the IV data
 
-	char *l_bufIn = new char[l_inBufSize];
-	memset(l_bufIn, 0, l_inBufSize); // important for padding
+	std::vector<char> l_bufIn;
+	l_bufIn.resize(l_inBufSize, 0);
 
 	ar_out.clear();
 
@@ -89,13 +89,12 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const st
 		RAND_pseudo_bytes(l_realIv, 8);
 	}
 	// ok we have an IV.
-	memcpy(l_bufIn, l_realIv, 8);
-	memcpy(l_bufIn + 8, a_in.c_str(), a_in.size());
+	memcpy_s(l_bufIn.data(), l_inBufSize, l_realIv, 8);
+	memcpy_s(l_bufIn.data() + 8, l_inBufSize - 8, a_in.c_str(), a_in.size());
 
 	// encrypt data:
-	_blowfish_cipher_walk(l_ctx, l_bufIn, l_inBufSize, ar_out);
+	_blowfish_cipher_walk(l_ctx, l_bufIn.data(), l_inBufSize, ar_out);
 
-	delete[] l_bufIn;
 	EVP_CIPHER_CTX_free(l_ctx);
 
 	// do base64 for easier handling outside this function:

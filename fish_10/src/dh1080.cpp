@@ -183,13 +183,13 @@ std::string DH1080_Compute(const std::string& a_priv, const std::string& a_pub)
 						std::vector<char> l_paddedBuf;
 						l_paddedBuf.resize(DH_size(l_dh), 0);
 
-						std::memcpy(l_paddedBuf.data() + DH_size(l_dh) - l_keySize, l_keyBuf.data(), l_keySize);
+						memcpy_s(l_paddedBuf.data() + l_paddedBuf.size() - l_keySize, l_paddedBuf.size(), l_keyBuf.data(), l_keySize);
 
-						l_result = DH1080_SHA256(l_paddedBuf.data(), DH_size(l_dh));
+						l_result = DH1080_SHA256(l_paddedBuf.data(), l_paddedBuf.size());
 					}
 					else
 					{
-						l_result = DH1080_SHA256(l_keyBuf.data(), DH_size(l_dh));
+						l_result = DH1080_SHA256(l_keyBuf.data(), l_keyBuf.size());
 					}
 				}
 			}

@@ -179,20 +179,19 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 
 			l_sock->Unlock();
 
-			char *l_localBuf = new char[len];
+			std::vector<char> l_localBuf;
+			l_localBuf.resize(len, 0);
 
-			int l_ret = a_lpfn_recv(s, l_localBuf, len, flags);
+			int l_ret = a_lpfn_recv(s, l_localBuf.data(), len, flags);
 
 			if(l_ret > 0)
 			{
 				l_sock->Lock();
-				l_sock->OnReceiving(false, l_localBuf, l_ret);
+				l_sock->OnReceiving(false, l_localBuf.data(), l_ret);
 				l_sock->Unlock();
 
-				memcpy_s(buf, len, l_localBuf, l_ret);
+				memcpy_s(buf, len, l_localBuf.data(), l_ret);
 			}
-
-			delete[] l_localBuf;
 
 			return l_ret;
 		}
@@ -367,20 +366,19 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 
 			l_sock->Unlock();
 
-			char *l_localBuf = new char[num];
+			std::vector<char> l_localBuf;
+			l_localBuf.resize(num, 0);
 
-			int l_ret = s_lpfn_SSL_read(ssl, l_localBuf, 1024);
+			int l_ret = s_lpfn_SSL_read(ssl, l_localBuf.data(), 1024);
 
 			if(l_ret > 0)
 			{
 				l_sock->Lock();
-				l_sock->OnReceiving(true, l_localBuf, l_ret);
+				l_sock->OnReceiving(true, l_localBuf.data(), l_ret);
 				l_sock->Unlock();
 
-				memcpy_s(buf, num, l_localBuf, l_ret);
+				memcpy_s(buf, num, l_localBuf.data(), l_ret);
 			}
-
-			delete[] l_localBuf;
 
 			return l_ret;
 		}

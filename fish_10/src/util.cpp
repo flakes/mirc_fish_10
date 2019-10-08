@@ -11,15 +11,12 @@ std::string UnicodeToCp(UINT a_codePage, const std::wstring& a_wstr)
 
 	if(l_size)
 	{
-		char *l_buf = new char[l_size];
+		std::vector<char> l_buf;
+		l_buf.resize(l_size, 0);
 
-		if(l_buf)
-		{
-			::WideCharToMultiByte(a_codePage, 0, a_wstr.c_str(), -1, l_buf, l_size, nullptr, nullptr);
-			std::string l_result(l_buf);
-			delete[] l_buf;
-			return l_result;
-		}
+		::WideCharToMultiByte(a_codePage, 0, a_wstr.c_str(), -1, l_buf.data(), l_size, nullptr, nullptr);
+
+		return { l_buf.data() };
 	}
 
 	return "";
@@ -32,15 +29,12 @@ std::wstring UnicodeFromCp(UINT a_codePage, const std::string& a_str)
 
 	if(l_size)
 	{
-		wchar_t *l_buf = new wchar_t[l_size];
+		std::vector<wchar_t> l_buf;
+		l_buf.resize(l_size, 0);
 
-		if(l_buf)
-		{
-			::MultiByteToWideChar(a_codePage, 0, a_str.c_str(), -1, l_buf, l_size);
-			std::wstring l_result(l_buf);
-			delete[] l_buf;
-			return l_result;
-		}
+		::MultiByteToWideChar(a_codePage, 0, a_str.c_str(), -1, l_buf.data(), l_size);
+
+		return { l_buf.data() };
 	}
 
 	return L"";
