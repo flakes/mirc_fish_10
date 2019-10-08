@@ -51,7 +51,9 @@ Please refer to the [SECURITY](SECURITY.md) document.
 
 * Do you have the latest release? Check the downloads page for updates.
 
-* For mIRC 7.35 and later, you have to set `load=1` under `[ssl]` in mirc.ini - the installer will do this for you.
+* You have to set `load=1` under `[ssl]` in mirc.ini - the installer will do this for you.
+
+* mIRC 7.55 and earlier are no longer supported, please update to latest FiSH and mIRC 7.56+
 
 * Is the script loaded correctly? If yes, these two lines will show up on mIRC startup:
 
@@ -64,8 +66,6 @@ Please refer to the [SECURITY](SECURITY.md) document.
 * Ensure that fish_10.mrc is not loaded/started twice.
 
 * You can check the active path to blow.ini using `//echo %blow_ini`
-
-* Ensure that blow.ini is writable by mIRC - if it's not, you will be notified on startup.
 
 * To work around keys exceeding a length of 56 bytes, the blow.ini option
   `enforce_max_key_length=0`
@@ -81,6 +81,8 @@ then paste into your bug report using Ctrl + V)
 * To dump a lot of useful debug information, use:
 
         /fishdebug
+
+* Ensure that blow.ini is writable by mIRC - if it's not, you will be notified on startup.
 
 * Known issues are listed at the end of this README.
 
