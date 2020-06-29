@@ -427,27 +427,35 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		PRIVMSG #chan :\x01ACTION says hi\x01
 		NOTICE test :y hello there
 		TOPIC #chan :new topic
+		CPRIVMSG xxx #chan :lulz
+		CNOTICE xxx #chan :lulz
 	*/
 
 	enum {
 		CMD_PRIVMSG = 1,
+		CMD_CPRIVMSG,
 		CMD_ACTION,
 		CMD_NOTICE,
-		CMD_TOPIC
+		CMD_CNOTICE,
+		CMD_TOPIC,
 	} l_cmd_type;
 
 	// figure out type of message...
 	if(!_strnicmp(a_line, "PRIVMSG ", 8))
 		l_cmd_type = CMD_PRIVMSG;
+	else if(!_strnicmp(a_line, "CPRIVMSG ", 9))
+		l_cmd_type = CMD_CPRIVMSG;
 	else if(!_strnicmp(a_line, "NOTICE ", 7))
 		l_cmd_type = CMD_NOTICE;
+	else if(!_strnicmp(a_line, "CNOTICE ", 8))
+		l_cmd_type = CMD_CNOTICE;
 	else if(!_strnicmp(a_line, "TOPIC ", 6))
 		l_cmd_type = CMD_TOPIC;
 	else
 		return nullptr;
 
 	// check notice encryption setting:
-	if(l_cmd_type == CMD_NOTICE && !l_ini->GetBool(L"encrypt_notice", false))
+	if((l_cmd_type == CMD_NOTICE || l_cmd_type == CMD_CNOTICE) && !l_ini->GetBool(L"encrypt_notice", false))
 		return nullptr;
 
 	// split line:
@@ -458,7 +466,18 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	if(l_msgPos == std::string::npos)
 		return nullptr; // "should never happen"
 
-	const std::string l_target = l_line.substr(l_targetPos, l_msgPos - l_targetPos);
+	std::string l_target = l_line.substr(l_targetPos, l_msgPos - l_targetPos);
+
+	if (l_cmd_type == CMD_CPRIVMSG || l_cmd_type == CMD_CNOTICE)
+	{
+		l_targetPos = l_target.find(' ');
+
+		if (l_targetPos != std::string::npos)
+		{
+			l_target = l_target.substr(0, l_targetPos);
+		}
+	}
+
 	std::string l_message = l_line.substr(l_msgPos + 2);
 
 	::EnterCriticalSection(&s_socketMapLock);
@@ -476,7 +495,7 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		return nullptr;
 
 	// don't encrypt DH1080 key exchange:
-	if(l_cmd_type == CMD_NOTICE && l_message.find("DH1080_") == 0)
+	if((l_cmd_type == CMD_NOTICE || l_cmd_type == CMD_CNOTICE) && l_message.find("DH1080_") == 0)
 		return nullptr;
 
 	// check for CTCPs:
