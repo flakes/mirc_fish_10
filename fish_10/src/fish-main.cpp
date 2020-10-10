@@ -488,7 +488,17 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		l_line = std::string(a_line, a_len);
 	}
 
-	std::string::size_type l_targetPos = l_line.find(' ') + 1;
+	std::string::size_type l_targetPos = l_line.find(' ');
+
+	if (l_targetPos == std::string::npos)
+	{
+		return nullptr; // "should never happen"
+	}
+	else
+	{
+		l_targetPos += 1;
+	}
+
 	std::string::size_type l_msgPos = l_line.find(" :", l_targetPos);
 
 	if(l_msgPos == std::string::npos)
