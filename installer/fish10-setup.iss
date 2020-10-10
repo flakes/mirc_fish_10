@@ -13,7 +13,7 @@ AppVersion={#SetupBuildDateMachine}
 AppPublisher=flakes
 AppCopyright=© flakes 2010-{#SetupBuildDateYear}
 VersionInfoVersion={#SetupBuildDateMachine}
-MinVersion=0,5.1
+MinVersion=6.1sp1
 OutputDir={#ReleaseDir}
 OutputBaseFilename=mirc_fish_10-setup-{#SetupBuildDate}
 DisableWelcomePage=yes
@@ -123,12 +123,6 @@ begin
 		if Length(VersStr) < 2 then
 		begin
 			MsgBox('mIRC version not recognized - please check mirc.exe!', mbError, MB_OK);
-			exit;
-		end;
-
-		if (CompareVersion(VersStr, '7.0') < 0) then
-		begin
-			MsgBox('mIRC version ' + VersStr + ' is too old - not supported!', mbError, MB_OK);
 			exit;
 		end;
 

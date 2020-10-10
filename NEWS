@@ -1,3 +1,13 @@
+== 2020-10-10 ==
+	* Happy New Year
+	* OpenSSL updated to 1.1.1h - issue #66
+	* Fixed missing encryption of outgoing messages when IRCv3 is used - issue #67
+	* Fixed missing encryption of outgoing messages when CPRIVMSG/CONTICE is used - issue #65
+	* Avoid delays during DH1080 key exchange - issue #61
+	* Minor bugfixes for DH1080 key exchange - issue #58
+	* Updated minhook library
+	* Compiled with Visual Studio 2019
+
 == 2019-10-06 ==
 	* Compatible with mIRC 7.56 and above. No longer compatible with 7.55 and below.
 	* OpenSSL updated to 1.1.1d - issue 57
