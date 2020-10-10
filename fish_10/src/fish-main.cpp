@@ -429,7 +429,23 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		TOPIC #chan :new topic
 		CPRIVMSG xxx #chan :lulz
 		CNOTICE xxx #chan :lulz
+		@label=dc11f13f11 PRIVMSG #chan :Hello
 	*/
+
+	// handle message tags:
+	// ( http://ircv3.atheme.org/specification/message-tags-3.2 )
+	bool l_hasTag = (*a_line == '@');
+	const char *l_afterTag = a_line;
+
+	if (l_hasTag)
+	{
+		const char *p = strstr(a_line, " ");
+
+		if (!p)
+			return nullptr;
+
+		l_afterTag = p + 1;
+	}
 
 	enum {
 		CMD_PRIVMSG = 1,
@@ -441,15 +457,15 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	} l_cmd_type;
 
 	// figure out type of message...
-	if(!_strnicmp(a_line, "PRIVMSG ", 8))
+	if(!_strnicmp(l_afterTag, "PRIVMSG ", 8))
 		l_cmd_type = CMD_PRIVMSG;
-	else if(!_strnicmp(a_line, "CPRIVMSG ", 9))
+	else if(!_strnicmp(l_afterTag, "CPRIVMSG ", 9))
 		l_cmd_type = CMD_CPRIVMSG;
-	else if(!_strnicmp(a_line, "NOTICE ", 7))
+	else if(!_strnicmp(l_afterTag, "NOTICE ", 7))
 		l_cmd_type = CMD_NOTICE;
-	else if(!_strnicmp(a_line, "CNOTICE ", 8))
+	else if(!_strnicmp(l_afterTag, "CNOTICE ", 8))
 		l_cmd_type = CMD_CNOTICE;
-	else if(!_strnicmp(a_line, "TOPIC ", 6))
+	else if(!_strnicmp(l_afterTag, "TOPIC ", 6))
 		l_cmd_type = CMD_TOPIC;
 	else
 		return nullptr;
@@ -458,10 +474,22 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	if((l_cmd_type == CMD_NOTICE || l_cmd_type == CMD_CNOTICE) && !l_ini->GetBool(L"encrypt_notice", false))
 		return nullptr;
 
-	// split line:
-	const std::string l_line(a_line, a_len);
-	std::string::size_type l_targetPos = l_line.find(' ') + 1,
-		l_msgPos = l_line.find(" :", l_targetPos);
+	// back up message tag, then process without it:
+	std::string l_tag;
+	std::string l_line;
+
+	if (l_hasTag)
+	{
+		l_tag = std::string(a_line, static_cast<size_t>(l_afterTag - a_line));
+		l_line = std::string(l_afterTag, a_len - l_tag.size());
+	}
+	else
+	{
+		l_line = std::string(a_line, a_len);
+	}
+
+	std::string::size_type l_targetPos = l_line.find(' ') + 1;
+	std::string::size_type l_msgPos = l_line.find(" :", l_targetPos);
 
 	if(l_msgPos == std::string::npos)
 		return nullptr; // "should never happen"
@@ -526,13 +554,14 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	const std::string l_plainPrefix = l_ini->GetString(L"plain_prefix", L"+p ");
 	if(!l_plainPrefix.empty() && l_message.find(l_plainPrefix) == 0)
 	{
-		l_newMsg = l_line.substr(0, l_msgPos + 2) + l_message.substr(l_plainPrefix.size()) + "\n";
+		l_newMsg = l_tag + l_line.substr(0, l_msgPos + 2) + l_message.substr(l_plainPrefix.size()) + "\n";
 	}
 	else
 	{
 		blowfish_encrypt_auto(l_cbc, l_message, l_newMsg, l_blowKey);
 
 		l_newMsg =
+			l_tag +
 			l_line.substr(0, l_msgPos + 2) +
 			(l_cmd_type == CMD_ACTION ? "\x01""ACTION +OK " : "+OK ") +
 			std::string(l_cbc ? "*" : "") + l_newMsg +
