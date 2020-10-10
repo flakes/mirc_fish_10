@@ -1,7 +1,7 @@
 #include "fish-internal.h"
 #include "fish-inject-engine.h"
 #include "mircdll.h"
-
+#include <thread>
 
 static CRITICAL_SECTION s_iniLock;
 
@@ -1117,6 +1117,14 @@ MIRC_EXPORT_SIG(int) UnloadDll(int mTimeout)
 MIRC_DLL_EXPORT(_callMe)
 {
 	strcpy_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a " FISH_MAIN_VERSION);
+
+	// enforce costly DH_check call during startup.
+	// see https://github.com/flakes/mirc_fish_10/issues/61
+	std::thread([] {
+		std::string dummyPriv, dummyPub;
+
+		DH1080_Generate(dummyPriv, dummyPub);
+	}).detach();
 
 	return MIRC_RET_DATA_COMMAND;
 }

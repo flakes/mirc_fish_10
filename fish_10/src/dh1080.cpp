@@ -2,6 +2,7 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include <openssl/sha.h>
+#include <mutex>
 
 
 static void DH1080_Base64_Encode(std::string& a_string)
@@ -55,7 +56,8 @@ static std::string DH1080_SHA256(const char* a_data, size_t a_len)
 
 
 #define DH1080_PRIME "++ECLiPSE+is+proud+to+present+latest+FiSH+release+featuring+even+more+security+for+you+++shouts+go+out+to+TMG+for+helping+to+generate+this+cool+sophie+germain+prime+number++++/C32L"
-
+static std::mutex g_dhInitCheckMutex;
+static bool g_dhInitChecked = false;
 
 static std::string DhKeyToStr(DH* a_dh, bool a_privKey)
 {
@@ -83,6 +85,24 @@ static std::string DhKeyToStr(DH* a_dh, bool a_privKey)
 }
 
 
+static bool _dh_init_check(DH *a_dh)
+{
+	std::lock_guard<std::mutex> l_initLock(g_dhInitCheckMutex);
+
+	if (!g_dhInitChecked)
+	{
+		int l_check;
+
+		if (DH_check(a_dh, &l_check) == 1 && l_check == 0)
+		{
+			g_dhInitChecked = true;
+		}
+	}
+
+	return g_dhInitChecked;
+}
+
+
 static bool _DH1080_Init(DH** a_dh)
 {
 	DH* l_dh = DH_new();
@@ -103,9 +123,12 @@ static bool _DH1080_Init(DH** a_dh)
 			{
 				DH_set0_pqg(l_dh, p, nullptr, g);
 
-				*a_dh = l_dh;
+				if (_dh_init_check(l_dh))
+				{
+					*a_dh = l_dh;
 
-				return true;
+					return true;
+				}
 			}
 		}
 
@@ -122,21 +145,16 @@ bool DH1080_Generate(std::string& ar_priv, std::string& ar_pub)
 
 	if(_DH1080_Init(&l_dh))
 	{
-		int l_check;
-
-		if(DH_check(l_dh, &l_check) == 1 && l_check == 0)
+		if(DH_generate_key(l_dh) == 1)
 		{
-			if(DH_generate_key(l_dh) == 1)
-			{
-				// private and public keys have been generated!
+			// private and public keys have been generated!
 
-				ar_priv = DhKeyToStr(l_dh, true);
-				ar_pub = DhKeyToStr(l_dh, false);
+			ar_priv = DhKeyToStr(l_dh, true);
+			ar_pub = DhKeyToStr(l_dh, false);
 
-				DH_free(l_dh);
+			DH_free(l_dh);
 
-				return true;
-			}
+			return true;
 		}
 
 		DH_free(l_dh);
