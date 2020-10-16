@@ -164,7 +164,7 @@ bool DH1080_Generate(std::string& ar_priv, std::string& ar_pub)
 }
 
 
-std::string DH1080_Compute(const std::string& a_priv, const std::string& a_pub)
+std::string DH1080_Compute(const std::string& a_priv, const std::string& a_pub, const std::string& raw_flag)
 {
 	std::string l_result;
 	DH* l_dh;
@@ -189,6 +189,7 @@ std::string DH1080_Compute(const std::string& a_priv, const std::string& a_pub)
 			if(l_remotePubKey && l_pub.size() == 135 &&
 				BN_bin2bn((unsigned char*)l_pub.data(), l_pub.size(), l_remotePubKey))
 			{
+				std::string l_raw(raw_flag);
 				std::vector<char> l_keyBuf;
 				l_keyBuf.resize(DH_size(l_dh), 0);
 
@@ -203,10 +204,16 @@ std::string DH1080_Compute(const std::string& a_priv, const std::string& a_pub)
 
 						memcpy_s(l_paddedBuf.data() + l_paddedBuf.size() - l_keySize, l_paddedBuf.size(), l_keyBuf.data(), l_keySize);
 
+// if 3rd parm == 1, return mime of the 180-byte computed string instead of the SHA256 *of* that string
+// This permits scripts to create key as the 1st 56 or 72 bytes of the mime(SHA512(returned string))
+						if (l_raw == "1") DH1080_Base64_Encode(l_paddedBuf.data());
+						else
 						l_result = DH1080_SHA256(l_paddedBuf.data(), l_paddedBuf.size());
 					}
 					else
 					{
+						if (l_raw == "1") DH1080_Base64_Encode(l_keyBuf.data());
+						else
 						l_result = DH1080_SHA256(l_keyBuf.data(), l_keyBuf.size());
 					}
 				}
