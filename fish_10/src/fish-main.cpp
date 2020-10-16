@@ -650,8 +650,8 @@ MIRC_DLL_EXPORT(DH1080_comp)
 
 		if(l_data.size() >= 2)
 		{
-			const std::string l_shared = DH1080_Compute(l_data[0], l_data[1]);
-
+			const std::string l_shared = DH1080_Compute(l_data[0], l_data[1],l_data[2]);
+//adding 3rd parm: 1=mime but do not sha256() the result
 			strcpy_s(data, MIRC_PARAM_DATA_LENGTH, l_shared.c_str());
 
 			return MIRC_RET_DATA_RETURN;
