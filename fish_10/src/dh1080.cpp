@@ -11,7 +11,11 @@ static void DH1080_Base64_Encode(std::string& a_string)
 
 	if(l_b64.find('=') == std::string::npos)
 	{
-		a_string = l_b64 + 'A';
+		//a_string = l_b64 + 'A';
+		a_string = l_b64;
+// cease appending extraneous 'A' to the tail end of priv/pub keys. This isn't needed by mIRC
+// If the above results in multiple '=' being there, which I don't think is the case, then line would possibly end with 0x00 like
+// a_string = l_b64 + 0;
 	}
 	else
 	{
