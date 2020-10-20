@@ -114,8 +114,9 @@ static bool _DH1080_Init(DH** a_dh)
 
 		if(g && p)
 		{
-			BN_dec2bn(&g, "2");
-
+			BN_dec2bn(&g, "00002");
+			//for hex-editing alternate g generator
+			
 			std::string l_primeStr = DH1080_PRIME;
 			DH1080_Base64_Decode(l_primeStr);
 
