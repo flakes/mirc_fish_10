@@ -8,6 +8,7 @@ typedef struct {
 	HWND   mHwnd;
 	BOOL   mKeep;
 	BOOL   mUnicode;
+	DWORD  mBeta;
 } LOADINFO;
 
 enum {
@@ -17,7 +18,7 @@ enum {
 	MIRC_RET_DATA_RETURN = 3,
 };
 
-#define MIRC_PARAM_DATA_LENGTH 900
+#define MIRC_PARAM_DATA_LENGTH 8192
 
 #define MIRC_EXPORT_SIG(RET_TYPE) extern "C" RET_TYPE __stdcall
 
