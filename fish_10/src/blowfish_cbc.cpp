@@ -26,18 +26,18 @@ static EVP_CIPHER* GetBlowfishCbcCipher()
 
 
 // buffer loop for both en- and decryption.
-static bool _blowfish_cipher_walk(EVP_CIPHER_CTX *a_ctx, const char* a_bufIn, size_t a_inSize, std::string &ar_out)
+static bool _blowfish_cipher_walk(EVP_CIPHER_CTX* a_ctx, const char* a_bufIn, size_t a_inSize, std::string& ar_out)
 {
 	size_t l_bytesLeft = a_inSize;
-	const char *l_bufPtr = a_bufIn;
+	const char* l_bufPtr = a_bufIn;
 	unsigned char l_tmpBuf[256];
 	int l_outLen;
 
-	while(l_bytesLeft > 0)
+	while (l_bytesLeft > 0)
 	{
 		size_t l_inSize = (l_bytesLeft > 256 ? 256 : l_bytesLeft);
 
-		if(!EVP_CipherUpdate(a_ctx, l_tmpBuf, &l_outLen, reinterpret_cast<const unsigned char*>(l_bufPtr), l_inSize))
+		if (!EVP_CipherUpdate(a_ctx, l_tmpBuf, &l_outLen, reinterpret_cast<const unsigned char*>(l_bufPtr), l_inSize))
 		{
 			// ZOMG! Error!
 			return false;
@@ -50,7 +50,7 @@ static bool _blowfish_cipher_walk(EVP_CIPHER_CTX *a_ctx, const char* a_bufIn, si
 
 	bool l_success = (EVP_CipherFinal_ex(a_ctx, l_tmpBuf, &l_outLen) != 0);
 
-	if(l_success)
+	if (l_success)
 	{
 		ar_out.append(reinterpret_cast<char*>(l_tmpBuf), l_outLen);
 	}
@@ -59,9 +59,9 @@ static bool _blowfish_cipher_walk(EVP_CIPHER_CTX *a_ctx, const char* a_bufIn, si
 }
 
 
-void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const std::string &a_key)
+void blowfish_encrypt_cbc(const std::string& a_in, std::string& ar_out, const std::string& a_key)
 {
-	const unsigned char iv[8] = {0};
+	const unsigned char iv[8] = { 0 };
 	/* for some f*cked up reason, Mircryption's CBC blowfish does not use an
 		explicit IV, but prepends 8 bytes of random data to the actual string
 		instead, so we have to do this too... */
@@ -70,7 +70,7 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const st
 	// init struct for encryption:
 	EVP_CIPHER_CTX* l_ctx = EVP_CIPHER_CTX_new();
 
-	if (!EVP_CipherInit_ex2(l_ctx, GetBlowfishCbcCipher(), nullptr, nullptr,1, nullptr)) {
+	if (!EVP_CipherInit_ex2(l_ctx, GetBlowfishCbcCipher(), nullptr, nullptr, 1, nullptr)) {
 #ifdef _DEBUG
 		::OutputDebugStringA(ERR_error_string(ERR_get_error(), nullptr));
 #endif
@@ -134,21 +134,21 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const st
 }
 
 
-int blowfish_decrypt_cbc(const std::string& a_in, std::string &ar_out, const std::string &a_key)
+int blowfish_decrypt_cbc(const std::string& a_in, std::string& ar_out, const std::string& a_key)
 {
-	const unsigned char iv[8] = {0};
+	const unsigned char iv[8] = { 0 };
 	const int l_keyLen = (a_key.size() <= 56 ? (int)a_key.size() : 56);
 
 	// de-base64:
 	std::string l_in = Base64_Decode(a_in);
-	if(l_in.empty())
+	if (l_in.empty())
 	{
 		return -1;
 	}
 
 	const bool l_beenCut = (l_in.size() % 8 != 0);
 
-	if(l_beenCut)
+	if (l_beenCut)
 	{
 		l_in.erase(l_in.size() - (l_in.size() % 8));
 	}
