@@ -565,7 +565,7 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		return nullptr;
 
 	// don't encrypt DH1080 key exchange:
-	if((l_cmd_type == CMD_NOTICE || l_cmd_type == CMD_CNOTICE) && l_message.find("DH1080_") == 0)
+	if((l_cmd_type == CMD_NOTICE || l_cmd_type == CMD_CNOTICE) && l_message.find("DH") == 0)
 		return nullptr;
 
 	// check for CTCPs:
