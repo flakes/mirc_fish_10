@@ -25,9 +25,6 @@ DefaultDirName="{pf}\FiSH 10 Setup"
 Uninstallable=not IsPortableInstall()
 SolidCompression=yes
 LanguageDetectionMethod=none
-; save some bytes by using the small image:
-WizardImageFile=compiler:WizModernSmallImage.bmp
-WizardImageStretch=no
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"

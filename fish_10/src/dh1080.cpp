@@ -46,7 +46,7 @@ static std::string DH1080_SHA256(const char* a_data, size_t a_len)
 
 	if (EVP_Q_digest(nullptr, "SHA256", nullptr, a_data, a_len, reinterpret_cast<unsigned char*>(l_shaBuf), &l_digestLength))
 	{
-		std::string l_result((char*)&l_shaBuf, l_digestLength);
+		std::string l_result(l_shaBuf, l_digestLength);
 
 		DH1080_Base64_Encode(l_result);
 
