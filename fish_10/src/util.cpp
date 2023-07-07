@@ -393,21 +393,3 @@ bool Utf8Validate(const char* a_str)
 
 	return (p != 0);
 }
-
-static std::mutex s_cryptoInitLock;
-static bool s_cryptoInitialized = false;
-
-void CryptoInit()
-{
-	std::lock_guard<std::mutex> l_initLock(s_cryptoInitLock);
-
-	if (s_cryptoInitialized)
-	{
-		return;
-	}
-
-
-
-	s_cryptoInitialized = true;
-}
-

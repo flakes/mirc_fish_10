@@ -52,6 +52,17 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		const std::string l_line(a_line, a_len);
 		std::string::size_type l_pos = l_line.find(" NETWORK=");
 
+		/*
+		  TODO: Use this as a trigger to initiate SendMsg to mirc.exe after sufficient delay
+		  to request value of $network. Alternative is an export function to feed the
+		  $network string to the DLL.
+		  mIRC sets $network string by removing characters outside this list: a-z A-Z 0-9 _ . -
+		  When $network does not match the NETWORK=string, the input to FiSH_WriteKey10 and
+		  FiSH_GetKey10 is different than the string used by encryption and decryption looking
+		  for the channel key. In rare cases MIRC gets $network from the servers list GROUP string
+		  or from the server's welcome message
+*/
+
 		if(l_pos != std::string::npos)
 		{
 			l_pos += 9; // strlen(" NETWORK=")
@@ -83,8 +94,13 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		:nick!ident@host PRIVMSG ownNick :\x01ACTION +OK 2T5zD0mPgMn\x01
 		:nick!ident@host NOTICE ownNick :+OK 2T5zD0mPgMn
 		:nick!ident@host NOTICE #chan :+OK 2T5zD0mPgMn
+		TODO: support encrypting outbound notices to the next 5 targets @#chan +#chan %#chan &#chan ~#chan
 		:nick!ident@host NOTICE @#chan :+OK 2T5zD0mPgMn
 		:nick!ident@host NOTICE ~#chan :+OK 2T5zD0mPgMn
+		:nick!ident@host NOTICE %#chan :+OK 2T5zD0mPgMn
+		:nick!ident@host NOTICE +#chan :+OK 2T5zD0mPgMn
+		  if '&' is within STATUSMSG=~&@%+ then &#chan is a group target not the name of a server-local channel
+		:nick!ident@host NOTICE &#chan :+OK 2T5zD0mPgMn
 		(topic) :irc.tld 332 nick #chan :+OK hqnSD1kaIaE00uei/.3LjAO1Den3t/iMNsc1
 		:nick!ident@host TOPIC #chan :+OK JRFEAKWS
 		(topic /list) :irc.tld 322 nick #chan 2 :[+snt] +OK BLAH
@@ -242,13 +258,21 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		{
 			switch(l_contact[0])
 			{
+			case '&': // this assumes seeing notice to &#chan is group notice to protected ops +a
+				// in #chan vs notice sent to entire server-local channel named literal &#something
+				// best practice will be to add code to inspect 005 for STATUSMSG=~&@%+
+				// in the absence of that check, likelihood of group notice to &'s is higher
+				// than local chan named &#something
+				if (l_contact[1] == '#') goto group_notice_to_protected_ops;
 			case '#':
-			case '&':
 				// channel, l_contact = channel name, all is fine.
 				break;
 			case '@':
 			case '+':
 			case '%':
+			case '~': 	// receive notice to group target ~#chan
+				// networks like Rizon permit giving ~ status even to un-identified nick(s)
+			group_notice_to_protected_ops:
 				// onotice or something like that.
 				l_contact.erase(0, 1);
 				// left in l_contact is the channel name.
@@ -431,6 +455,14 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		CPRIVMSG xxx #chan :lulz
 		CNOTICE xxx #chan :lulz
 		@label=dc11f13f11 PRIVMSG #chan :Hello
+		TODO: if anyof these 5 chars are in 005's STATUSMSG=~&@%+ string
+		STATUSMSG= must be checked to avoid mixup with server local channel names beginning with '&#'
+		NOTICE @#chan :hello channel @ops
+		NOTICE +#chan :hello channel +voices
+		NOTICE %#chan :hello channel %halfops
+		NOTICE &#chan :hello channel &protected ops mode +a
+		NOTICE ~#chan :hello channel ~founders
+		(local channel name of &#chan can be tested at EFnet)
 	*/
 
 	// handle message tags:
@@ -534,7 +566,7 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 		return nullptr;
 
 	// don't encrypt DH1080 key exchange:
-	if((l_cmd_type == CMD_NOTICE || l_cmd_type == CMD_CNOTICE) && l_message.find("DH1080_") == 0)
+	if((l_cmd_type == CMD_NOTICE || l_cmd_type == CMD_CNOTICE) && l_message.find("DH") == 0)
 		return nullptr;
 
 	// check for CTCPs:
