@@ -5,7 +5,7 @@
 
 /******************************************************************************
 
-          FiSH for mIRC 7 via DLL injection and in-memory patching
+		  FiSH for mIRC 7 via DLL injection and in-memory patching
 
  Here's how it's done:
  First, we use CPatch from CodeProject to redirect the Winsock API calls
@@ -35,6 +35,7 @@ HMODULE g_hModule = nullptr;
 
 /* static vars */
 static bool s_loaded = false;
+static DWORD s_maxMircReturnBytes = MIRC_PARAM_DATA_LENGTH_LOW;
 
 /* CPatch instances */
 static PPatch s_patchConnect;
@@ -67,9 +68,9 @@ static SSL_is_init_finished_proc _SSL_is_init_finished;
 
 
 /* patched connect call */
-int WSAAPI my_connect(SOCKET s, const struct sockaddr FAR * name, int namelen)
+int WSAAPI my_connect(SOCKET s, const struct sockaddr FAR* name, int namelen)
 {
-	if(s)
+	if (s)
 	{
 		s_socketsAccess.EnterWriter();
 
@@ -83,15 +84,15 @@ int WSAAPI my_connect(SOCKET s, const struct sockaddr FAR * name, int namelen)
 
 
 /* patched send calls */
-static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, send_proc a_lpfn_send)
+static int my_send_actual(SOCKET s, const char FAR* buf, int len, int flags, send_proc a_lpfn_send)
 {
-	if(!s || len < 1 || !buf)
+	if (!s || len < 1 || !buf)
 		return a_lpfn_send(s, buf, len, flags);
 
 	s_socketsAccess.EnterReader();
 	auto it = s_sockets.find(s);
 
-	if(it != s_sockets.end()
+	if (it != s_sockets.end()
 		&& !it->second->IsSSL() // ignore SSL connections, they have been handled in SSL_write
 		&& it->second->GetState() != MSCK_NOT_IRC)
 	{
@@ -102,8 +103,8 @@ static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 		l_sock->Lock();
 
 		bool l_modified = l_sock->OnSending(false, buf, len);
-		
-		if(l_modified)
+
+		if (l_modified)
 		{
 			const std::string l_buf = l_sock->GetSendBuffer();
 
@@ -129,7 +130,7 @@ static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 	}
 	else
 	{
-		if(it != s_sockets.end() && it->second->GetState() == MSCK_NOT_IRC)
+		if (it != s_sockets.end() && it->second->GetState() == MSCK_NOT_IRC)
 		{
 			// "garbage collection" of sorts
 			s_sockets.erase(it);
@@ -143,27 +144,27 @@ static int my_send_actual(SOCKET s, const char FAR * buf, int len, int flags, se
 	return a_lpfn_send(s, buf, len, flags);
 }
 
-int WSAAPI my_send_legacy(SOCKET s, const char FAR * buf, int len, int flags)
+int WSAAPI my_send_legacy(SOCKET s, const char FAR* buf, int len, int flags)
 {
 	return my_send_actual(s, buf, len, flags, s_lpfn_send_legacy);
 }
 
-int WSAAPI my_send(SOCKET s, const char FAR * buf, int len, int flags)
+int WSAAPI my_send(SOCKET s, const char FAR* buf, int len, int flags)
 {
 	return my_send_actual(s, buf, len, flags, s_lpfn_send);
 }
 
 
 /* patched recv calls */
-static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_proc a_lpfn_recv)
+static int my_recv_actual(SOCKET s, char FAR* buf, int len, int flags, recv_proc a_lpfn_recv)
 {
-	if(!s || !buf || len < 1)
+	if (!s || !buf || len < 1)
 		return a_lpfn_recv(s, buf, len, flags);
 
 	s_socketsAccess.EnterReader();
 	auto it = s_sockets.find(s);
 
-	if(it != s_sockets.end()
+	if (it != s_sockets.end()
 		&& !it->second->IsSSL()  // ignore SSL connections, they have been handled in SSL_read
 		&& it->second->GetState() != MSCK_NOT_IRC)
 	{
@@ -173,7 +174,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 
 		l_sock->Lock();
 
-		if(l_sock->GetState() != MSCK_IRC_IDENTIFIED)
+		if (l_sock->GetState() != MSCK_IRC_IDENTIFIED)
 		{
 			// don't do much (anything) yet.
 
@@ -184,7 +185,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 
 			int l_ret = a_lpfn_recv(s, l_localBuf.data(), len, flags);
 
-			if(l_ret > 0)
+			if (l_ret > 0)
 			{
 				l_sock->Lock();
 				l_sock->OnReceiving(false, l_localBuf.data(), l_ret);
@@ -199,7 +200,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 		{
 			// it's an IRC connection, so let's rock.
 
-			while(!l_sock->HasReceivedLine())
+			while (!l_sock->HasReceivedLine())
 			{
 				char l_localBuf[4150];
 
@@ -207,7 +208,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 
 				int l_ret = a_lpfn_recv(s, l_localBuf, 4150, flags);
 
-				if(l_ret < 1)
+				if (l_ret < 1)
 				{
 					return l_ret;
 				}
@@ -232,7 +233,7 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 	}
 	else
 	{
-		if(it != s_sockets.end() && it->second->GetState() == MSCK_NOT_IRC)
+		if (it != s_sockets.end() && it->second->GetState() == MSCK_NOT_IRC)
 		{
 			// "garbage collection" of sorts
 			s_sockets.erase(it);
@@ -246,12 +247,12 @@ static int my_recv_actual(SOCKET s, char FAR * buf, int len, int flags, recv_pro
 	return a_lpfn_recv(s, buf, len, flags);
 }
 
-int WSAAPI my_recv_legacy(SOCKET s, char FAR * buf, int len, int flags)
+int WSAAPI my_recv_legacy(SOCKET s, char FAR* buf, int len, int flags)
 {
 	return my_recv_actual(s, buf, len, flags, s_lpfn_recv_legacy);
 }
 
-int WSAAPI my_recv(SOCKET s, char FAR * buf, int len, int flags)
+int WSAAPI my_recv(SOCKET s, char FAR* buf, int len, int flags)
 {
 	return my_recv_actual(s, buf, len, flags, s_lpfn_recv);
 }
@@ -275,20 +276,20 @@ int WSAAPI my_closesocket(SOCKET s)
 
 
 /* patched SSL_write call */
-int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
+int __cdecl my_SSL_write(void* ssl, const void* buf, int num)
 {
-	if(!ssl || num < 1 || !buf)
+	if (!ssl || num < 1 || !buf)
 		return s_lpfn_SSL_write(ssl, buf, num);
 
 	SOCKET s = (SOCKET)_SSL_get_fd(ssl);
 
-	if(!s)
+	if (!s)
 		return s_lpfn_SSL_write(ssl, buf, num);
 
 	s_socketsAccess.EnterReader();
 	auto it = s_sockets.find(s);
 
-	if(it != s_sockets.end()
+	if (it != s_sockets.end()
 		&& it->second->IsSSL()
 		&& it->second->GetState() != MSCK_NOT_IRC)
 	{
@@ -298,14 +299,14 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 
 		l_sock->Lock();
 
-		if(l_sock->GetState() == MSCK_TLS_HANDSHAKE && _SSL_is_init_finished(ssl))
+		if (l_sock->GetState() == MSCK_TLS_HANDSHAKE && _SSL_is_init_finished(ssl))
 		{
 			l_sock->OnSSLHandshakeComplete();
 		}
 
 		bool l_modified = l_sock->OnSending(true, (const char*)buf, num);
 
-		if(l_modified)
+		if (l_modified)
 		{
 			const std::string l_buf = l_sock->GetSendBuffer();
 
@@ -331,20 +332,20 @@ int __cdecl my_SSL_write(void *ssl, const void *buf, int num)
 
 
 /* patched SSL_read call */
-int __cdecl my_SSL_read(void *ssl, void *buf, int num)
+int __cdecl my_SSL_read(void* ssl, void* buf, int num)
 {
-	if(!ssl || !buf || num < 0)
+	if (!ssl || !buf || num < 0)
 		return s_lpfn_SSL_read(ssl, buf, num);
 
 	SOCKET s = (SOCKET)_SSL_get_fd(ssl);
 
-	if(!s)
+	if (!s)
 		return s_lpfn_SSL_read(ssl, buf, num);
 
 	s_socketsAccess.EnterReader();
 	auto it = s_sockets.find(s);
 
-	if(it != s_sockets.end()
+	if (it != s_sockets.end()
 		&& it->second->IsSSL()
 		&& it->second->GetState() != MSCK_NOT_IRC)
 	{
@@ -355,12 +356,12 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 		l_sock->Lock();
 
 		// terminate our internal handshake flag if the handshake is complete:
-		if(l_sock->GetState() == MSCK_TLS_HANDSHAKE && _SSL_is_init_finished(ssl))
+		if (l_sock->GetState() == MSCK_TLS_HANDSHAKE && _SSL_is_init_finished(ssl))
 		{
 			l_sock->OnSSLHandshakeComplete();
 		}
 
-		if(l_sock->GetState() != MSCK_IRC_IDENTIFIED)
+		if (l_sock->GetState() != MSCK_IRC_IDENTIFIED)
 		{
 			// don't do much (anything) yet.
 
@@ -371,7 +372,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 
 			int l_ret = s_lpfn_SSL_read(ssl, l_localBuf.data(), 1024);
 
-			if(l_ret > 0)
+			if (l_ret > 0)
 			{
 				l_sock->Lock();
 				l_sock->OnReceiving(true, l_localBuf.data(), l_ret);
@@ -388,7 +389,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 			// 1. if local (modified) buffer, read from that
 			// 2. else if line incomplete, or empty local buffer, call s_lpfn_SSL_read
 
-			while(!l_sock->HasReceivedLine())
+			while (!l_sock->HasReceivedLine())
 			{
 				char l_localBuf[1024];
 
@@ -396,7 +397,7 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 
 				int l_ret = s_lpfn_SSL_read(ssl, l_localBuf, 1024);
 
-				if(l_ret < 1)
+				if (l_ret < 1)
 				{
 					return l_ret;
 				}
@@ -423,34 +424,62 @@ int __cdecl my_SSL_read(void *ssl, void *buf, int num)
 	{
 		s_socketsAccess.LeaveReader();
 	}
-	
+
 	return s_lpfn_SSL_read(ssl, buf, num);
 }
 
 
 /* You can keep a DLL loaded by including a LoadDll() routine in your DLL, which mIRC calls the first time you load the DLL. */
-extern "C" void __stdcall LoadDll(LOADINFO* info)
+extern "C" void __stdcall LoadDll(LOADINFO * info)
 {
-	// always keep DLL around to avoid errors showing up multiple times.
-	info->mKeep = TRUE;
+	info->mKeep = TRUE; // always keep DLL around to avoid errors showing up multiple times.
+	info->mUnicode = FALSE; // no point in converting back&forth with sockets
+	s_maxMircReturnBytes = info->mBytes;
 
 	INJECT_DEBUG_MSG("");
 
-	HINSTANCE hInstSSLLib = ::GetModuleHandleW(L"libssl-1_1.dll");
+	const HMODULE hInstSSLLib = ::GetModuleHandleW(L"libssl-3.dll");
+	const HMODULE hInstCryptoLib = ::GetModuleHandleW(L"libcrypto-3.dll");
 
-	if(LOWORD(info->mVersion) < 7 || HIWORD(info->mVersion) < 56)
+	if (LOWORD(info->mVersion) < 7 || HIWORD(info->mVersion) < 73)
 	{
-		::MessageBoxW(info->mHwnd, L"This version of FiSH does not support any mIRC version older than 7.56. Disabling.", L"Error", MB_ICONEXCLAMATION);
+		::MessageBoxW(info->mHwnd, L"This version of FiSH does not support any mIRC version older than 7.73. Disabling.", L"Error", MB_ICONEXCLAMATION);
 
 		return;
 	}
-	else if(hInstSSLLib == nullptr)
+	else if (hInstSSLLib == nullptr || hInstCryptoLib == nullptr)
 	{
 		::MessageBoxW(info->mHwnd,
 			L"FiSH needs the OpenSSL DLLs to be installed and loaded. Disabling.\r\n\r\n"
 			L"Hint: Setting load=1 under [ssl] in mirc.ini is necessary. "
 			L"Please check the README or use the provided FiSH installer.",
 			L"Error", MB_ICONEXCLAMATION);
+
+		return;
+	}
+
+	const auto OSSL_PROVIDER_load = (OSSL_PROVIDER_load_proc)::GetProcAddress(hInstCryptoLib, "OSSL_PROVIDER_load");
+	const auto OSSL_PROVIDER_available = (OSSL_PROVIDER_available_proc)::GetProcAddress(hInstCryptoLib, "OSSL_PROVIDER_available");
+	void* legacyCryptoAlgorithmsProvider = nullptr;
+
+	if (OSSL_PROVIDER_available != nullptr && !OSSL_PROVIDER_available(nullptr, "legacy") && OSSL_PROVIDER_load != nullptr)
+	{
+		char cryptLibDirectoryBuf[4096] = { 0 };
+
+		if (::GetModuleFileNameA(hInstCryptoLib, cryptLibDirectoryBuf, 4000) != 0)
+		{
+			if (::PathRemoveFileSpecA(cryptLibDirectoryBuf)
+				&& ::PathAppendA(cryptLibDirectoryBuf, "libcrypto-legacy.dll"))
+			{
+				legacyCryptoAlgorithmsProvider = OSSL_PROVIDER_load(nullptr, cryptLibDirectoryBuf);
+			}
+		}
+	}
+
+	if (legacyCryptoAlgorithmsProvider == nullptr)
+	{
+		::MessageBoxW(info->mHwnd,
+			L"FiSH needs the OpenSSL Legacy Provider DLL (libcrypto-legacy.dll) to be installed and loaded. Disabling.", L"Error", MB_ICONEXCLAMATION);
 
 		return;
 	}
@@ -495,7 +524,7 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 	_SSL_is_init_finished = (SSL_is_init_finished_proc)::GetProcAddress(hInstSSLLib, "SSL_is_init_finished");
 
 	// check if it worked:
-	if(s_patchConnect->patched() && s_patchRecv->patched() && s_patchSend->patched() &&
+	if (s_patchConnect->patched() && s_patchRecv->patched() && s_patchSend->patched() &&
 		(!hInstSSLLib || (s_patchSSLWrite->patched() && s_patchSSLRead->patched()))
 		&& _SSL_get_fd != nullptr
 		&& _SSL_is_init_finished != nullptr)
@@ -506,7 +535,7 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 	}
 	else
 	{
-		wchar_t wszPatchedInfo[50] = {0};
+		wchar_t wszPatchedInfo[50] = { 0 };
 		swprintf_s(wszPatchedInfo, 50, L"[%i%i%i%i%i%i%i%i][%i%i]",
 			(s_patchConnect->patched() ? 1 : 0),
 			(s_patchSend->patched() ? 1 : 0),
@@ -542,14 +571,14 @@ extern "C" void __stdcall LoadDll(LOADINFO* info)
 /* You can also define an UnloadDll() routine in your DLL which mIRC will call when unloading a DLL to allow it to clean up. */
 extern "C" int __stdcall UnloadDll(int mTimeout)
 {
-/* The mTimeout value can be:
-   0   UnloadDll() is being called due to a DLL being unloaded with /dll -u.
-   1   UnloadDll() is being called due to a DLL not being used for ten minutes.
-			The UnloadDll() routine can return 0 to keep the DLL loaded, or 1 to allow it to be unloaded.
-   2   UnloadDll() is being called due to a DLL being unloaded when mIRC exits.
-*/
+	/* The mTimeout value can be:
+	   0   UnloadDll() is being called due to a DLL being unloaded with /dll -u.
+	   1   UnloadDll() is being called due to a DLL not being used for ten minutes.
+				The UnloadDll() routine can return 0 to keep the DLL loaded, or 1 to allow it to be unloaded.
+	   2   UnloadDll() is being called due to a DLL being unloaded when mIRC exits.
+	*/
 
-	if(mTimeout == 1)
+	if (mTimeout == 1)
 	{
 		if (!s_loaded)
 		{
@@ -585,7 +614,7 @@ extern "C" int __stdcall UnloadDll(int mTimeout)
 
 
 /* returns 0 on success */
-extern "C" int RegisterEngine(const fish_inject_engine_t *pEngine)
+extern "C" int RegisterEngine(const fish_inject_engine_t * pEngine)
 {
 	if (!s_engines)
 		return -1;
@@ -595,7 +624,7 @@ extern "C" int RegisterEngine(const fish_inject_engine_t *pEngine)
 
 
 /* returns 0 on success */
-extern "C" int UnregisterEngine(const fish_inject_engine_t *pEngine)
+extern "C" int UnregisterEngine(const fish_inject_engine_t * pEngine)
 {
 	if (!s_engines)
 		return -1;
@@ -603,7 +632,7 @@ extern "C" int UnregisterEngine(const fish_inject_engine_t *pEngine)
 	return (s_engines->Unregister(pEngine) ? 0 : 1);
 }
 
-#define FISH_INJECT_VERSION "*** FiSH 10.2 *** by [c&f]\xA0\xA0*** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***"
+#define FISH_INJECT_VERSION "*** FiSH 10.23.1 *** by [c&f]\xA0\xA0*** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***"
 
 /* dummy call to facilitate loading of DLL */
 MIRC_DLL_EXPORT(_callMe)
@@ -614,7 +643,7 @@ MIRC_DLL_EXPORT(_callMe)
 	{
 		version_shown = true;
 
-		strcpy_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a " FISH_INJECT_VERSION);
+		strcpy_s(data, s_maxMircReturnBytes, "/echo -a " FISH_INJECT_VERSION);
 
 		return MIRC_RET_DATA_COMMAND;
 	}
@@ -624,7 +653,7 @@ MIRC_DLL_EXPORT(_callMe)
 
 MIRC_DLL_EXPORT(FiSH_GetInjectVersion)
 {
-	strcpy_s(data, MIRC_PARAM_DATA_LENGTH, FISH_INJECT_VERSION);
+	strcpy_s(data, s_maxMircReturnBytes, FISH_INJECT_VERSION);
 
 	return MIRC_RET_DATA_RETURN;
 }
@@ -650,7 +679,7 @@ MIRC_DLL_EXPORT(InjectDebugInfo)
 
 	const std::string l_engineList = (s_engines ? s_engines->GetEngineList() : "");
 
-	sprintf_s(data, MIRC_PARAM_DATA_LENGTH, "/echo -a *** Sockets: Active %d - Discarded %d - %s - Engines: %s",
+	sprintf_s(data, s_maxMircReturnBytes, "/echo -a *** Sockets: Active %d - Discarded %d - %s - Engines: %s",
 		l_numSockets, s_discardedSockets, (l_stats.size() < 700 ? l_stats.c_str() : "a lot of data"), l_engineList.c_str());
 
 	return MIRC_RET_DATA_COMMAND;
@@ -694,7 +723,7 @@ void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function,
 		s_logFilePath += L"\\FiSH10.log";
 	}
 
-	FILE *fp = nullptr;
+	FILE* fp = nullptr;
 	if (0 == _wfopen_s(&fp, s_logFilePath.c_str(), L"a+"))
 	{
 		fputs(tid, fp);
@@ -713,15 +742,15 @@ void _fishInjectDebugMsg(const char* a_file, int a_line, const char* a_function,
 
 		fclose(fp);
 	}
-	
+
 #else
 	OutputDebugStringA(tid);
 	OutputDebugStringA(a_function);
-	if(!a_message.empty())
+	if (!a_message.empty())
 	{
 		OutputDebugStringA(" >> ");
 		OutputDebugStringA(a_message.c_str());
-		if(a_message.rfind('\n') != a_message.size() - 1) OutputDebugStringA("\n");
+		if (a_message.rfind('\n') != a_message.size() - 1) OutputDebugStringA("\n");
 	}
 	else
 	{

@@ -7,6 +7,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <Shlwapi.h>
 
 #include "mircdll.h"
 
@@ -21,7 +22,8 @@ typedef int(__cdecl* SSL_read_proc)(void *ssl, void *buf, int num);
 
 typedef int(__cdecl* SSL_is_init_finished_proc)(const void *ssl);
 typedef int(__cdecl* SSL_get_fd_proc)(const void *ssl);
-
+typedef void*(__cdecl* OSSL_PROVIDER_load_proc)(void*, const char* name);
+typedef int(__cdecl* OSSL_PROVIDER_available_proc)(void*, const char* name);
 
 /* own module handle */
 extern HMODULE g_hModule;

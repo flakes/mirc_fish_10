@@ -1,5 +1,5 @@
 ﻿#define ReleaseDir "..\Release"
-#define OpenSSLVer GetStringFileInfo(ReleaseDir + "\libssl-1_1.dll", "ProductVersion")
+#define OpenSSLVer GetStringFileInfo(ReleaseDir + "\libssl-3.dll", "ProductVersion")
 #define BuildTime GetFileDateTimeString(ReleaseDir + "\fish_10.dll", 'yyyy/mm/dd hh:nn:ss', '-', ':')
 #define SetupBuildDate GetFileDateTimeString(ReleaseDir + "\fish_10.dll", 'yyyy/mm/dd', '-', ':')
 #define SetupBuildDateMachine GetFileDateTimeString(ReleaseDir + "\fish_10.dll", 'yyyy/mm/dd', '.', ':')
@@ -33,8 +33,9 @@ WizardImageStretch=no
 Name: "en"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "{#ReleaseDir}\libcrypto-1_1.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
-Source: "{#ReleaseDir}\libssl-1_1.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
+Source: "{#ReleaseDir}\libcrypto-3.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
+Source: "{#ReleaseDir}\libcrypto-legacy.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
+Source: "{#ReleaseDir}\libssl-3.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
 Source: "{#ReleaseDir}\fish_10.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
 Source: "{#ReleaseDir}\fish_inject.dll"; DestDir: "{code:mIRCExeDir}"; Flags: ignoreversion overwritereadonly
 Source: "{#ReleaseDir}\README.BLOWINI.txt"; DestDir: "{code:mIRCIniDir}"; Flags: ignoreversion overwritereadonly
@@ -43,6 +44,10 @@ Source: "{#ReleaseDir}\blow.ini-EXAMPLE"; DestName: "blow.ini"; DestDir: "{code:
 ; back up .mrc just in case someone customized it:
 Source: "{code:mIRCIniDir}\fish_10.mrc"; DestDir: "{code:mIRCIniDir}"; DestName: "fish_10.mrc.bak"; Flags: external skipifsourcedoesntexist
 Source: "{#ReleaseDir}\fish_10.mrc"; DestDir: "{code:mIRCIniDir}"; Flags: ignoreversion overwritereadonly
+
+[InstallDelete]
+Type: files; Name: "{code:mIRCExeDir}\libcrypto-1_1.dll"
+Type: files; Name: "{code:mIRCExeDir}\libssl-1_1.dll"
 
 [Run]
 Filename: "{code:mIRCExeDir}\mirc.exe"; Description: "Launch mIRC now"; Flags: shellexec skipifdoesntexist postinstall skipifsilent
@@ -126,9 +131,9 @@ begin
 			exit;
 		end;
 
-		if (CompareVersion(VersStr, '7.56') < 0) then
+		if (CompareVersion(VersStr, '7.73') < 0) then
 		begin
-			MsgBox('mIRC version ' + VersStr + ' is not supported, please upgrade to at least version 7.56.', mbError, MB_OK);
+			MsgBox('mIRC version ' + VersStr + ' is not supported, please upgrade to at least version 7.73.', mbError, MB_OK);
 			exit;
 		end;
 

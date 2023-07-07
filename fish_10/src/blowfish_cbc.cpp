@@ -2,13 +2,27 @@
 #include <openssl/evp.h>
 #include <openssl/blowfish.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
+#include <mutex>
 
 /*
 Mircryption compatible Blowfish routines using OpenSSL.
 */
 
+static EVP_CIPHER* GetBlowfishCbcCipher()
+{
+	static std::mutex s_initLock;
+	static EVP_CIPHER* s_cbc = nullptr;
 
-static bool s_PrngSeeded = false;
+	std::lock_guard<std::mutex> lock(s_initLock);
+
+	if (s_cbc == nullptr)
+	{
+		s_cbc = EVP_CIPHER_fetch(nullptr, "BF-CBC", "provider=legacy");
+	}
+
+	return s_cbc;
+}
 
 
 // buffer loop for both en- and decryption.
@@ -51,18 +65,35 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const st
 	/* for some f*cked up reason, Mircryption's CBC blowfish does not use an
 		explicit IV, but prepends 8 bytes of random data to the actual string
 		instead, so we have to do this too... */
-	int l_keyLen = (a_key.size() <= 56 ? (int)a_key.size() : 56);
+	const int l_keyLen = (a_key.size() <= 56 ? (int)a_key.size() : 56);
 
 	// init struct for encryption:
 	EVP_CIPHER_CTX* l_ctx = EVP_CIPHER_CTX_new();
-	EVP_CipherInit_ex(l_ctx, EVP_bf_cbc(), nullptr, nullptr, nullptr, 1);
+
+	if (!EVP_CipherInit_ex2(l_ctx, GetBlowfishCbcCipher(), nullptr, nullptr,1, nullptr)) {
+#ifdef _DEBUG
+		::OutputDebugStringA(ERR_error_string(ERR_get_error(), nullptr));
+#endif
+
+		EVP_CIPHER_CTX_free(l_ctx);
+
+		return;
+	}
 
 	// set options:
 	EVP_CIPHER_CTX_set_key_length(l_ctx, l_keyLen);
 	EVP_CIPHER_CTX_set_padding(l_ctx, 0); // disable auto padding. Required for Mircryption compatibility.
 
 	// actually initialize session context:
-	EVP_CipherInit_ex(l_ctx, nullptr, nullptr, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 1);
+	if (!EVP_CipherInit_ex2(l_ctx, nullptr, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 1, nullptr)) {
+#ifdef _DEBUG
+		::OutputDebugStringA(ERR_error_string(ERR_get_error(), nullptr));
+#endif
+
+		EVP_CIPHER_CTX_free(l_ctx);
+
+		return;
+	}
 
 	// prepare buffers:
 	size_t l_inBufSize = a_in.size();
@@ -76,18 +107,19 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const st
 
 	ar_out.clear();
 
+	if (RAND_status() == 0)
+	{
+		RAND_poll();
+	}
+
 	// generate IV:
-	if(!s_PrngSeeded)
-	{
-		s_PrngSeeded = true;
-		RAND_screen();
-	}
 	unsigned char l_realIv[8];
-	if(!RAND_bytes(l_realIv, 8))
+
+	if (!RAND_bytes(l_realIv, 8))
 	{
-		// fallback:
-		RAND_pseudo_bytes(l_realIv, 8);
+		return;
 	}
+
 	// ok we have an IV.
 	memcpy_s(l_bufIn.data(), l_inBufSize, l_realIv, 8);
 	memcpy_s(l_bufIn.data() + 8, l_inBufSize - 8, a_in.c_str(), a_in.size());
@@ -105,7 +137,7 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string &ar_out, const st
 int blowfish_decrypt_cbc(const std::string& a_in, std::string &ar_out, const std::string &a_key)
 {
 	const unsigned char iv[8] = {0};
-	int l_keyLen = (a_key.size() <= 56 ? (int)a_key.size() : 56);
+	const int l_keyLen = (a_key.size() <= 56 ? (int)a_key.size() : 56);
 
 	// de-base64:
 	std::string l_in = Base64_Decode(a_in);
@@ -113,7 +145,8 @@ int blowfish_decrypt_cbc(const std::string& a_in, std::string &ar_out, const std
 	{
 		return -1;
 	}
-	bool l_beenCut = (l_in.size() % 8 != 0);
+
+	const bool l_beenCut = (l_in.size() % 8 != 0);
 
 	if(l_beenCut)
 	{
@@ -122,17 +155,34 @@ int blowfish_decrypt_cbc(const std::string& a_in, std::string &ar_out, const std
 
 	// init struct for decryption:
 	EVP_CIPHER_CTX* l_ctx = EVP_CIPHER_CTX_new();
-	EVP_CipherInit_ex(l_ctx, EVP_bf_cbc(), nullptr, nullptr, nullptr, 0);
+
+	if (!EVP_CipherInit_ex2(l_ctx, GetBlowfishCbcCipher(), nullptr, nullptr, 0, nullptr)) {
+#ifdef _DEBUG
+		::OutputDebugStringA(ERR_error_string(ERR_get_error(), nullptr));
+#endif
+
+		EVP_CIPHER_CTX_free(l_ctx);
+
+		return -1;
+	}
 
 	// set options:
 	EVP_CIPHER_CTX_set_key_length(l_ctx, l_keyLen);
 	EVP_CIPHER_CTX_set_padding(l_ctx, 0); // MUST be the same setting used during encryption.
 
 	// actually initialize session context:
-	EVP_CipherInit_ex(l_ctx, nullptr, nullptr, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 0);
+	if (!EVP_CipherInit_ex2(l_ctx, nullptr, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 0, nullptr)) {
+#ifdef _DEBUG
+		::OutputDebugStringA(ERR_error_string(ERR_get_error(), nullptr));
+#endif
+
+		EVP_CIPHER_CTX_free(l_ctx);
+
+		return -1;
+	}
 
 	// decrypt...
-	bool l_success = _blowfish_cipher_walk(l_ctx, l_in.c_str(), l_in.size(), ar_out);
+	const bool l_success = _blowfish_cipher_walk(l_ctx, l_in.c_str(), l_in.size(), ar_out);
 
 	EVP_CIPHER_CTX_free(l_ctx);
 

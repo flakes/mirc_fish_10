@@ -46,6 +46,7 @@ public:
 typedef std::vector<std::string> string_vector;
 
 /* from util.cpp */
+void CryptoInit();
 std::string UnicodeToCp(UINT a_codePage, const std::wstring& a_wstr);
 std::wstring UnicodeFromCp(UINT a_codePage, const std::string& a_str);
 void StrTrimRight(std::string& a_str);
