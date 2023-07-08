@@ -1,3 +1,11 @@
+== 2023-07-08 ==
+	* Слава Україні! Смерть окупантам!
+	* Compatible with mIRC 7.73 and above. No longer compatible with older versions.
+	* OpenSSL updated to 3.0.9, now using version built by https://kb.firedaemon.com/support/solutions/articles/4000121705
+	* [maroonbells] Enable decryption of notices from group target ~#chan and &#chan with assumption that &#something is not a server-local channel, but is if anything except '#' is the 2nd char
+	* [maroonbells] Change do-not-encrypt-NOTICE prefix from DH1080_ to DH | allows scripted change to have a different DH handshake using a shorter prefix
+	* [maroonbells] Allow hex-editing alternate g generator
+
 == 2020-10-10 ==
 	* Happy New Year
 	* OpenSSL updated to 1.1.1h - issue #66
