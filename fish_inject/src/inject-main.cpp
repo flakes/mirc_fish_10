@@ -496,10 +496,10 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 	recv_proc xrecv = (recv_proc)::GetProcAddress(hInstWs2, "recv");
 	closesocket_proc xclosesock = (closesocket_proc)::GetProcAddress(hInstWs2, "closesocket");
 
-	s_patchConnect = std::make_shared<CPatch>(xconnect, my_connect, s_lpfn_connect);
-	s_patchSend = std::make_shared<CPatch>(xsend, my_send, s_lpfn_send);
-	s_patchRecv = std::make_shared<CPatch>(xrecv, my_recv, s_lpfn_recv);
-	s_patchCloseSocket = std::make_shared<CPatch>(xclosesock, my_closesocket, s_lpfn_closesocket);
+	s_patchConnect = std::make_unique<CPatch>(xconnect, my_connect, s_lpfn_connect);
+	s_patchSend = std::make_unique<CPatch>(xsend, my_send, s_lpfn_send);
+	s_patchRecv = std::make_unique<CPatch>(xrecv, my_recv, s_lpfn_recv);
+	s_patchCloseSocket = std::make_unique<CPatch>(xclosesock, my_closesocket, s_lpfn_closesocket);
 
 	// patch legacy WinSock calls (may be used by OpenSSL DLLs):
 	HINSTANCE hInstWsOld = ::GetModuleHandleW(L"wsock32.dll");
@@ -508,16 +508,16 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 	recv_proc xrecv_legacy = (recv_proc)::GetProcAddress(hInstWsOld, "recv");
 
 	if (xsend_legacy != nullptr && xsend_legacy != xsend)
-		s_patchSendLegacy = std::make_shared<CPatch>(xsend_legacy, my_send_legacy, s_lpfn_send_legacy);
+		s_patchSendLegacy = std::make_unique<CPatch>(xsend_legacy, my_send_legacy, s_lpfn_send_legacy);
 	if (xrecv_legacy != nullptr && xrecv_legacy != xrecv)
-		s_patchRecvLegacy = std::make_shared<CPatch>(xrecv_legacy, my_recv_legacy, s_lpfn_recv_legacy);
+		s_patchRecvLegacy = std::make_unique<CPatch>(xrecv_legacy, my_recv_legacy, s_lpfn_recv_legacy);
 
 	// patch OpenSSL calls:
 	SSL_write_proc xsslwrite = (SSL_write_proc)::GetProcAddress(hInstSSLLib, "SSL_write");
 	SSL_read_proc xsslread = (SSL_read_proc)::GetProcAddress(hInstSSLLib, "SSL_read");
 
-	s_patchSSLWrite = std::make_shared<CPatch>(xsslwrite, my_SSL_write, s_lpfn_SSL_write);
-	s_patchSSLRead = std::make_shared<CPatch>(xsslread, my_SSL_read, s_lpfn_SSL_read);
+	s_patchSSLWrite = std::make_unique<CPatch>(xsslwrite, my_SSL_write, s_lpfn_SSL_write);
+	s_patchSSLRead = std::make_unique<CPatch>(xsslread, my_SSL_read, s_lpfn_SSL_read);
 
 	// OpenSSL utility methods:
 	_SSL_get_fd = (SSL_get_fd_proc)::GetProcAddress(hInstSSLLib, "SSL_get_fd");

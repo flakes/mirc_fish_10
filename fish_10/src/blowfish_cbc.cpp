@@ -70,7 +70,8 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string& ar_out, const st
 	// init struct for encryption:
 	EVP_CIPHER_CTX* l_ctx = EVP_CIPHER_CTX_new();
 
-	if (!EVP_CipherInit_ex2(l_ctx, GetBlowfishCbcCipher(), nullptr, nullptr, 1, nullptr)) {
+	if (!EVP_CipherInit_ex2(l_ctx, GetBlowfishCbcCipher(), nullptr, nullptr, 1, nullptr))
+	{
 #ifdef _DEBUG
 		::OutputDebugStringA(ERR_error_string(ERR_get_error(), nullptr));
 #endif
@@ -85,7 +86,8 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string& ar_out, const st
 	EVP_CIPHER_CTX_set_padding(l_ctx, 0); // disable auto padding. Required for Mircryption compatibility.
 
 	// actually initialize session context:
-	if (!EVP_CipherInit_ex2(l_ctx, nullptr, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 1, nullptr)) {
+	if (!EVP_CipherInit_ex2(l_ctx, nullptr, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 1, nullptr))
+	{
 #ifdef _DEBUG
 		::OutputDebugStringA(ERR_error_string(ERR_get_error(), nullptr));
 #endif
@@ -97,7 +99,8 @@ void blowfish_encrypt_cbc(const std::string& a_in, std::string& ar_out, const st
 
 	// prepare buffers:
 	size_t l_inBufSize = a_in.size();
-	if (l_inBufSize % 8 != 0) {
+	if (l_inBufSize % 8 != 0)
+	{
 		l_inBufSize += 8 - (l_inBufSize % 8);
 	}
 	l_inBufSize += 8; // for the IV data
@@ -156,7 +159,8 @@ int blowfish_decrypt_cbc(const std::string& a_in, std::string& ar_out, const std
 	// init struct for decryption:
 	EVP_CIPHER_CTX* l_ctx = EVP_CIPHER_CTX_new();
 
-	if (!EVP_CipherInit_ex2(l_ctx, GetBlowfishCbcCipher(), nullptr, nullptr, 0, nullptr)) {
+	if (!EVP_CipherInit_ex2(l_ctx, GetBlowfishCbcCipher(), nullptr, nullptr, 0, nullptr))
+	{
 #ifdef _DEBUG
 		::OutputDebugStringA(ERR_error_string(ERR_get_error(), nullptr));
 #endif
@@ -171,7 +175,8 @@ int blowfish_decrypt_cbc(const std::string& a_in, std::string& ar_out, const std
 	EVP_CIPHER_CTX_set_padding(l_ctx, 0); // MUST be the same setting used during encryption.
 
 	// actually initialize session context:
-	if (!EVP_CipherInit_ex2(l_ctx, nullptr, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 0, nullptr)) {
+	if (!EVP_CipherInit_ex2(l_ctx, nullptr, reinterpret_cast<const unsigned char*>(a_key.c_str()), iv, 0, nullptr))
+	{
 #ifdef _DEBUG
 		::OutputDebugStringA(ERR_error_string(ERR_get_error(), nullptr));
 #endif

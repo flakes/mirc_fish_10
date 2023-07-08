@@ -64,12 +64,9 @@ static bool g_dhInitChecked = false;
 static std::string DhKeyToStr(DH* a_dh, bool a_privKey)
 {
 	std::string l_result;
-	const BIGNUM* p = nullptr, * q = nullptr, * g = nullptr;
 
 	if (a_dh && DH_size(a_dh) < 10240)
 	{
-		DH_get0_pqg(a_dh, &p, &q, &g);
-
 		const size_t l_bufSize = DH_size(a_dh);
 		std::vector<char> l_keyBuf;
 		l_keyBuf.resize(l_bufSize, 0);

@@ -56,4 +56,4 @@ private:
 	static bool ms_initialized;
 };
 
-typedef std::shared_ptr<CPatch> PPatch;
+typedef std::unique_ptr<CPatch> PPatch;
