@@ -1,0 +1,10 @@
+EXPORTS
+	LoadDll
+	UnloadDll
+	_callMe
+
+	mIRC_OTR_Version
+	mIRC_OTR_SetKeyDir
+
+	mIRC_OTR_GenPrivKey
+	mIRC_OTR_Init
