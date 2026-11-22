@@ -334,7 +334,7 @@ int __cdecl my_SSL_write(void* ssl, const void* buf, int num)
 /* patched SSL_read call */
 int __cdecl my_SSL_read(void* ssl, void* buf, int num)
 {
-	if (!ssl || !buf || num < 0)
+	if (!ssl || !buf || num < 1)
 		return s_lpfn_SSL_read(ssl, buf, num);
 
 	SOCKET s = (SOCKET)_SSL_get_fd(ssl);
@@ -370,7 +370,7 @@ int __cdecl my_SSL_read(void* ssl, void* buf, int num)
 			std::vector<char> l_localBuf;
 			l_localBuf.resize(num, 0);
 
-			int l_ret = s_lpfn_SSL_read(ssl, l_localBuf.data(), 1024);
+			int l_ret = s_lpfn_SSL_read(ssl, l_localBuf.data(), num);
 
 			if (l_ret > 0)
 			{
@@ -461,8 +461,14 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 	const auto OSSL_PROVIDER_load = (OSSL_PROVIDER_load_proc)::GetProcAddress(hInstCryptoLib, "OSSL_PROVIDER_load");
 	const auto OSSL_PROVIDER_available = (OSSL_PROVIDER_available_proc)::GetProcAddress(hInstCryptoLib, "OSSL_PROVIDER_available");
 	void* legacyCryptoAlgorithmsProvider = nullptr;
+	bool legacyCryptoAlgorithmsAvailable = false;
 
-	if (OSSL_PROVIDER_available != nullptr && !OSSL_PROVIDER_available(nullptr, "legacy") && OSSL_PROVIDER_load != nullptr)
+	if (OSSL_PROVIDER_available != nullptr)
+	{
+		legacyCryptoAlgorithmsAvailable = (OSSL_PROVIDER_available(nullptr, "legacy") != 0);
+	}
+
+	if (!legacyCryptoAlgorithmsAvailable && OSSL_PROVIDER_load != nullptr)
 	{
 		char cryptLibDirectoryBuf[4096] = { 0 };
 
@@ -474,9 +480,11 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 				legacyCryptoAlgorithmsProvider = OSSL_PROVIDER_load(nullptr, cryptLibDirectoryBuf);
 			}
 		}
+
+		legacyCryptoAlgorithmsAvailable = (legacyCryptoAlgorithmsProvider != nullptr);
 	}
 
-	if (legacyCryptoAlgorithmsProvider == nullptr)
+	if (!legacyCryptoAlgorithmsAvailable)
 	{
 		::MessageBoxW(info->mHwnd,
 			L"FiSH needs the OpenSSL Legacy Provider DLL (libcrypto-legacy.dll) to be installed and loaded. Disabling.", L"Error", MB_ICONEXCLAMATION);
@@ -488,13 +496,43 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 
 	s_engines = std::make_shared<CInjectEngines>();
 
-	HINSTANCE hInstWs2 = ::GetModuleHandleW(L"ws2_32.dll");
+	HINSTANCE hInstWs2 = nullptr;
+	connect_proc xconnect = nullptr;
+	send_proc xsend = nullptr;
+	recv_proc xrecv = nullptr;
+	closesocket_proc xclosesock = nullptr;
+
+	hInstWs2 = ::GetModuleHandleW(L"ws2_32.dll");
+	if (hInstWs2 == nullptr)
+	{
+		hInstWs2 = ::LoadLibraryW(L"ws2_32.dll");
+	}
+
+	if (hInstWs2 == nullptr)
+	{
+		::MessageBoxW(info->mHwnd,
+			L"FiSH 10 failed to load: ws2_32.dll is not available for socket patching.",
+			L"Error",
+			MB_ICONEXCLAMATION);
+
+		return;
+	}
 
 	// patch WinSock calls:
-	connect_proc xconnect = (connect_proc)::GetProcAddress(hInstWs2, "connect");
-	send_proc xsend = (send_proc)::GetProcAddress(hInstWs2, "send");
-	recv_proc xrecv = (recv_proc)::GetProcAddress(hInstWs2, "recv");
-	closesocket_proc xclosesock = (closesocket_proc)::GetProcAddress(hInstWs2, "closesocket");
+	xconnect = (connect_proc)::GetProcAddress(hInstWs2, "connect");
+	xsend = (send_proc)::GetProcAddress(hInstWs2, "send");
+	xrecv = (recv_proc)::GetProcAddress(hInstWs2, "recv");
+	xclosesock = (closesocket_proc)::GetProcAddress(hInstWs2, "closesocket");
+
+	if (xconnect == nullptr || xsend == nullptr || xrecv == nullptr || xclosesock == nullptr)
+	{
+		::MessageBoxW(info->mHwnd,
+			L"FiSH 10 failed to load: one or more required ws2_32.dll exports are missing.",
+			L"Error",
+			MB_ICONEXCLAMATION);
+
+		return;
+	}
 
 	s_patchConnect = std::make_unique<CPatch>(xconnect, my_connect, s_lpfn_connect);
 	s_patchSend = std::make_unique<CPatch>(xsend, my_send, s_lpfn_send);
@@ -504,8 +542,14 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 	// patch legacy WinSock calls (may be used by OpenSSL DLLs):
 	HINSTANCE hInstWsOld = ::GetModuleHandleW(L"wsock32.dll");
 
-	send_proc xsend_legacy = (send_proc)::GetProcAddress(hInstWsOld, "send");
-	recv_proc xrecv_legacy = (recv_proc)::GetProcAddress(hInstWsOld, "recv");
+	send_proc xsend_legacy = nullptr;
+	recv_proc xrecv_legacy = nullptr;
+
+	if (hInstWsOld != nullptr)
+	{
+		xsend_legacy = (send_proc)::GetProcAddress(hInstWsOld, "send");
+		xrecv_legacy = (recv_proc)::GetProcAddress(hInstWsOld, "recv");
+	}
 
 	if (xsend_legacy != nullptr && xsend_legacy != xsend)
 		s_patchSendLegacy = std::make_unique<CPatch>(xsend_legacy, my_send_legacy, s_lpfn_send_legacy);
@@ -515,17 +559,25 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 	// patch OpenSSL calls:
 	SSL_write_proc xsslwrite = (SSL_write_proc)::GetProcAddress(hInstSSLLib, "SSL_write");
 	SSL_read_proc xsslread = (SSL_read_proc)::GetProcAddress(hInstSSLLib, "SSL_read");
+	_SSL_get_fd = (SSL_get_fd_proc)::GetProcAddress(hInstSSLLib, "SSL_get_fd");
+	_SSL_is_init_finished = (SSL_is_init_finished_proc)::GetProcAddress(hInstSSLLib, "SSL_is_init_finished");
+
+	if (xsslwrite == nullptr || xsslread == nullptr || _SSL_get_fd == nullptr || _SSL_is_init_finished == nullptr)
+	{
+		::MessageBoxW(info->mHwnd,
+			L"FiSH 10 failed to load: one or more required libssl-3.dll exports are missing.",
+			L"Error",
+			MB_ICONEXCLAMATION);
+
+		return;
+	}
 
 	s_patchSSLWrite = std::make_unique<CPatch>(xsslwrite, my_SSL_write, s_lpfn_SSL_write);
 	s_patchSSLRead = std::make_unique<CPatch>(xsslread, my_SSL_read, s_lpfn_SSL_read);
 
-	// OpenSSL utility methods:
-	_SSL_get_fd = (SSL_get_fd_proc)::GetProcAddress(hInstSSLLib, "SSL_get_fd");
-	_SSL_is_init_finished = (SSL_is_init_finished_proc)::GetProcAddress(hInstSSLLib, "SSL_is_init_finished");
-
 	// check if it worked:
 	if (s_patchConnect->patched() && s_patchRecv->patched() && s_patchSend->patched() &&
-		(!hInstSSLLib || (s_patchSSLWrite->patched() && s_patchSSLRead->patched()))
+		(s_patchSSLWrite->patched() && s_patchSSLRead->patched())
 		&& _SSL_get_fd != nullptr
 		&& _SSL_is_init_finished != nullptr)
 	{
@@ -537,14 +589,14 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 	{
 		wchar_t wszPatchedInfo[50] = { 0 };
 		swprintf_s(wszPatchedInfo, 50, L"[%i%i%i%i%i%i%i%i][%i%i]",
-			(s_patchConnect->patched() ? 1 : 0),
-			(s_patchSend->patched() ? 1 : 0),
-			(s_patchRecv->patched() ? 1 : 0),
+			(s_patchConnect && s_patchConnect->patched() ? 1 : 0),
+			(s_patchSend && s_patchSend->patched() ? 1 : 0),
+			(s_patchRecv && s_patchRecv->patched() ? 1 : 0),
 			(!s_patchRecvLegacy || s_patchRecvLegacy->patched() ? 1 : 0),
 			(!s_patchSendLegacy || s_patchSendLegacy->patched() ? 1 : 0),
-			(s_patchCloseSocket->patched() ? 1 : 0),
-			(s_patchSSLWrite->patched() ? 1 : 0),
-			(s_patchSSLRead->patched() ? 1 : 0),
+			(s_patchCloseSocket && s_patchCloseSocket->patched() ? 1 : 0),
+			(s_patchSSLWrite && s_patchSSLWrite->patched() ? 1 : 0),
+			(s_patchSSLRead && s_patchSSLRead->patched() ? 1 : 0),
 			(_SSL_get_fd ? 1 : 0),
 			(_SSL_is_init_finished ? 1 : 0));
 

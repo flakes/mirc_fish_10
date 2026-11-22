@@ -91,12 +91,7 @@ on *:CONNECT:{
 on *:NICK:{
   if (($nick == $me) || ($upper($newnick) == $upper($nick))) { return }
   if (($query($newnick) == $null) || (%NickTrack != [On])) { return }
-  var %ky_tmp = $dll(%FiSH_dll,FiSH_GetKey10,$network $nick)
-  if ($len(%ky_tmp) > 4) {
-    writeini -n %blow_ini $newnick key %ky_tmp
-    writeini -n %blow_ini $newnick dh1080_cbc $readini(%blow_ini,$nick,dh1080_cbc)
-  }
-  unset %ky_tmp
+  .dll %FiSH_dll FiSH_WriteAlias10 $network $newnick $nick nick
 }
 
 
@@ -163,15 +158,19 @@ alias FiSH.setkey_utf8 { FiSH.WriteKey raw_bytes $1 $2- }
 
 
 alias FiSH.usechankey {
-  var %theKey = $readini %blow_ini $2 key
-  if (%theKey == $null) {
+  if ($0 != 2) {
+    echo $color(Mode text) -at *** FiSH: Usage: /FiSH.usechankey target source
+    return
+  }
+  var %result = $dll(%FiSH_dll,FiSH_WriteAlias10,$network $1 $2)
+  if (%result == ok) {
+    echo $color(Mode text) -at *** FiSH: Using same key as $2 for $1
+  }
+  else if (%result == no_key) {
     echo $color(Mode text) -at *** FiSH: No valid key for $2 found
   }
   else {
-    writeini -n %blow_ini $1 key %theKey
-    writeini -n %blow_ini $1 date $date
-    unset %theKey
-    echo $color(Mode text) -at *** FiSH: Using same key as $2 for $1
+    echo $color(Mode text) -at *** FiSH: Could not use the key for $2 for $1
   }
 }
 

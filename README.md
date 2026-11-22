@@ -67,9 +67,8 @@ Please refer to the [SECURITY](SECURITY.md) document.
 
 * You can check the active path to blow.ini using `//echo %blow_ini`
 
-* To work around keys exceeding a length of 56 bytes, the blow.ini option
-  `enforce_max_key_length=0`
-  can be used. This option is present from releases starting with 2017-02-25.
+* For legacy ECB keys between 57 and 72 bytes, use the blow.ini option
+  `enforce_max_key_length=0`. CBC keys always have a 56-byte limit.
 
 * If an error like "*patching ... failed*" shows up, something specific to your system went wrong.
 It could be something simple like an incompatible OpenSSL DLL, something weird like
@@ -87,6 +86,29 @@ then paste into your bug report using Ctrl + V)
 * Known issues are listed at the end of this README.
 
 * If you are unable to resolve your problem, you may ask for help in #fish10 on EFNet.
+
+### OpenSSL compatibility with mIRC 7.83 and 7.85
+
+mIRC includes its own SSL support. FiSH uses the external OpenSSL 3 DLLs
+for encryption and to intercept TLS reads and writes. [mIRC SSL documentation](https://www.mirc.com/ssl.html)
+
+If FiSH reports an OpenSSL error on startup, close mIRC and copy the following
+files from the same FireDaemon OpenSSL 3.5 LTS ZIP to the folder containing
+`mirc.exe`. Back up any existing copies before replacing them.
+[FireDaemon downloads](https://kb.firedaemon.com/support/solutions/articles/4000121705)
+
+| ZIP path | Name alongside `mirc.exe` |
+| --- | --- |
+| `x86/bin/libcrypto-3.dll` | `libcrypto-3.dll` |
+| `x86/bin/libssl-3.dll` | `libssl-3.dll` |
+| `x86/lib/ossl-modules/legacy.dll` | `libcrypto-legacy.dll` |
+
+Set `load=1` in the `[ssl]` section of `mirc.ini`, restart mIRC, and run
+`/fishdebug`. Check that `SSL ready` is `$true`, `SSL mode` is `1`, and
+`GetKey10` returns `HelloWorld`. This setup was reported to work with
+mIRC 7.83 using OpenSSL 3.6.0 and with mIRC 7.85 using OpenSSL 3.5.9.
+[mIRC 7.83 report](https://github.com/flakes/mirc_fish_10/issues/80#issuecomment-3651525338),
+[mIRC 7.85 report](https://github.com/flakes/mirc_fish_10/issues/80#issuecomment-6372411019)
 
 ## FEATURES
 
@@ -134,15 +156,41 @@ The rest of the code is what I contributed myself and is licensed under the
 
 ## TECHNICAL
 
-FiSH 10 makes heavy use of OpenSSL. It is recommended that you use the SSL libs
-(libssl-1_1.dll and libcrypto-1_1.dll) that come with the download, but other recent
-libraries should work too. If they don't, FiSH 10 will let you know on startup.
+FiSH 10 makes heavy use of OpenSSL. The current releases use the OpenSSL 3.x
+runtime DLLs that come with the download (`libssl-3.dll`, `libcrypto-3.dll`,
+and `libcrypto-legacy.dll`). Other recent libraries may work too. If they
+don't, FiSH 10 will let you know on startup.
+
+For local Visual Studio builds in this repository, you can bootstrap the pinned
+OpenSSL 3.5.9 package with:
+
+    pwsh -File .\scripts\bootstrap-openssl.ps1
+
+This downloads the current ZIP configured by the repository, verifies the
+SHA-256 checksum, copies the Win32 import libraries and runtime DLLs into
+`.\lib`, copies the legacy provider DLL expected by the release packaging, and
+copies the headers into `.\include`. Building `fish_10` then copies the three
+runtime DLLs into the selected Visual Studio output directory alongside FiSH.
+The Win32 toolchain, MinHook version, and build commands are documented in [BUILD.md](BUILD.md).
 
 You can read some lines about the in-memory patching in fish-inject.cpp. fish_inject.dll
 does the magic of intercepting the system calls and managing buffers. For complete lines,
 it calls into fish_10.dll which does the actual IRC parsing and encryption things.
 Key-exchange, getting the public IP etc. is still handled by fish_10.mrc, like it
 has always been (with the help of fish_10.dll).
+
+### Encryption DLL calls
+
+Use `FiSH_GetKey10` with `<network> <contact> hex` to retrieve the active
+key bytes as hex. CBC keys retain the `cbc:` prefix. Pass the result to
+`FiSH_EncryptMsg10` or `FiSH_DecryptMsg10` as `hex_key <key> <message>`.
+This preserves spaces and byte values in the key across the mIRC DLL interface.
+The first space after the key separates the arguments. Additional spaces
+belong to the message.
+
+The `raw_bytes` format passes key bytes through as supplied. The legacy
+`decode_utf8` format uses the Windows ANSI code page and rejects keys
+that cannot be converted without changing the input.
 
 ## KNOWN ISSUES
 

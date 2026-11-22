@@ -5,8 +5,6 @@
 #include <map>
 #include <vector>
 
-#define MAX_BLOWFISH_ECB_KEY_LENGTH_BYTES (448/8)
-
 class CBlowIni
 {
 protected:
@@ -15,10 +13,15 @@ protected:
 	bool m_noLegacy;
 
 	std::string GetBlowKey(const std::string& a_name, bool& ar_cbc) const;
+	std::string FindBlowKey(const std::string& a_network, const std::string& a_contact,
+		bool& ar_cbc, std::string& ar_alias) const;
+	std::string ResolveBlowKey(const std::string& a_network, const std::string& a_contact,
+		bool& ar_cbc, std::string& ar_alias) const;
 	bool DeleteBlowKey(const std::string& a_name) const;
 	bool WriteBlowKey(const std::string& a_name, const std::string& a_value) const;
 	bool GetSectionBool(const std::string& a_name, const wchar_t* a_key, bool a_default) const;
-	bool SetSectionValue(const std::string& a_name, const wchar_t* a_key, const std::wstring& a_value) const;
+	std::wstring GetSectionValue(const std::string& a_name, const wchar_t* a_key) const;
+	bool SetSectionValue(const std::string& a_name, const wchar_t* a_key, const wchar_t* a_value) const;
 
 	static std::string FixContactName(const std::string& a_name);
 public:
@@ -34,8 +37,12 @@ public:
 	
 	bool NoLegacy() const { return m_noLegacy; }
 	bool IsWritable() const;
+	size_t MaxKeyLength(bool a_cbc) const;
 
 	/* blow.ini-specific methods */
+	enum class AliasWriteResult { Ok, NoKey, Error };
+	AliasWriteResult WriteBlowAlias(const std::string& a_network, const std::string& a_target,
+		const std::string& a_source, bool a_trackNick) const;
 	std::string GetBlowKey(const std::string& a_network, const std::string& a_contact, bool& ar_cbc) const;
 	bool DeleteBlowKey(const std::string& a_network, const std::string& a_contact) const;
 	bool WriteBlowKey(const std::string& a_network, const std::string& a_contact, const std::string& a_value) const;

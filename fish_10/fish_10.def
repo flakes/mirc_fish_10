@@ -19,3 +19,4 @@ EXPORTS
 	INI_SetSectionBool
 	NetworkDebugInfo
 	FiSH_GetVersion
+	FiSH_WriteAlias10

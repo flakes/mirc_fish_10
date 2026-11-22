@@ -1,2 +1,13 @@
 *.suo
 *.sdf
+*.dll
+*.lib
+*.exp
+*.pdb
+*.obj
+*.tlog
+*.lastbuildstate
+*.idb
+*.iobj
+*.ipdb
+RelWithDebInfo/

@@ -69,11 +69,18 @@ This file explains all settings and their implications in blow.ini.
 	* Name: enforce_max_key_length
 		Value: 0 or 1
 		Default: 1
-		The maximum defined key length for blowfish is 448 bits or 56 bytes:
-		https://en.wikipedia.org/wiki/Blowfish_%28cipher%29#The_algorithm
-		However, some other clients and also FiSH10 in older versions did not enforce this limit. To allow longer keys,
-		set this option to zero. If you have the chance to, it's better to instead change your key(s) (which is always a
-		good idea) and use a new one with 56 bytes max.
+		CBC keys are limited to 56 bytes. ECB keys are limited to 56 bytes by default or
+		72 bytes with this option set to 0 for compatibility with older clients.
+		FiSH rejects new keys above the active limit. For an existing longer key, FiSH
+		uses the leading bytes up to the current limit and leaves the stored key intact.
+		The cbc: prefix is a mode indicator and does not count toward the limit.
+
+	* Name: strict_cipher_mode
+		Value: 0 or 1
+		Default: 0
+		Set to 1 to leave an incoming message encrypted when its CBC or ECB mode
+		differs from the mode configured for the contact. With 0, FiSH uses the
+		mode indicated by the incoming message.
 
 == Contact sections, e.g. [#chan], [EFNet:#fish10] or [duude] ==
 
@@ -83,12 +90,20 @@ This file explains all settings and their implications in blow.ini.
 		If the value of this setting starts with +OK, the rest of the message will be decrypted using the hardcoded
 		blow.ini blowfish key. If it doesn't, it will be assumed that the key is deposited in plain text.
 
+	* Name: Alias
+		Value: a contact name on the same network (for example, #copyfrom)
+		Default: (no default)
+		Uses the source contact's key and CBC mode. A source must have a direct key. An alias pointing to
+		another alias, to itself, or to a contact without a key has no effective key.
+		NickTracker and /FiSH.usechankey create aliases. If the selected source is already an alias,
+		they use its direct source. Setting a key explicitly replaces the alias for that contact.
+
 	* Name: cbc
 		Value: 0 or 1
 		Default: 0
 		If this is 1, messages to this contact will be encrypted in CBC mode (more secure) by default. If it isn't, the
-		standard ECB mode will be used. This only affects outgoing messages, the mode of incoming messages will always
-		be detected automatically and treated appropriately.
+		standard ECB mode will be used. FiSH also uses this setting to check incoming message
+		modes when strict_cipher_mode is enabled.
 
 	* Name: mark_encrypted
 		Value: 0 or 1

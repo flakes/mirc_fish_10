@@ -1,5 +1,6 @@
 #include "inject-main.h"
 #include "inject-socket.h"
+#include <vector>
 
 
 CSocketInfo::CSocketInfo(SOCKET s, const PInjectEngines& engines) :
@@ -41,6 +42,35 @@ static bool IsTLSHandshakePacket(const char* a_data, size_t a_len)
 
 	// http://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
 	return (*a_data == 22);
+}
+
+// Each recipient needs its own engine dispatch: keys and even the engine may differ.
+static std::vector<std::string> SplitPrivmsgRecipients(const std::string& line)
+{
+	size_t command = 0;
+	if (!line.empty() && line[0] == '@')
+		command = line.find_first_not_of(' ', line.find(' '));
+	if (command == std::string::npos || _strnicmp(line.c_str() + command, "PRIVMSG ", 8) != 0)
+		return {};
+
+	const size_t first = line.find_first_not_of(' ', command + 8);
+	const size_t end = line.find(' ', first);
+	const size_t message = line.find_first_not_of(' ', end);
+	if (message == std::string::npos || line[message] != ':' || line.find(',', first) >= end)
+		return {};
+
+	std::vector<std::string> lines;
+	size_t start = first;
+	while (start <= end)
+	{
+		const size_t comma = line.find(',', start);
+		const size_t stop = comma < end ? comma : end;
+		if (start == stop)
+			return {}; // Leave malformed recipient lists to the server.
+		lines.push_back(line.substr(0, command + 8) + line.substr(start, stop - start) + " " + line.substr(message));
+		start = stop + 1;
+	}
+	return lines;
 }
 
 
@@ -207,17 +237,32 @@ bool CSocketInfo::OnSending(bool a_ssl, const char* a_data, size_t a_len)
 
 			INJECT_DEBUG_MSG(l_line);
 
-			++m_linesSent;
-
-			if (m_engines->OnOutgoingLine(m_socket, l_line))
+			auto recipients = SplitPrivmsgRecipients(l_line);
+			if (recipients.empty())
+				recipients.push_back(l_line);
+			size_t modified = 0;
+			for (auto& recipient : recipients)
 			{
-				INJECT_DEBUG_MSG("encrypted:");
-				INJECT_DEBUG_MSG(l_line);
-
-				++m_linesEncrypted;
+				if (m_engines->OnOutgoingLine(m_socket, recipient))
+				{
+					INJECT_DEBUG_MSG("encrypted:");
+					INJECT_DEBUG_MSG(recipient);
+					++modified;
+				}
 			}
-
-			l_chunk += l_line;
+			if (modified)
+			{
+				for (const auto& recipient : recipients)
+					l_chunk += recipient;
+				m_linesSent += recipients.size();
+				m_linesEncrypted += modified;
+			}
+			else
+			{
+				// Keep the original target list when all engines pass it through.
+				l_chunk += l_line;
+				++m_linesSent;
+			}
 		}
 
 		m_sendBuffer = l_chunk;

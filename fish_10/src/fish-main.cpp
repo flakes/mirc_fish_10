@@ -122,7 +122,7 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	}
 
 	std::string l_cmd, l_contact, l_message;
-	std::string::size_type l_cmdPos, l_tmpPos, l_targetPos, l_msgPos;
+	std::string::size_type l_cmdPos, l_tmpPos, l_msgPos;
 
 	StrTrimRight(l_line);
 
@@ -180,19 +180,17 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 
 	if(l_cmd_type == CMD_N322 || l_cmd_type == CMD_N332 || l_cmd_type == CMD_TOPIC)
 	{
-		l_targetPos = l_line.rfind(" #", l_msgPos);
-
-		if(l_targetPos != std::string::npos && l_targetPos >= l_cmdPos + l_cmd.size())
-			/* >= because of the leading space in the find string */
+		// TOPIC names the channel first; the numeric replies name the recipient first.
+		size_t l_targetPos = l_tmpPos + 1;
+		if (l_cmd_type != CMD_TOPIC)
 		{
-			l_targetPos++; // skip the leading space
-			l_tmpPos = l_line.find(' ', l_targetPos + 1);
-
-			if(l_tmpPos != std::string::npos)
-			{
-				l_contact = l_line.substr(l_targetPos, l_tmpPos - l_targetPos);
-			}
+			const size_t l_recipientEnd = l_line.find(' ', l_targetPos);
+			l_targetPos = l_line.find_first_not_of(' ', l_recipientEnd);
 		}
+		if (l_targetPos >= l_msgPos - 2)
+			return nullptr;
+		const size_t l_targetEnd = l_line.find(' ', l_targetPos);
+		l_contact = l_line.substr(l_targetPos, l_targetEnd - l_targetPos);
 
 		if(l_cmd_type == CMD_N322 && !l_message.empty())
 		{
@@ -327,7 +325,7 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	const std::string l_networkName = s_socketMap[a_socket];
 	::LeaveCriticalSection(&s_socketMapLock);
 
-	const std::string& l_blowKey = l_ini->GetBlowKey(l_networkName, l_contact, l_cbc);
+	std::string l_blowKey = l_ini->GetBlowKey(l_networkName, l_contact, l_cbc);
 
 	if(l_blowKey.empty())
 		return nullptr;
@@ -335,22 +333,15 @@ char* _OnIncomingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 	// put together new message:
 	std::string l_newMsg;
 
-	if(l_cbc && !l_message.empty() && l_message[0] != '*')
-	{
-		// silent fallback to old style
-		l_cbc = false;
-	}
-	else if(!l_cbc && !l_message.empty() && l_message[0] == '*')
-	{
-		// auto-enable new style even for non-prefixed keys
-		l_cbc = true;
-	}
-
-	if(l_cbc && !l_message.empty() && l_message[0] == '*')
-	{
-		// strip asterisk
+	const bool l_messageCbc = !l_message.empty() && l_message[0] == '*';
+	if(l_messageCbc != l_cbc && l_ini->GetBool(L"strict_cipher_mode", false))
+		return nullptr;
+	l_cbc = l_messageCbc;
+	if(l_cbc)
 		l_message.erase(0, 1);
-	}
+	const size_t l_maxLength = l_ini->MaxKeyLength(l_cbc);
+	if(l_blowKey.size() > l_maxLength)
+		l_blowKey.resize(l_maxLength);
 
 	int l_decryptionResult = blowfish_decrypt_auto(l_cbc, l_message, l_newMsg, l_blowKey);
 
@@ -585,10 +576,13 @@ char* _OnOutgoingIRCLine(HANDLE a_socket, const char* a_line, size_t a_len)
 
 	// get blowfish key...
 	bool l_cbc;
-	const std::string& l_blowKey = l_ini->GetBlowKey(l_networkName, l_target, l_cbc);
+	std::string l_blowKey = l_ini->GetBlowKey(l_networkName, l_target, l_cbc);
 
 	if(l_blowKey.empty())
 		return nullptr;
+	const size_t l_maxLength = l_ini->MaxKeyLength(l_cbc);
+	if(l_blowKey.size() > l_maxLength)
+		l_blowKey.resize(l_maxLength);
 
 	// put together new message:
 	std::string l_newMsg;
@@ -695,6 +689,18 @@ MIRC_DLL_EXPORT(DH1080_comp)
 }
 
 
+// Preserve the legacy ANSI representation only when it round-trips exactly.
+static bool DecodeKeyToAnsi(std::string& a_key)
+{
+	const std::wstring l_wide = UnicodeFromCp(CP_UTF8, a_key);
+	const std::string l_ansi = UnicodeToCp(CP_ACP, l_wide);
+	if(UnicodeToCp(CP_UTF8, UnicodeFromCp(CP_ACP, l_ansi)) != a_key)
+		return false;
+	a_key = l_ansi;
+	return true;
+}
+
+
 MIRC_DLL_EXPORT(FiSH_WriteKey10)
 {
 	if(data && *data)
@@ -704,22 +710,24 @@ MIRC_DLL_EXPORT(FiSH_WriteKey10)
 
 		if(l_data.size() == 4)
 		{
-			if(_stricmp(l_data[0].c_str(), "decode_utf8") == 0)
+			if(_stricmp(l_data[0].c_str(), "decode_utf8") == 0 && !DecodeKeyToAnsi(l_data[3]))
 			{
-				// old FiSH keys have always been ANSI encoded.
-				l_data[3] = UnicodeToCp(CP_ACP, UnicodeFromCp(CP_UTF8, l_data[3]));
+				strcpy_s(data, s_maxMircReturnBytes, "/echo -ac highlight ERROR: key cannot be represented in the system ANSI code page. Use a UTF-8 key.");
+				return MIRC_RET_DATA_COMMAND;
 			}
 
-			if (!HasCBCPrefix(l_data[3])
-				&& l_data[3].length() > MAX_BLOWFISH_ECB_KEY_LENGTH_BYTES
-				&& GetBlowIni()->GetBool(L"enforce_max_key_length", true))
+			auto l_ini = GetBlowIni();
+			const bool l_cbc = HasCBCPrefix(l_data[3]);
+			const size_t l_keyLength = l_data[3].size() - (l_cbc ? 4 : 0);
+			const size_t l_maxLength = l_ini->MaxKeyLength(l_cbc);
+			if(l_keyLength > l_maxLength)
 			{
-				sprintf_s(data, s_maxMircReturnBytes, "/echo -ac highlight ERROR: key length exceeds limit of %d bytes.", MAX_BLOWFISH_ECB_KEY_LENGTH_BYTES);
+				sprintf_s(data, s_maxMircReturnBytes, "/echo -ac highlight ERROR: key length exceeds limit of %zu bytes.", l_maxLength);
 
 				return MIRC_RET_DATA_COMMAND;
 			}
 
-			if (GetBlowIni()->WriteBlowKey(l_data[1], l_data[2], l_data[3]))
+			if(l_ini->WriteBlowKey(l_data[1], l_data[2], l_data[3]))
 			{
 				strcpy_s(data, s_maxMircReturnBytes, "ok");
 
@@ -732,23 +740,37 @@ MIRC_DLL_EXPORT(FiSH_WriteKey10)
 }
 
 
+static const std::string s_hexDigits = "0123456789abcdef";
+
 MIRC_DLL_EXPORT(FiSH_GetKey10)
 {
 	if(data && *data)
 	{
 		string_vector l_data = SplitString(data, " ");
-		/* <network> <contact> */
+		/* <network> <contact> [hex] */
 
 		if(l_data.size() >= 2)
 		{
 			bool l_cbc;
-			std::string l_key = GetBlowIni()->GetBlowKey(l_data[0], l_data[1], l_cbc);
+			auto l_ini = GetBlowIni();
+			std::string l_key = l_ini->GetBlowKey(l_data[0], l_data[1], l_cbc);
+			const size_t l_maxLength = l_ini->MaxKeyLength(l_cbc);
+			if(l_key.size() > l_maxLength)
+				l_key.resize(l_maxLength);
 
-			if(l_cbc)
+			if(l_data.size() >= 3 && _stricmp(l_data[2].c_str(), "hex") == 0)
 			{
-				// :TODO: find out if there's a better way for UI integration and so forth
-				l_key.insert(0, "cbc:");
+				std::string l_hex;
+				l_hex.reserve(l_key.size() * 2);
+				for(unsigned char l_byte : l_key)
+				{
+					l_hex += s_hexDigits[l_byte >> 4];
+					l_hex += s_hexDigits[l_byte & 15];
+				}
+				l_key.swap(l_hex);
 			}
+			if(l_cbc && !l_key.empty())
+				l_key.insert(0, "cbc:");
 
 			strcpy_s(data, s_maxMircReturnBytes, l_key.c_str());
 
@@ -777,51 +799,77 @@ MIRC_DLL_EXPORT(FiSH_DelKey10)
 }
 
 
+static bool ParseMessageArgs(const std::string& a_data, std::string& ar_key, std::string& ar_message, bool& ar_cbc)
+{
+	/* <decode_utf8|raw_bytes|hex_key> <key> <message> */
+	const auto l_formatEnd = a_data.find(' ');
+	if(l_formatEnd == std::string::npos)
+		return false;
+	const auto l_keyStart = a_data.find_first_not_of(' ', l_formatEnd);
+	if(l_keyStart == std::string::npos)
+		return false;
+	const auto l_keyEnd = a_data.find(' ', l_keyStart);
+	if(l_keyEnd == std::string::npos || l_keyEnd + 1 == a_data.size())
+		return false;
+
+	const std::string l_format = a_data.substr(0, l_formatEnd);
+	ar_key = a_data.substr(l_keyStart, l_keyEnd - l_keyStart);
+	// Consume one separator. Any remaining spaces belong to the message.
+	ar_message = a_data.substr(l_keyEnd + 1);
+	if(_stricmp(l_format.c_str(), "decode_utf8") == 0 && !DecodeKeyToAnsi(ar_key))
+		return false;
+	ar_cbc = HasCBCPrefix(ar_key, true);
+	if(_stricmp(l_format.c_str(), "hex_key") == 0)
+	{
+		if(ar_key.size() % 2 != 0)
+			return false;
+		std::string l_decoded;
+		l_decoded.reserve(ar_key.size() / 2);
+		for(size_t i = 0; i < ar_key.size(); i += 2)
+		{
+			const auto l_high = s_hexDigits.find(static_cast<char>(tolower(static_cast<unsigned char>(ar_key[i]))));
+			const auto l_low = s_hexDigits.find(static_cast<char>(tolower(static_cast<unsigned char>(ar_key[i + 1]))));
+			if(l_high == std::string::npos || l_low == std::string::npos)
+				return false;
+			l_decoded += static_cast<char>((l_high << 4) | l_low);
+		}
+		ar_key.swap(l_decoded);
+	}
+	return !ar_key.empty() && ar_key.find('\0') == std::string::npos;
+}
+
+
 static int _FiSH_DecryptMsg_Internal(std::string& a_data)
 {
-	const string_vector l_data = SplitString(a_data, " ", 3);
-	/* <decode_utf8|raw_bytes> <key> <base64data> */
+	std::string l_key, l_message;
+	bool l_cbc;
+	if(!ParseMessageArgs(a_data, l_key, l_message, l_cbc))
+		return MIRC_RET_HALT;
 
-	if(l_data.size() >= 3)
-	{
-		std::string l_key = l_data[1], l_message = l_data[2];
+	const bool l_framed = l_message.compare(0, 4, "+OK ") == 0 || l_message.compare(0, 5, "mcps ") == 0;
+	if(l_framed)
+		l_message.erase(0, l_message[0] == '+' ? 4 : 5);
+	const bool l_markedCbc = !l_message.empty() && l_message[0] == '*';
+	// Unframed historical calls can omit the CBC marker and use the key mode.
+	const bool l_messageCbc = l_markedCbc || (!l_framed && l_cbc);
+	const auto l_ini = GetBlowIni();
+	if(l_messageCbc != l_cbc && l_ini->GetBool(L"strict_cipher_mode", false))
+		return MIRC_RET_HALT;
+	if(l_markedCbc)
+		l_message.erase(0, 1);
 
-		if(_stricmp(l_data[0].c_str(), "decode_utf8") == 0)
-		{
-			l_key = UnicodeToCp(CP_ACP, UnicodeFromCp(CP_UTF8, l_key));
-		}
+	const size_t l_maxLength = l_ini->MaxKeyLength(l_messageCbc);
+	if(l_key.size() > l_maxLength)
+		l_key.resize(l_maxLength);
 
-		if(l_message.find("+OK ") == 0)
-			l_message.erase(0, 4);
-		else if(l_message.find("mcps ") == 0)
-			l_message.erase(0, 5);
-
-		std::string l_decrypted;
-		bool l_cbc = HasCBCPrefix(l_key, true);
-
-		if(!l_cbc && !l_message.empty() && l_message[0] == '*')
-		{
-			l_cbc = true;
-			l_message.erase(0, 1);
-		}
-
-		int l_result = blowfish_decrypt_auto(l_cbc, l_message, l_decrypted, l_key);
-
-		if(l_result == 1)
-		{
-			l_decrypted += "&";
-		}
-		else if(l_result < 0)
-		{
-			l_decrypted += "=[FiSH: DECRYPTION FAILED!]=";
-		}
-
-		a_data = l_decrypted;
-
-		return MIRC_RET_DATA_RETURN;
-	}
-
-	return MIRC_RET_CONTINUE;
+	std::string l_decrypted;
+	const int l_result = blowfish_decrypt_auto(l_messageCbc, l_message, l_decrypted, l_key);
+	if(l_result == 1)
+		l_decrypted += "&";
+	else if(l_result < 0)
+		l_decrypted += "=[FiSH: DECRYPTION FAILED!]=";
+	a_data.swap(l_decrypted);
+	return MIRC_RET_DATA_RETURN;
 }
 
 
@@ -867,34 +915,20 @@ MIRC_DLL_EXPORT(FiSH_decrypt_msg)
 
 static int _FiSH_EncryptMsg_Internal(std::string& a_data)
 {
-	const string_vector l_data = SplitString(a_data, " ", 3);
-
-	if(l_data.size() >= 3)
-	{
-		std::string l_key = l_data[1], l_message = l_data[2];
-		std::string l_encrypted;
-
-		if(_stricmp(l_data[0].c_str(), "decode_utf8") == 0)
-		{
-			l_key = UnicodeToCp(CP_ACP, UnicodeFromCp(CP_UTF8, l_key));
-		}
-
-		if(!HasCBCPrefix(l_key, true))
-		{
-			blowfish_encrypt(l_message, l_encrypted, l_key);
-		}
-		else
-		{
-			blowfish_encrypt_cbc(l_message, l_encrypted, l_key);
-			l_encrypted.insert(0, "*"); // mark CBC mode "message"
-		}
-
-		a_data = l_encrypted;
-
-		return MIRC_RET_DATA_RETURN;
-	}
-
-	return MIRC_RET_HALT;
+	std::string l_key, l_message, l_encrypted;
+	bool l_cbc;
+	if(!ParseMessageArgs(a_data, l_key, l_message, l_cbc))
+		return MIRC_RET_HALT;
+	const size_t l_maxLength = GetBlowIni()->MaxKeyLength(l_cbc);
+	if(l_key.size() > l_maxLength)
+		return MIRC_RET_HALT;
+	blowfish_encrypt_auto(l_cbc, l_message, l_encrypted, l_key);
+	if(l_encrypted.empty())
+		return MIRC_RET_HALT;
+	if(l_cbc)
+		l_encrypted.insert(0, "*");
+	a_data.swap(l_encrypted);
+	return MIRC_RET_DATA_RETURN;
 }
 
 
@@ -1169,6 +1203,29 @@ MIRC_DLL_EXPORT(FiSH_GetVersion)
 {
 	strcpy_s(data, s_maxMircReturnBytes, FISH_MAIN_VERSION);
 
+	return MIRC_RET_DATA_RETURN;
+}
+
+MIRC_DLL_EXPORT(FiSH_WriteAlias10)
+{
+	if(!data || !*data)
+		return MIRC_RET_CONTINUE;
+
+	/* <network> <target> <source> [nick] */
+	const string_vector l_args = SplitString(data, " ");
+	const bool l_trackNick = l_args.size() == 4 && l_args[3] == "nick";
+	const auto l_result = (l_args.size() == 3 || l_trackNick)
+		? GetBlowIni()->WriteBlowAlias(l_args[0], l_args[1], l_args[2], l_trackNick)
+		: CBlowIni::AliasWriteResult::Error;
+	if(l_trackNick)
+		return MIRC_RET_CONTINUE;
+
+	const char* l_status = "error";
+	if(l_result == CBlowIni::AliasWriteResult::Ok)
+		l_status = "ok";
+	else if(l_result == CBlowIni::AliasWriteResult::NoKey)
+		l_status = "no_key";
+	strcpy_s(data, s_maxMircReturnBytes, l_status);
 	return MIRC_RET_DATA_RETURN;
 }
 
