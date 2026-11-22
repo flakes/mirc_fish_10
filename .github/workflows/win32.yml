@@ -1,0 +1,46 @@
+name: Win32 build
+
+on:
+  push:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build FiSH (Release, Win32)
+    runs-on: windows-2022
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out FiSH and MinHook
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Bootstrap OpenSSL
+        shell: pwsh
+        run: ./scripts/bootstrap-openssl.ps1
+
+      - name: Compile both FiSH DLLs
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $msbuild = & $vswhere -latest -products '*' -version '[17.0,18.0)' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find 'MSBuild\Current\Bin\amd64\MSBuild.exe'
+          if ($LASTEXITCODE -ne 0 -or -not $msbuild) {
+            throw 'MSBuild with the Visual Studio 2022 C++ tools was not found.'
+          }
+
+          & $msbuild .\mirc_fish_10.sln /m /p:Configuration=Release /p:Platform=Win32
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+          foreach ($dll in 'fish_10.dll', 'fish_inject.dll', 'libcrypto-3.dll', 'libssl-3.dll', 'libcrypto-legacy.dll') {
+            if (-not (Test-Path -LiteralPath (Join-Path 'Release' $dll) -PathType Leaf)) {
+              throw "Missing Release output $dll"
+            }
+          }
