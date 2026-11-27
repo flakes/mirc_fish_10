@@ -639,7 +639,7 @@ MIRC_DLL_EXPORT(FiSH_SetIniPath)
 
 		if(!l_ini->IsWritable())
 		{
-			strcpy_s(data, s_maxMircReturnBytes, "/echo -a *** FiSH 10 *** WARNING: blow.ini is not writable! FiSH will not function correctly. ***");
+			strcpy_s(data, s_maxMircReturnBytes, "/echo -a *** ReefCrypt *** WARNING: blow.ini is not writable! ReefCrypt will not function correctly. ***");
 
 			return MIRC_RET_DATA_COMMAND;
 		}
@@ -1155,7 +1155,7 @@ MIRC_EXPORT_SIG(void) LoadDll(LOADINFO* info)
 	
 	if (!reg->RegisterUsingDll())
 	{
-		::MessageBoxW(info->mHwnd, L"FiSH10_DLL failed to register engine w/ inject component!", L"This is likely a bug", MB_ICONERROR | MB_OK);
+		::MessageBoxW(info->mHwnd, L"ReefCrypt could not register fish_10.dll with fish_inject.dll.", L"This is likely a bug", MB_ICONERROR | MB_OK);
 
 		// info->mKeep = FALSE;
 		// still keep to avoid error messages showing up again and again.
@@ -1182,7 +1182,7 @@ MIRC_EXPORT_SIG(int) UnloadDll(int mTimeout)
 
 /* call for mIRC to show compililation date */
 
-#define FISH_MAIN_VERSION "*** FiSH 10.23.1 *** by [c&f]\xA0\xA0*** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***"
+#define FISH_MAIN_VERSION "*** ReefCrypt *** based on FiSH 10.23.1 by [c&f]\xA0\xA0*** fish_10.dll\xA0\xA0\xA0\xA0\xA0""compiled " __DATE__ " " __TIME__ " ***"
 
 MIRC_DLL_EXPORT(_callMe)
 {

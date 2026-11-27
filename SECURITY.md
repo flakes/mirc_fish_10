@@ -1,4 +1,4 @@
-# FiSH 10 - Security Information
+# ReefCrypt security information
 
 ## Short Version
 
@@ -79,9 +79,9 @@ attacks. This also includes the DH1080 key exchange procedure.
 
 **Could this be fixed?** - No.
 
-## Using FiSH Securely
+## Using ReefCrypt securely
 
-Here's an (incomplete) list of steps that you can take to maximize the level of security provided by FiSH 10.
+Here's an (incomplete) list of steps that you can take to maximize the level of security provided by ReefCrypt.
 
 * Connect to IRC servers using SSL/TLS-encrypted connections exclusively.
 * Try to verify the identity of your IRC server. Storing the certificate's hash on first use is a reasonable middle ground.

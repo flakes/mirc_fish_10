@@ -1,4 +1,4 @@
-# Build FiSH 10 for Win32
+# Build ReefCrypt for Win32
 
 Use Visual Studio 2022 or Build Tools 2022 with the Desktop development with
 C++ workload, a Windows 10 or 11 SDK, and PowerShell 7. The solution uses the
