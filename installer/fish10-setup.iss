@@ -6,22 +6,25 @@
 #define SetupBuildDateYear GetFileDateTimeString(ReleaseDir + "\fish_10.dll", 'yyyy', '.', ':')
 
 [Setup]
+; Preserve the FiSH 10 installer ID for upgrades of existing installations.
 AppId={{cb634ee1-f9f8-4236-b2ae-dc9912d30d72}
-AppName=FiSH 10
-AppVerName=FiSH 10 ({#SetupBuildDate}) for mIRC 7
+AppName=ReefCrypt
+AppVerName=ReefCrypt ({#SetupBuildDate}) for mIRC 7
 AppVersion={#SetupBuildDateMachine}
-AppPublisher=flakes
+AppPublisher=tsautier
+AppPublisherURL=https://github.com/tsautier/ReefCrypt
+AppSupportURL=https://github.com/tsautier/ReefCrypt/issues
 AppCopyright=© flakes 2010-{#SetupBuildDateYear}
 VersionInfoVersion={#SetupBuildDateMachine}
 MinVersion=6.1sp1
 OutputDir={#ReleaseDir}
-OutputBaseFilename=mirc_fish_10-setup-{#SetupBuildDate}
+OutputBaseFilename=ReefCrypt-setup-{#SetupBuildDate}
 DisableWelcomePage=yes
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 AllowCancelDuringInstall=no
 ; the uninstaller is placed here:
-DefaultDirName="{pf}\FiSH 10 Setup"
+DefaultDirName="{pf}\ReefCrypt Setup"
 Uninstallable=not IsPortableInstall()
 SolidCompression=yes
 LanguageDetectionMethod=none

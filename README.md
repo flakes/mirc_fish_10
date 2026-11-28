@@ -1,17 +1,16 @@
-# FiSH 10
-**A blowfish encryption plug-in for mIRC 7, compatible with previous FiSH scripts and other clients!**
+# ReefCrypt
 
-This is an encryption addon for mIRC, it is based on FiSH v1.30 and is compatible to the
-original *blowcrypt/bloW* script as well as *Mircryption* and other clients.
+ReefCrypt is a Blowfish encryption plug-in for mIRC 7 based on
+[FiSH 10](https://github.com/flakes/mirc_fish_10) by flakes. It interoperates with
+FiSH clients, the original *blowcrypt/bloW* script, and *Mircryption*. Existing
+installations use the same DLL filenames, mIRC commands, and blow.ini profiles.
 It supports private chat, channel, topic encryption and comes with a secure key exchange
 system (DH1080). In addition to the regular ECB Blowfish mode, it also supports the more
 secure CBC mode.
 
 ## SETUP
 
-FiSH 10 does no longer modify (patch) your mirc.exe file like the old FiSH addon used
-to. This has the clear advantage that FiSH 10 simply continues working even after
-updates to mIRC - no action required.
+ReefCrypt integrates with mIRC in memory and leaves the mirc.exe file on disk intact.
 
 Furthermore, we now have an installer that handles most of the setup routine for you.
 All you have to do is download and point it to the directory where your mIRC installation
@@ -25,12 +24,13 @@ If you just upgraded from mIRC 6, you have to manually unload the `FiSH.mrc` fil
 
 ### DOWNLOAD
 
-Please download the latest version from: https://syndicode.org/fish_10/
+See [ReefCrypt releases](https://github.com/tsautier/ReefCrypt/releases) for packages
+or [BUILD.md](BUILD.md) to compile the DLLs.
 
 ### MANUAL SETUP
 
 In case you prefer to not use the installer for whatever reason, you can still download
-a zip file. Here are the instructions to get FiSH going in that case. We assume you are
+a zip file. Here are the instructions to get ReefCrypt going in that case. We assume you are
 running mIRC in portable mode.
 
 * Shut down mIRC, extract all \*.dll files and fish_10.mrc to your mirc.exe folder.
@@ -53,12 +53,9 @@ Please refer to the [SECURITY](SECURITY.md) document.
 
 * You have to set `load=1` under `[ssl]` in mirc.ini - the installer will do this for you.
 
-* mIRC 7.55 and earlier are no longer supported, please update to latest FiSH and mIRC 7.56+
+* Use mIRC 7.73 or later.
 
-* Is the script loaded correctly? If yes, these two lines will show up on mIRC startup:
-
-        *** FiSH 10 *** by [c&f] *** fish_inject.dll compiled XXX XX 2017 12:00:00 ***
-        *** FiSH 10 *** by [c&f] *** fish_10.dll     compiled XXX XX 2017 12:00:00 ***
+* Check for ReefCrypt startup notices for fish_inject.dll and fish_10.dll in the mIRC status window.
 
 * Do you use any kind of connect-on-startup script? You may have to turn that off or add a timer.
   The fish_10.mrc script MUST be loaded before any connection is made or it will not work.
@@ -72,8 +69,8 @@ Please refer to the [SECURITY](SECURITY.md) document.
 
 * If an error like "*patching ... failed*" shows up, something specific to your system went wrong.
 It could be something simple like an incompatible OpenSSL DLL, something weird like
-your anti-virus program, or a bug in FiSH 10. You can check here for existing problem reports, or create a new one:
-https://github.com/flakes/mirc_fish_10/issues
+your anti-virus program, or a bug in ReefCrypt. Check existing reports or open an
+issue on the [ReefCrypt issue tracker](https://github.com/tsautier/ReefCrypt/issues).
 (Hint for Windows Vista and above: Hit Ctrl + C to copy the message box contents into the clipboard,
 then paste into your bug report using Ctrl + V)
 
@@ -89,10 +86,10 @@ then paste into your bug report using Ctrl + V)
 
 ### OpenSSL compatibility with mIRC 7.83 and 7.85
 
-mIRC includes its own SSL support. FiSH uses the external OpenSSL 3 DLLs
+mIRC includes its own SSL support. ReefCrypt uses the external OpenSSL 3 DLLs
 for encryption and to intercept TLS reads and writes. [mIRC SSL documentation](https://www.mirc.com/ssl.html)
 
-If FiSH reports an OpenSSL error on startup, close mIRC and copy the following
+If ReefCrypt reports an OpenSSL error on startup, close mIRC and copy the following
 files from the same FireDaemon OpenSSL 3.5 LTS ZIP to the folder containing
 `mirc.exe`. Back up any existing copies before replacing them.
 [FireDaemon downloads](https://kb.firedaemon.com/support/solutions/articles/4000121705)
@@ -115,19 +112,16 @@ mIRC 7.83 using OpenSSL 3.6.0 and with mIRC 7.85 using OpenSSL 3.5.9.
 ### MULTI-NETWORK SUPPORT
 
 The old FiSH never supported using different keys for #chan on NetworkOne and #chan
-on NetworkTwo. The new FiSH does fully support this while still maintaining blow.ini
-backwards compatibility in all directions.
+on NetworkTwo. ReefCrypt keeps separate keys per network and continues to read existing
+blow.ini profiles.
 
 ### CBC MODE
 
-FiSH 10 implements Mircryption's CBC mode, as defined here:
+ReefCrypt implements Mircryption's CBC mode, as defined here:
 www.donationcoder.com/Software/Mouser/mircryption/extra_cbcinfo.php
 
-FiSH 10 is the first add-on to deploy a fully backwards compatible DH1080 key exchange
-that AUTOMATICALLY enables the more secure CBC encryption mode if both parties use
-FiSH 10. You won't notice a difference, but your messages will be encrypted stronger
-than ever. Key exchanges with users of older versions and other scripts are completely
-unimpaired.
+ReefCrypt retains FiSH 10’s DH1080 negotiation for CBC. CBC is enabled
+automatically when both clients support this negotiation.
 
 There are however at least three broken DH1080 implementations that take the remainder of
 the string in `DH1080_(INIT|FINISH)` instead of splitting at space characters:
@@ -156,10 +150,9 @@ The rest of the code is what I contributed myself and is licensed under the
 
 ## TECHNICAL
 
-FiSH 10 makes heavy use of OpenSSL. The current releases use the OpenSSL 3.x
-runtime DLLs that come with the download (`libssl-3.dll`, `libcrypto-3.dll`,
-and `libcrypto-legacy.dll`). Other recent libraries may work too. If they
-don't, FiSH 10 will let you know on startup.
+ReefCrypt uses three OpenSSL 3.x runtime DLLs (`libssl-3.dll`,
+`libcrypto-3.dll`, and `libcrypto-legacy.dll`). ReefCrypt reports
+missing or incompatible OpenSSL dependencies at startup.
 
 For local Visual Studio builds in this repository, you can bootstrap the pinned
 OpenSSL 3.5.9 package with:
@@ -170,7 +163,7 @@ This downloads the current ZIP configured by the repository, verifies the
 SHA-256 checksum, copies the Win32 import libraries and runtime DLLs into
 `.\lib`, copies the legacy provider DLL expected by the release packaging, and
 copies the headers into `.\include`. Building `fish_10` then copies the three
-runtime DLLs into the selected Visual Studio output directory alongside FiSH.
+runtime DLLs into the selected Visual Studio output directory alongside ReefCrypt.
 The Win32 toolchain, MinHook version, and build commands are documented in [BUILD.md](BUILD.md).
 
 You can read some lines about the in-memory patching in fish-inject.cpp. fish_inject.dll
@@ -194,15 +187,12 @@ that cannot be converted without changing the input.
 
 ## KNOWN ISSUES
 
-FiSH 10 is incompatible with the following applications. Please whitelist mirc.exe in these:
-
-* "AdMuncher"
-
-This is because FiSH 10 integrates itself into mIRC similarly to these apps.
+FiSH 10 documented an incompatibility with AdMuncher because both integrate with mIRC.
+If you encounter this conflict, whitelist mirc.exe in AdMuncher.
 
 If you continue to use your old blow.ini file, and have been using a non-ANSI-compatible crypt
 mark (such as the default middot "·"), using any right click menu from within mIRC will convert
-your blow.ini file from ANSI to UTF-8 which will effectively destroy FiSH 10's ability to
+your blow.ini file from ANSI to UTF-8 which will effectively destroy ReefCrypt's ability to
 properly read the crypt mark.
 The suggested workaround is using $chr(183) instead of "·".
 

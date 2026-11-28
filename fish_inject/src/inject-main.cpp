@@ -443,16 +443,16 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 
 	if (LOWORD(info->mVersion) < 7 || HIWORD(info->mVersion) < 73)
 	{
-		::MessageBoxW(info->mHwnd, L"This version of FiSH does not support any mIRC version older than 7.73. Disabling.", L"Error", MB_ICONEXCLAMATION);
+		::MessageBoxW(info->mHwnd, L"ReefCrypt requires mIRC 7.73 or later. Disabling.", L"Error", MB_ICONEXCLAMATION);
 
 		return;
 	}
 	else if (hInstSSLLib == nullptr || hInstCryptoLib == nullptr)
 	{
 		::MessageBoxW(info->mHwnd,
-			L"FiSH needs the OpenSSL DLLs to be installed and loaded. Disabling.\r\n\r\n"
+			L"ReefCrypt needs the OpenSSL DLLs to be installed and loaded. Disabling.\r\n\r\n"
 			L"Hint: Setting load=1 under [ssl] in mirc.ini is necessary. "
-			L"Please check the README or use the provided FiSH installer.",
+			L"Please check the README or use the ReefCrypt installer.",
 			L"Error", MB_ICONEXCLAMATION);
 
 		return;
@@ -487,7 +487,7 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 	if (!legacyCryptoAlgorithmsAvailable)
 	{
 		::MessageBoxW(info->mHwnd,
-			L"FiSH needs the OpenSSL Legacy Provider DLL (libcrypto-legacy.dll) to be installed and loaded. Disabling.", L"Error", MB_ICONEXCLAMATION);
+			L"ReefCrypt needs the OpenSSL Legacy Provider DLL (libcrypto-legacy.dll) to be installed and loaded. Disabling.", L"Error", MB_ICONEXCLAMATION);
 
 		return;
 	}
@@ -511,7 +511,7 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 	if (hInstWs2 == nullptr)
 	{
 		::MessageBoxW(info->mHwnd,
-			L"FiSH 10 failed to load: ws2_32.dll is not available for socket patching.",
+			L"ReefCrypt failed to load: ws2_32.dll is not available for socket patching.",
 			L"Error",
 			MB_ICONEXCLAMATION);
 
@@ -527,7 +527,7 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 	if (xconnect == nullptr || xsend == nullptr || xrecv == nullptr || xclosesock == nullptr)
 	{
 		::MessageBoxW(info->mHwnd,
-			L"FiSH 10 failed to load: one or more required ws2_32.dll exports are missing.",
+			L"ReefCrypt failed to load: one or more required ws2_32.dll exports are missing.",
 			L"Error",
 			MB_ICONEXCLAMATION);
 
@@ -565,7 +565,7 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 	if (xsslwrite == nullptr || xsslread == nullptr || _SSL_get_fd == nullptr || _SSL_is_init_finished == nullptr)
 	{
 		::MessageBoxW(info->mHwnd,
-			L"FiSH 10 failed to load: one or more required libssl-3.dll exports are missing.",
+			L"ReefCrypt failed to load: one or more required libssl-3.dll exports are missing.",
 			L"Error",
 			MB_ICONEXCLAMATION);
 
@@ -609,7 +609,7 @@ extern "C" void __stdcall LoadDll(LOADINFO * info)
 		s_patchSSLWrite.reset();
 		s_patchSSLRead.reset();
 
-		std::wstring l_errorInfo = L"FiSH 10 failed to load: Patching functions in memory was unsuccessful.";
+		std::wstring l_errorInfo = L"ReefCrypt failed to load: Patching functions in memory was unsuccessful.";
 		l_errorInfo += L"\r\nDebug info: ";
 		l_errorInfo += wszPatchedInfo;
 
@@ -684,7 +684,7 @@ extern "C" int UnregisterEngine(const fish_inject_engine_t * pEngine)
 	return (s_engines->Unregister(pEngine) ? 0 : 1);
 }
 
-#define FISH_INJECT_VERSION "*** FiSH 10.23.1 *** by [c&f]\xA0\xA0*** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***"
+#define FISH_INJECT_VERSION "*** ReefCrypt *** based on FiSH 10.23.1 by [c&f]\xA0\xA0*** fish_inject.dll compiled " __DATE__ " " __TIME__ " ***"
 
 /* dummy call to facilitate loading of DLL */
 MIRC_DLL_EXPORT(_callMe)
